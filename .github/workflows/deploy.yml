@@ -1,20 +1,18 @@
 name: Deploy to GitHub Pages
+# Every push to main is tested, built and published to the gh-pages branch, which
+# GitHub Pages serves at https://<owner>.github.io/fittrack/. The installed app
+# picks up the new version the next time it starts.
 on:
   push:
     branches: ['main']
   workflow_dispatch:
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 concurrency:
   group: 'pages'
   cancel-in-progress: true
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -25,12 +23,15 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - uses: actions/configure-pages@v6
-        with:
-          # switches Pages on (source: GitHub Actions) the first time, if the token may
-          enablement: true
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: './dist'
-      - id: deployment
-        uses: actions/deploy-pages@v5
+      - name: Publish dist/ to gh-pages
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd dist
+          touch .nojekyll
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
