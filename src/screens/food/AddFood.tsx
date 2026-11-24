@@ -5,20 +5,22 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState, type CSSProperties } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { db, type Food, type Meal } from '../../db'
+import { db, type Food, type Meal, type MealTemplate } from '../../db'
 import { useSetting, useToday } from '../../hooks'
 import { addDays, daysBetween, relativeDay } from '../../lib/dates'
 import { fmt1, fmtInt } from '../../lib/format'
 import { buildFoodIndex, searchFoods, type Usage } from '../../lib/foodSearch'
 import { copyEntries, deleteEntries, logFood, MEAL_LABEL, MEALS, mealForNow, recentMeals, type PortionChoice } from '../../store/diary'
 import { frequentFoods, myFoods, recentFoods } from '../../store/foods'
-import { IconBarcode, IconEdit, IconFood, IconPlus, IconRepeat, IconSearch, IconX } from '../../ui/icons'
-import { Button, EmptyState, IconTile, Screen, Segmented, Spinner } from '../../ui/kit'
+import { deleteMealTemplate, listMealTemplates, logMealTemplate, recipeFoods, restoreMealTemplate } from '../../store/recipes'
+import { recipeIdOf } from '../../lib/recipes'
+import { IconBarcode, IconDots, IconEdit, IconFood, IconList, IconPlus, IconRepeat, IconSearch, IconStar, IconX } from '../../ui/icons'
+import { Button, EmptyState, Group, IconButton, IconTile, ListRow, Screen, Segmented, Sheet, Spinner } from '../../ui/kit'
 import { haptic } from '../../ui/motion'
 import { useToast } from '../../ui/toast'
 import { PortionSheet } from './PortionSheet'
 
-type Tab = 'recent' | 'frequent' | 'mine'
+type Tab = 'recent' | 'frequent' | 'mine' | 'recipes'
 
 /** The portion the user most likely wants: last time's, else the first serving, else 100 g. */
 function usualPortion(f: Food): PortionChoice & { label: string } {
@@ -28,10 +30,15 @@ function usualPortion(f: Food): PortionChoice & { label: string } {
   return { grams: 100, label: '100 g' }
 }
 
-function FoodRow({ food, onPick, onQuick }: { food: Food; onPick: (f: Food) => void; onQuick: (f: Food) => void }) {
+function FoodRow({ food, onPick, onQuick, onEdit }: { food: Food; onPick: (f: Food) => void; onQuick: (f: Food) => void; onEdit?: (f: Food) => void }) {
   const p = usualPortion(food)
   return (
     <div className="flex min-h-[60px] items-center">
+      {onEdit && (
+        <IconButton label={`Edit ${food.name}`} className="ml-1.5 size-9 shrink-0 text-ink-3" onClick={() => onEdit(food)}>
+          <IconEdit size={18} />
+        </IconButton>
+      )}
       <button type="button" onClick={() => onPick(food)} className="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-4 text-left active:bg-fill">
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[16px] font-medium">{food.name}</span>
@@ -69,7 +76,9 @@ export default function AddFood() {
   const qs = `meal=${meal}${date !== today ? `&d=${date}` : ''}`
   const go = (to: string) => navigate(to)
 
-  const foods = useLiveQuery(() => db.foods.toArray())
+  const foods = useLiveQuery(async () => [...(await db.foods.toArray()), ...(await recipeFoods())])
+  const templates = useLiveQuery(() => listMealTemplates())
+  const [templateMenu, setTemplateMenu] = useState<MealTemplate | null>(null)
   const index = useMemo(() => (foods ? buildFoodIndex(foods) : null), [foods])
   const byId = useMemo(() => new Map((foods ?? []).map((f) => [f.id, f])), [foods])
   const usage = useLiveQuery(async () => {
@@ -78,17 +87,18 @@ export default function AddFood() {
       .where('date')
       .between(addDays(today, -60), today, true, true)
       .each((e) => {
-        if (!e.foodId) return
-        const u = map.get(e.foodId) ?? { count: 0 }
+        const key = e.foodId ?? (e.recipeId ? `recipe:${e.recipeId}` : null)
+        if (!key) return
+        const u = map.get(key) ?? { count: 0 }
         u.count += 1
         const ago = daysBetween(e.date, today)
         if (u.daysAgo == null || ago < u.daysAgo) u.daysAgo = ago
-        map.set(e.foodId, u)
+        map.set(key, u)
       })
     return map
   }, [today])
   const repeat = useLiveQuery(() => recentMeals(meal, date), [meal, date])
-  const list = useLiveQuery(() => (tab === 'recent' ? recentFoods(30) : tab === 'frequent' ? frequentFoods(30) : myFoods()), [tab])
+  const list = useLiveQuery(() => (tab === 'recent' ? recentFoods(30) : tab === 'frequent' ? frequentFoods(30) : tab === 'recipes' ? recipeFoods() : myFoods()), [tab])
 
   const results = useMemo(() => {
     if (!index || !query.trim()) return null
@@ -104,6 +114,25 @@ export default function AddFood() {
     toast({ message: `${f.name} · ${fmtInt(e.macros.kcal)} kcal added`, action: { label: 'Undo', onClick: () => void deleteEntries([e.id]) } })
   }
 
+  const addTemplate = async (t: MealTemplate) => {
+    const rows = await logMealTemplate(t, meal, date)
+    const kcal = rows.reduce((n, e) => n + e.macros.kcal, 0)
+    haptic('success')
+    toast({ message: `${t.name} added · ${fmtInt(kcal)} kcal`, action: { label: 'Undo', onClick: () => void deleteEntries(rows.map((r) => r.id)) } })
+    go(back)
+  }
+
+  const removeTemplate = async (t: MealTemplate) => {
+    const row = await deleteMealTemplate(t.id)
+    setTemplateMenu(null)
+    if (row) toast({ message: `${row.name} deleted`, action: { label: 'Undo', onClick: () => restoreMealTemplate(row) } })
+  }
+
+  const editRecipe = (f: Food) => {
+    const rid = recipeIdOf(f.id)
+    if (rid) go(`/food/recipe/${rid}`)
+  }
+
   const addMeal = async (r: NonNullable<typeof repeat>[number]) => {
     const copies = await copyEntries(r.entries, date, meal)
     haptic('success')
@@ -111,10 +140,10 @@ export default function AddFood() {
     go(back)
   }
 
-  const rows = (items: Food[]) => (
+  const rows = (items: Food[], editable = false) => (
     <div className="card divide-y divide-line overflow-hidden">
       {items.map((f) => (
-        <FoodRow key={f.id} food={f} onPick={setPicked} onQuick={(x) => void quickAdd(x)} />
+        <FoodRow key={f.id} food={f} onPick={setPicked} onQuick={(x) => void quickAdd(x)} onEdit={editable ? editRecipe : undefined} />
       ))}
     </div>
   )
@@ -195,6 +224,32 @@ export default function AddFood() {
             ))}
           </div>
 
+          {templates && templates.length > 0 && (
+            <>
+              <h2 className="mb-2.5 mt-7 px-1 text-[20px] font-bold tracking-tight">Saved meals</h2>
+              <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+                {templates.map((t) => (
+                  <div key={t.id} className="card flex w-[78%] max-w-72 shrink-0 snap-start flex-col !rounded-[24px] p-4">
+                    <div className="flex items-center gap-2 text-[13px] font-semibold text-ink-2">
+                      <IconStar size={16} />
+                      <span className="min-w-0 flex-1 truncate">{t.name}</span>
+                      <IconButton label={`${t.name} options`} className="-my-2 -mr-2 size-9 text-ink-3" onClick={() => setTemplateMenu(t)}>
+                        <IconDots size={18} className="rotate-90" />
+                      </IconButton>
+                    </div>
+                    <p className="mt-1 line-clamp-2 min-h-[2.6em] text-[15px] font-medium leading-snug">{t.items.map((e) => e.name).join(', ')}</p>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-[15px] font-semibold">{fmtInt(t.items.reduce((n, e) => n + e.macros.kcal, 0))} kcal</span>
+                      <Button size="sm" onClick={() => void addTemplate(t)}>
+                        Add all
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           {repeat && repeat.length > 0 && (
             <>
               <h2 className="mb-2.5 mt-7 px-1 text-[20px] font-bold tracking-tight">Repeat a meal</h2>
@@ -225,17 +280,27 @@ export default function AddFood() {
             options={[
               { value: 'recent' as Tab, label: 'Recent' },
               { value: 'frequent' as Tab, label: 'Frequent' },
-              { value: 'mine' as Tab, label: 'My foods' },
+              { value: 'mine' as Tab, label: 'Mine' },
+              { value: 'recipes' as Tab, label: 'Recipes' },
             ]}
             onChange={setTab}
           />
           <div className="mt-3">
+            {tab === 'recipes' && (
+              <Button block variant="secondary" className="mb-3" onClick={() => go('/food/recipe/new')}>
+                <IconList size={18} /> New recipe
+              </Button>
+            )}
             {!list ? (
               <div className="flex justify-center py-8 text-ink-2">
                 <Spinner />
               </div>
             ) : list.length ? (
-              rows(list)
+              rows(list, tab === 'recipes')
+            ) : tab === 'recipes' ? (
+              <EmptyState icon={<IconList size={28} />} title="No recipes yet">
+                Weigh the ingredients raw, the finished dish once cooked, and log it by serving or by grams.
+              </EmptyState>
             ) : (
               <EmptyState icon={<IconFood size={28} />} title={tab === 'mine' ? 'No scanned or saved foods yet' : tab === 'frequent' ? 'Foods you log often show up here' : 'Foods you log show up here'}>
                 {tab === 'mine' ? 'Scan a package or add a food from its label.' : 'Search above, or scan a barcode.'}
@@ -244,6 +309,14 @@ export default function AddFood() {
           </div>
         </>
       )}
+
+      <Sheet open={!!templateMenu} onClose={() => setTemplateMenu(null)} title={templateMenu?.name}>
+        {templateMenu && (
+          <Group className="!shadow-none">
+            <ListRow title="Delete saved meal" destructive onClick={() => void removeTemplate(templateMenu)} />
+          </Group>
+        )}
+      </Sheet>
 
       <PortionSheet
         open={!!picked}

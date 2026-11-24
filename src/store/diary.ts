@@ -1,6 +1,7 @@
 import { db, newRow, type DiaryEntry, type DiarySource, type Food, type Meal, type Nutrients } from '../db'
 import { addDays } from '../lib/dates'
 import { roundNutrients, scaleNutrients } from '../lib/macros'
+import { recipeIdOf } from '../lib/recipes'
 
 export const MEALS: readonly Meal[] = ['breakfast', 'lunch', 'dinner', 'snacks']
 
@@ -26,24 +27,30 @@ export interface PortionChoice {
   servingCount?: number | null
 }
 
-/** Logs a food portion with its own macro snapshot and remembers the portion on the food. */
+/**
+ * Logs a food portion with its own macro snapshot and remembers the portion on the food.
+ * A recipe comes in as a food with a `recipe:` id and is logged with its recipe id.
+ */
 export async function logFood(food: Food, portion: PortionChoice, meal: Meal, date: string, source: DiarySource): Promise<DiaryEntry> {
+  const recipeId = recipeIdOf(food.id)
   const entry = newRow<DiaryEntry>({
     date,
     meal,
-    foodId: food.id,
+    foodId: recipeId ? null : food.id,
+    ...(recipeId ? { recipeId } : {}),
     name: food.name,
     ...(food.brand ? { brand: food.brand } : {}),
     grams: portion.grams,
     servingName: portion.servingName ?? null,
     servingCount: portion.servingCount ?? null,
     macros: roundNutrients(scaleNutrients(food.per100, portion.grams)),
-    source,
+    source: recipeId ? 'recipe' : source,
   })
   const now = new Date().toISOString()
-  await db.transaction('rw', db.diaryEntries, db.foods, async () => {
+  await db.transaction('rw', db.diaryEntries, db.foods, db.recipes, async () => {
     await db.diaryEntries.add(entry)
-    await db.foods.update(food.id, { lastUsedAt: now, lastPortionG: portion.grams })
+    if (recipeId) await db.recipes.update(recipeId, { lastUsedAt: now, lastPortionG: portion.grams })
+    else await db.foods.update(food.id, { lastUsedAt: now, lastPortionG: portion.grams })
   })
   return entry
 }
@@ -73,7 +80,8 @@ export async function logQuickAdd(q: QuickAdd, meal: Meal, date: string): Promis
 
 /** Re-portions an entry from its food's current values. */
 export async function updatePortion(entry: DiaryEntry, food: Food, portion: PortionChoice, meal: Meal = entry.meal): Promise<void> {
-  await db.transaction('rw', db.diaryEntries, db.foods, async () => {
+  const recipeId = recipeIdOf(food.id)
+  await db.transaction('rw', db.diaryEntries, db.foods, db.recipes, async () => {
     await db.diaryEntries.put({
       ...entry,
       meal,
@@ -83,7 +91,8 @@ export async function updatePortion(entry: DiaryEntry, food: Food, portion: Port
       macros: roundNutrients(scaleNutrients(food.per100, portion.grams)),
       updatedAt: new Date().toISOString(),
     })
-    await db.foods.update(food.id, { lastPortionG: portion.grams })
+    if (recipeId) await db.recipes.update(recipeId, { lastPortionG: portion.grams })
+    else await db.foods.update(food.id, { lastPortionG: portion.grams })
   })
 }
 

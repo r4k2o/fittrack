@@ -7,6 +7,8 @@ import { addDays, formatDayShort, weekStart } from '../../lib/dates'
 import { fmtDuration, fmtInt } from '../../lib/format'
 import { sessionStats } from '../../lib/training'
 import { WEEKDAY_LONG } from '../../lib/volume'
+import { weekMinutes, WHO_WEEKLY_MIN } from '../../lib/cardio'
+import { cardioBetween } from '../../store/cardio'
 import { activePlan, deloadActive, deloadOffer, endDeload, planWeek, snoozeDeloadOffer, startDeload, startPlanDay, type PlanDayFull, type WeekDay } from '../../store/plans'
 import { getSetting } from '../../store/settings'
 import { activeSession, deleteRoutine, listRoutines, recentSessions, startSession } from '../../store/training'
@@ -34,6 +36,7 @@ export default function Train() {
   const offer = useLiveQuery(async () => (plan ? deloadOffer(plan, today) : null), [plan, today])
   const deload = useLiveQuery(async () => ((await deloadActive(today)) ? await getSetting('deloadUntil') : null), [today])
   const week = plan && thisWeek ? planWeek(plan, thisWeek, today) : null
+  const cardio = useLiveQuery(async () => weekMinutes(await cardioBetween(monday, addDays(monday, 6))), [monday])
   const focus = week?.find((d) => d.status === 'today') ?? week?.find((d) => d.status === 'next') ?? null
   const [routineMenu, setRoutineMenu] = useState<{ day: PlanDay; exercises: PlanExercise[] } | null>(null)
   const doneDays = new Set(thisWeek?.map((s) => s.date))
@@ -187,6 +190,28 @@ export default function Train() {
           <IconPlus size={20} strokeWidth={2.6} /> Start empty workout
         </Button>
       )}
+
+      <SectionTitle
+        action={
+          <Button size="sm" variant="ghost" onClick={() => go('/train/cardio/new')}>
+            <IconPlus size={15} strokeWidth={2.6} /> Log cardio
+          </Button>
+        }
+      >
+        Cardio
+      </SectionTitle>
+      <Card className="!p-4" onClick={() => go('/train/cardio')}>
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="text-[16px] font-semibold">This week</p>
+          <p className="text-[14px] tabular-nums text-ink-2">
+            <span className="font-semibold text-ink">{fmtInt(cardio?.moderateEquivalent ?? 0)}</span> of {WHO_WEEKLY_MIN} min
+          </p>
+        </div>
+        <div className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-fill">
+          <div className="h-full rounded-full bg-train transition-[width] duration-500" style={{ width: `${Math.min(100, ((cardio?.moderateEquivalent ?? 0) / WHO_WEEKLY_MIN) * 100)}%` }} />
+        </div>
+        <p className="mt-2 text-[13px] text-ink-2">Moderate-equivalent minutes against the WHO's weekly 150; a vigorous minute counts as two.</p>
+      </Card>
 
       <SectionTitle>Routines</SectionTitle>
       {routines && routines.length > 0 ? (

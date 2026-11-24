@@ -6,7 +6,7 @@ import { useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db, type DiaryEntry, type Meal } from '../db'
 import { useNow, useSetting, useTarget, useToday } from '../hooks'
-import { addDays, daysBetween, formatDayLong, localDay } from '../lib/dates'
+import { addDays, daysBetween, formatDayLong, localDay, weekStart } from '../lib/dates'
 import { fmt1, fmt2, fmtDuration, fmtInt } from '../lib/format'
 import { sumNutrients } from '../lib/macros'
 import { GOALS } from '../lib/nutrition'
@@ -15,8 +15,8 @@ import { MEAL_LABEL, MEALS, mealForNow } from '../store/diary'
 import { metricSeries } from '../store/metrics'
 import { getActiveGoal } from '../store/profile'
 import { activePlan, planWeek, startPlanDay } from '../store/plans'
+import { burnedKcal } from '../store/cardio'
 import { activeSession, listRoutines, startSession } from '../store/training'
-import { weekStart } from '../lib/dates'
 import {
   IconAlert,
   IconBarcode,
@@ -32,6 +32,7 @@ import {
   IconTrendDown,
   IconTrendFlat,
   IconTrendUp,
+  IconTimer,
 } from '../ui/icons'
 import { AnimatedNumber, Button, Card, cx, IconTile, MacroBar, Ring, Screen, Sheet, Sparkline } from '../ui/kit'
 import { haptic } from '../ui/motion'
@@ -75,8 +76,10 @@ function EnergyCard({ today }: { today: string }) {
   const navigate = useNavigate()
   const target = useTarget(today)
   const entries = useLiveQuery(() => db.diaryEntries.where('date').equals(today).toArray(), [today])
+  const addBurned = useSetting('addBurnedCalories')
+  const burned = useLiveQuery(async () => (addBurned ? burnedKcal(today) : 0), [addBurned, today])
   const totals = sumNutrients(entries?.map((e) => e.macros) ?? [])
-  const kcalTarget = target?.kcal ?? 0
+  const kcalTarget = (target?.kcal ?? 0) + (burned ?? 0)
   const left = kcalTarget - totals.kcal
   const over = left < 0
   return (
@@ -89,6 +92,7 @@ function EnergyCard({ today }: { today: string }) {
         </Ring>
         <p className="mt-3 text-[14px] text-ink-2">
           <span className="font-semibold text-ink">{fmtInt(totals.kcal)}</span> eaten of {fmtInt(kcalTarget)} kcal
+          {burned ? ` · incl. ${fmtInt(burned)} burned` : ''}
         </p>
       </div>
       <div className="mt-5 grid grid-cols-3 gap-3">
@@ -255,6 +259,7 @@ export default function Today() {
     { label: 'Food', hint: 'Search and recent', icon: <IconSearch size={20} />, tone: 'food' as const, run: () => go(`/food/add?meal=${meal}`) },
     { label: 'Scan', hint: 'Barcode', icon: <IconBarcode size={20} />, tone: 'brand' as const, run: () => go(`/food/scan?meal=${meal}`) },
     { label: 'Quick add', hint: 'Just calories', icon: <IconFood size={20} />, tone: 'amber' as const, run: () => go(`/food/quick?meal=${meal}`) },
+    { label: 'Cardio', hint: 'Run, ride, swim', icon: <IconTimer size={20} />, tone: 'train' as const, run: () => go('/train/cardio/new') },
     {
       label: 'Weight',
       hint: "Today's reading",

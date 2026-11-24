@@ -29,6 +29,9 @@ const Backup = lazy(() => import('./screens/more/Backup'))
 const FoodList = lazy(() => import('./screens/more/FoodList'))
 const DeviceCheck = lazy(() => import('./screens/more/DeviceCheck'))
 const NewPlan = lazy(() => import('./screens/train/plan/NewPlan'))
+const RecipeEditor = lazy(() => import('./screens/food/RecipeEditor'))
+const Cardio = lazy(() => import('./screens/train/Cardio'))
+const CardioForm = lazy(() => import('./screens/train/CardioForm'))
 const PlanEditor = lazy(() => import('./screens/train/plan/PlanEditor'))
 
 const TABS = [
@@ -40,7 +43,7 @@ const TABS = [
 ] as const
 
 /** Full-screen flows hide the tab bar. */
-const NO_TABS = [/^\/welcome/, /^\/food\/scan/, /^\/train\/session\//, /^\/train\/plan\/new/]
+const NO_TABS = [/^\/welcome/, /^\/food\/scan/, /^\/train\/session\//, /^\/train\/plan\/new/, /^\/food\/recipe\//, /^\/train\/cardio\/./]
 
 function TabBar() {
   return (
@@ -129,12 +132,17 @@ const router = createHashRouter([
       { path: 'food/quick', element: <QuickAdd /> },
       { path: 'food/new', element: <FoodForm /> },
       { path: 'food/edit/:foodId', element: <FoodForm /> },
+      { path: 'food/recipe/new', element: <RecipeEditor /> },
+      { path: 'food/recipe/:id', element: <RecipeEditor /> },
       { path: 'train', element: <Train /> },
       { path: 'train/session/:id', element: <Session /> },
       { path: 'train/summary/:id', element: <Summary /> },
       { path: 'train/exercises', element: <ExerciseLibrary /> },
       { path: 'train/plan', element: <PlanEditor /> },
       { path: 'train/plan/new', element: <NewPlan /> },
+      { path: 'train/cardio', element: <Cardio /> },
+      { path: 'train/cardio/new', element: <CardioForm /> },
+      { path: 'train/cardio/:id', element: <CardioForm /> },
       { path: 'progress', element: <Progress /> },
       { path: 'more', element: <More /> },
       { path: 'more/profile', element: <Profile /> },

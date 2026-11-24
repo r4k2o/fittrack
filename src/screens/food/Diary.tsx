@@ -7,7 +7,8 @@ import { addDays, formatDayLong, relativeDay, weekStart } from '../../lib/dates'
 import { fmt1, fmtInt } from '../../lib/format'
 import { sumNutrients } from '../../lib/macros'
 import { copyEntries, deleteEntries, foodFromEntry, MEAL_LABEL, MEALS, restoreEntries } from '../../store/diary'
-import { IconCalendar, IconCopy, IconDots, IconPlus, IconTrash } from '../../ui/icons'
+import { deleteMealTemplate, recipeFood, saveMealTemplate } from '../../store/recipes'
+import { IconCalendar, IconCopy, IconDots, IconPlus, IconStar, IconTrash } from '../../ui/icons'
 import { Button, cx, Group, IconButton, ListRow, MacroBar, Screen, Sheet, SwipeRow, TextInput } from '../../ui/kit'
 import { haptic } from '../../ui/motion'
 import { useToast } from '../../ui/toast'
@@ -45,6 +46,7 @@ export default function Diary() {
   const [mealMenu, setMealMenu] = useState<Meal | null>(null)
   const [copyDate, setCopyDate] = useState('')
   const [pickDay, setPickDay] = useState(false)
+  const [saving, setSaving] = useState<{ meal: Meal; name: string } | null>(null)
 
   const sorted = (entries ?? []).slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   const byMeal = (m: Meal) => sorted.filter((e) => e.meal === m)
@@ -59,7 +61,7 @@ export default function Diary() {
       navigate(`/food/quick?edit=${e.id}`)
       return
     }
-    const food = (e.foodId ? await db.foods.get(e.foodId) : undefined) ?? foodFromEntry(e)
+    const food = (e.foodId ? await db.foods.get(e.foodId) : e.recipeId ? await recipeFood(e.recipeId) : undefined) ?? foodFromEntry(e)
     if (food) setEditing({ entry: e, food })
   }
 
@@ -68,6 +70,15 @@ export default function Diary() {
     const copies = await copyEntries(rows, to)
     haptic()
     toast({ message: `${label} copied to ${dayInSentence(to, today)}`, action: { label: 'Undo', onClick: () => void deleteEntries(copies.map((c) => c.id)) } })
+  }
+
+  const saveMeal = async () => {
+    if (!saving?.name.trim()) return
+    const rows = byMeal(saving.meal)
+    const t = await saveMealTemplate(saving.name, rows)
+    setSaving(null)
+    haptic('success')
+    toast({ message: `Saved "${t.name}". Find it under Add food.`, action: { label: 'Undo', onClick: () => void deleteMealTemplate(t.id) } })
   }
 
   const remove = async (ids: string[], label: string) => {
@@ -204,6 +215,16 @@ export default function Diary() {
                 />
               )}
               <ListRow
+                icon={<IconStar size={18} />}
+                iconTone="amber"
+                title="Save as a meal"
+                subtitle="Log it again in one tap"
+                onClick={() => {
+                  setSaving({ meal: mealMenu, name: '' })
+                  setMealMenu(null)
+                }}
+              />
+              <ListRow
                 icon={<IconTrash size={18} />}
                 iconTone="danger"
                 title="Delete meal"
@@ -234,6 +255,24 @@ export default function Diary() {
                 Copy
               </Button>
             </div>
+          </div>
+        )}
+      </Sheet>
+
+      <Sheet
+        open={!!saving}
+        onClose={() => setSaving(null)}
+        title="Save as a meal"
+        footer={
+          <Button block size="lg" disabled={!saving?.name.trim()} onClick={() => void saveMeal()}>
+            Save
+          </Button>
+        }
+      >
+        {saving && (
+          <div className="space-y-3 pb-1">
+            <TextInput autoFocus placeholder="e.g. Usual breakfast" value={saving.name} onChange={(e) => setSaving({ ...saving, name: e.target.value })} />
+            <p className="px-1 text-[14px] text-ink-2">{byMeal(saving.meal).map((e) => e.name).join(', ')}</p>
           </div>
         )}
       </Sheet>

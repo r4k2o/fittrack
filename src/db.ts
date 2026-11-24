@@ -127,8 +127,11 @@ export interface Food extends Row {
 export interface Recipe extends Row {
   name: string
   servings: number
+  /** Weight of the finished dish; without it the raw weights are used. */
   cookedWeightG?: number | null
   ingredients: { foodId: string; grams: number }[]
+  lastUsedAt?: string
+  lastPortionG?: number
 }
 
 export interface DiaryEntry extends Row {
@@ -148,7 +151,7 @@ export interface DiaryEntry extends Row {
 
 export interface MealTemplate extends Row {
   name: string
-  items: { foodId?: string | null; recipeId?: string | null; name: string; grams: number; macros: Nutrients }[]
+  items: { foodId?: string | null; recipeId?: string | null; name: string; grams: number; macros: Nutrients; servingName?: string | null; servingCount?: number | null }[]
 }
 
 export interface Exercise extends Row {
@@ -228,6 +231,8 @@ export interface CardioSession extends Row {
   rpe?: number | null
   avgHr?: number | null
   kcal?: number | null
+  /** True when kcal is the app's MET estimate rather than a watch reading. */
+  kcalEstimated?: boolean
   source: 'manual' | 'health'
   externalId?: string | null
   notes?: string
