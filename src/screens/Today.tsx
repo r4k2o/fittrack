@@ -16,6 +16,9 @@ import { metricSeries } from '../store/metrics'
 import { getActiveGoal } from '../store/profile'
 import { activePlan, planWeek, startPlanDay } from '../store/plans'
 import { burnedKcal } from '../store/cardio'
+import { dismissReview, mondayReview } from '../store/progress'
+import { AdaptiveCard } from './shared/AdaptiveCard'
+import { WeeklyReviewCard } from './shared/WeeklyReviewCard'
 import { activeSession, listRoutines, startSession } from '../store/training'
 import {
   IconAlert,
@@ -290,6 +293,16 @@ function SleepTile({ today }: { today: string }) {
   )
 }
 
+function MondayReview({ today }: { today: string }) {
+  const review = useLiveQuery(() => mondayReview(today), [today])
+  if (!review) return null
+  return (
+    <div className="mb-3">
+      <WeeklyReviewCard review={review} onDismiss={() => void dismissReview(today)} />
+    </div>
+  )
+}
+
 export default function Today() {
   const navigate = useNavigate()
   const today = useToday()
@@ -320,6 +333,7 @@ export default function Today() {
   return (
     <Screen tone="brand" eyebrow={formatDayLong(today)} title={greeting()}>
       <BackupReminder />
+      <MondayReview today={today} />
       <EnergyCard today={today} />
       <MealTiles today={today} />
       <div className="mt-3 grid grid-cols-2 gap-3">
@@ -327,6 +341,9 @@ export default function Today() {
         <WeightTile today={today} onLog={() => setWeightOpen(true)} />
         <StepsTile today={today} />
         <SleepTile today={today} />
+      </div>
+      <div className="mt-3">
+        <AdaptiveCard />
       </div>
 
       <button

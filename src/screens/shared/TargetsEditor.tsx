@@ -195,6 +195,17 @@ export function TargetsEditor({ inputs, onChange, defaultOpen = false }: { input
               )}
             </Step>
             <Step n={2} title="Maintenance" value={`${fmtInt(r.maintenanceKcal)} kcal`}>
+              {inputs.maintenanceOverride ? (
+                <div className="-mx-4 rounded-[20px] bg-fill px-4 py-3">
+                  <p className="font-semibold text-ink">From your own data: {fmtInt(inputs.maintenanceOverride)} kcal</p>
+                  <p className="mt-0.5">
+                    Average intake minus the weight trend's change × 7,700 kcal per kg, over 14 days. The formula gives {fmtInt(r.formulaMaintenanceKcal)} kcal.
+                  </p>
+                  <button type="button" className="mt-1 text-[14px] font-semibold text-brand-ink" onClick={() => set({ maintenanceOverride: undefined })}>
+                    Use the formula again
+                  </button>
+                </div>
+              ) : null}
               <p>
                 × activity factor {fmt2(inputs.activityFactor)} ({level.label.toLowerCase()}: {level.detail.toLowerCase()})
               </p>

@@ -31,6 +31,10 @@ const DeviceCheck = lazy(() => import('./screens/more/DeviceCheck'))
 const NewPlan = lazy(() => import('./screens/train/plan/NewPlan'))
 const RecipeEditor = lazy(() => import('./screens/food/RecipeEditor'))
 const HealthImport = lazy(() => import('./screens/more/HealthImport'))
+const Compare = lazy(() => import('./screens/progress/Compare'))
+const PhotoCapture = lazy(() => import('./screens/progress/photos/PhotoCapture'))
+const PhotoViewer = lazy(() => import('./screens/progress/photos/PhotoViewer'))
+const PhotoCompare = lazy(() => import('./screens/progress/photos/PhotoCompare'))
 const Cardio = lazy(() => import('./screens/train/Cardio'))
 const CardioForm = lazy(() => import('./screens/train/CardioForm'))
 const PlanEditor = lazy(() => import('./screens/train/plan/PlanEditor'))
@@ -44,7 +48,7 @@ const TABS = [
 ] as const
 
 /** Full-screen flows hide the tab bar. */
-const NO_TABS = [/^\/welcome/, /^\/food\/scan/, /^\/train\/session\//, /^\/train\/plan\/new/, /^\/food\/recipe\//, /^\/train\/cardio\/./]
+const NO_TABS = [/^\/welcome/, /^\/food\/scan/, /^\/train\/session\//, /^\/train\/plan\/new/, /^\/food\/recipe\//, /^\/train\/cardio\/./, /^\/progress\/photos\/new/]
 
 function TabBar() {
   return (
@@ -145,6 +149,10 @@ const router = createHashRouter([
       { path: 'train/cardio/new', element: <CardioForm /> },
       { path: 'train/cardio/:id', element: <CardioForm /> },
       { path: 'progress', element: <Progress /> },
+      { path: 'progress/compare', element: <Compare /> },
+      { path: 'progress/photos/new', element: <PhotoCapture /> },
+      { path: 'progress/photos/compare', element: <PhotoCompare /> },
+      { path: 'progress/photos/:id', element: <PhotoViewer /> },
       { path: 'more', element: <More /> },
       { path: 'more/profile', element: <Profile /> },
       { path: 'more/targets', element: <Targets /> },

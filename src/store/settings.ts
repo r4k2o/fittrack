@@ -28,6 +28,12 @@ export interface SettingsMap {
   deloadUntil: string | null
   /** The lighter-week offer stays hidden until this date after "Not now". */
   deloadSnoozedUntil: string | null
+  /** Monday of the week whose review card was closed on Today. */
+  reviewDismissedWeek: string | null
+  /** "Ignore" on the target correction hides it until this date. */
+  adaptiveSnoozedUntil: string | null
+  /** The capture guide for progress photos has been shown. */
+  photoGuideSeen: boolean
 }
 
 export const SETTING_DEFAULTS: SettingsMap = {
@@ -44,6 +50,9 @@ export const SETTING_DEFAULTS: SettingsMap = {
   deloadFrom: null,
   deloadUntil: null,
   deloadSnoozedUntil: null,
+  reviewDismissedWeek: null,
+  adaptiveSnoozedUntil: null,
+  photoGuideSeen: false,
 }
 
 /** Keys that never go into a backup file (secrets and per-device state). */

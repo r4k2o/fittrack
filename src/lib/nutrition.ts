@@ -83,6 +83,8 @@ export interface TargetInputs {
   proteinPerKg?: number
   fatPerKg?: number
   kcalOverride?: number
+  /** Maintenance measured from 14 days of intake and weight trend; replaces resting × activity. */
+  maintenanceOverride?: number
 }
 
 export type TargetWarningCode = 'belowResting' | 'lowCarbs' | 'minorNoDeficit' | 'macrosExceedKcal'
@@ -93,7 +95,9 @@ export interface TargetWarning {
 }
 
 export interface TargetResult {
-  method: 'mifflin' | 'katch'
+  method: 'mifflin' | 'katch' | 'adaptive'
+  /** Resting × activity, also when the maintenance in use comes from your data. */
+  formulaMaintenanceKcal: number
   restingKcal: number
   maintenanceKcal: number
   goalAdjustPct: number
@@ -124,7 +128,8 @@ export function calculateTargets(i: TargetInputs): TargetResult {
   const warnings: TargetWarning[] = []
   const katch = i.useLeanMass && i.bodyFatPct != null && i.bodyFatPct > 0
   const resting = katch ? katchMcArdle(i.weightKg, i.bodyFatPct as number) : mifflinStJeor(i.sex, i.weightKg, i.heightCm, i.ageYears)
-  const maintenance = resting * i.activityFactor
+  const formulaMaintenance = resting * i.activityFactor
+  const maintenance = i.maintenanceOverride && i.maintenanceOverride > 0 ? i.maintenanceOverride : formulaMaintenance
 
   let adjust = i.goalAdjustPct ?? goal.adjustPct
   if (i.ageYears < 18 && adjust < 0) {
@@ -163,7 +168,8 @@ export function calculateTargets(i: TargetInputs): TargetResult {
   }
 
   return {
-    method: katch ? 'katch' : 'mifflin',
+    method: i.maintenanceOverride && i.maintenanceOverride > 0 ? 'adaptive' : katch ? 'katch' : 'mifflin',
+    formulaMaintenanceKcal: Math.round(formulaMaintenance),
     restingKcal: Math.round(resting),
     maintenanceKcal: Math.round(maintenance),
     goalAdjustPct: adjust,
