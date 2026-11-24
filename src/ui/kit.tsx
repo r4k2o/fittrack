@@ -210,6 +210,15 @@ export function Screen({
   )
 }
 
+/** A bottom bar for a flow's main buttons, fading the page out behind it. */
+export function StickyFooter({ children }: { children: ReactNode }) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-20 px-4 pb-[max(env(safe-area-inset-bottom),1rem)] pt-10" style={{ background: 'linear-gradient(to top, var(--page) 58%, transparent)' }}>
+      <div className="mx-auto flex max-w-xl gap-2">{children}</div>
+    </div>
+  )
+}
+
 export function SectionTitle({ children, action, className }: { children: ReactNode; action?: ReactNode; className?: string }) {
   return (
     <div className={cx('mb-2.5 mt-7 flex items-end justify-between gap-2 px-1', className)}>

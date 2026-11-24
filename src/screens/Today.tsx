@@ -14,7 +14,9 @@ import { ema, ratePctPerWeek } from '../lib/trends'
 import { MEAL_LABEL, MEALS, mealForNow } from '../store/diary'
 import { metricSeries } from '../store/metrics'
 import { getActiveGoal } from '../store/profile'
+import { activePlan, planWeek, startPlanDay } from '../store/plans'
 import { activeSession, listRoutines, startSession } from '../store/training'
+import { weekStart } from '../lib/dates'
 import {
   IconAlert,
   IconBarcode,
@@ -142,11 +144,24 @@ function WorkoutTile({ today }: { today: string }) {
     return db.setLogs.where('sessionId').anyOf(done.map((s) => s.id)).filter((s) => s.kind === 'work').count()
   }, [done])
   const routines = useLiveQuery(() => listRoutines())
-  const next = routines?.[0]
+  const planned = useLiveQuery(async () => {
+    const plan = await activePlan()
+    if (!plan) return null
+    const monday = weekStart(today)
+    const sessions = await db.sessions.where('date').between(monday, addDays(monday, 6), true, true).toArray()
+    const week = planWeek(plan, sessions, today)
+    return week.find((d) => d.status === 'today') ?? week.find((d) => d.status === 'next') ?? null
+  }, [today])
+  const routine = routines?.[0]
+  const next = planned ? { name: planned.day.name, count: planned.day.exercises.length, today: planned.status === 'today' } : routine ? { name: routine.day.name, count: routine.exercises.length, today: false } : null
 
   const start = async () => {
     haptic()
-    const s = next ? await startSession(next.day.name, next.exercises.map((e) => e.exerciseId), next.day.id) : await startSession('Workout')
+    const s = planned
+      ? await startPlanDay(planned.day)
+      : routine
+        ? await startSession(routine.day.name, routine.exercises.map((e) => e.exerciseId), routine.day.id)
+        : await startSession('Workout')
     navigate(`/train/session/${s.id}`)
   }
 
@@ -178,9 +193,9 @@ function WorkoutTile({ today }: { today: string }) {
         </>
       ) : (
         <>
-          <p className="mt-3 text-[13px] font-semibold text-ink-2">{next ? 'Next workout' : 'Training'}</p>
-          <p className="truncate text-[17px] font-bold">{next ? next.day.name : 'Free workout'}</p>
-          <p className="text-[13px] text-ink-2">{next ? `${next.exercises.length} exercises` : 'Log sets as you go'}</p>
+          <p className="mt-3 text-[13px] font-semibold text-ink-2">{next ? (next.today ? "Today's workout" : 'Next workout') : 'Training'}</p>
+          <p className="truncate text-[17px] font-bold">{next ? next.name : 'Free workout'}</p>
+          <p className="text-[13px] text-ink-2">{next ? `${next.count} exercises` : 'Log sets as you go'}</p>
         </>
       )}
       <Button size="sm" className="mt-3" onClick={() => void start()}>

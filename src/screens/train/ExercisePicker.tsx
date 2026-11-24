@@ -6,8 +6,18 @@ import { EQUIPMENT_LABEL, exerciseSubtitle, MUSCLE_GROUPS, MUSCLE_LABEL } from '
 import { IconSearch } from '../../ui/icons'
 import { Chip, EmptyState, Group, ListRow, Spinner } from '../../ui/kit'
 
-/** Searchable, filterable exercise list. */
-export function ExercisePicker({ onPick, exclude = [], autoFocus }: { onPick: (e: Exercise) => void; exclude?: readonly string[]; autoFocus?: boolean }) {
+/** Searchable, filterable exercise list; `suggest` puts alternatives (same movement) on top. */
+export function ExercisePicker({
+  onPick,
+  exclude = [],
+  autoFocus,
+  suggest,
+}: {
+  onPick: (e: Exercise) => void
+  exclude?: readonly string[]
+  autoFocus?: boolean
+  suggest?: readonly Exercise[]
+}) {
   const all = useLiveQuery(() => db.exercises.toArray())
   const [q, setQ] = useState('')
   const [group, setGroup] = useState<string | null>(null)
@@ -52,6 +62,17 @@ export function ExercisePicker({ onPick, exclude = [], autoFocus }: { onPick: (e
           </Chip>
         ))}
       </div>
+      {suggest && suggest.length > 0 && !q && !group && (
+        <div className="mt-3">
+          <p className="mb-1.5 px-1 text-[13px] font-semibold text-ink-2">Same movement</p>
+          <Group className="bg-fill">
+            {suggest.map((e) => (
+              <ListRow key={e.id} title={e.name} subtitle={exerciseSubtitle(e)} chevron={false} onClick={() => onPick(e)} />
+            ))}
+          </Group>
+          <p className="mb-1.5 mt-4 px-1 text-[13px] font-semibold text-ink-2">All exercises</p>
+        </div>
+      )}
       <div className="mt-3">
         {!list ? (
           <div className="flex justify-center py-8 text-ink-2">

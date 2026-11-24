@@ -486,12 +486,21 @@ export function normalizeAnswers(a: PlanAnswers): PlanAnswers {
 }
 
 /** Exercises that suit the equipment, avoid flagged joints and, for beginners, are not expert lifts. */
-export function exercisePool(answers: Pick<PlanAnswers, 'equipment' | 'injuries' | 'experience'>, library: readonly PlannerExercise[]): PlannerExercise[] {
+export function exercisePool<T extends PlannerExercise>(answers: Pick<PlanAnswers, 'equipment' | 'injuries' | 'experience'>, library: readonly T[]): T[] {
   const allowed = new Set<Equipment>(EQUIPMENT_CHOICES[answers.equipment].allowed)
   const flagged = new Set(answers.injuries)
   return library.filter(
     (e) => allowed.has(e.equipment) && !e.jointStress.some((j) => flagged.has(j)) && !(answers.experience === 'beginner' && e.level === 'expert'),
   )
+}
+
+/** Swaps for an exercise: same movement pattern and a shared main muscle group. */
+export function alternativesFor<T extends PlannerExercise>(ex: PlannerExercise, library: readonly T[], answers?: Pick<PlanAnswers, 'equipment' | 'injuries' | 'experience'>): T[] {
+  const pool = answers ? exercisePool(answers, library) : [...library]
+  const groups = primaryGroups(ex)
+  return pool
+    .filter((e) => e.id !== ex.id && e.pattern === ex.pattern && primaryGroups(e).some((g) => groups.includes(g)))
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 /** Exercises that take load in small steps; a strength focus needs one. */

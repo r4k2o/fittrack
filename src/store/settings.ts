@@ -23,6 +23,11 @@ export interface SettingsMap {
   restCompoundSec: number
   restIsolationSec: number
   deviceCheck: DeviceCheckResult | null
+  /** First and last day of a lighter week (half the sets), as local dates. */
+  deloadFrom: string | null
+  deloadUntil: string | null
+  /** The lighter-week offer stays hidden until this date after "Not now". */
+  deloadSnoozedUntil: string | null
 }
 
 export const SETTING_DEFAULTS: SettingsMap = {
@@ -36,6 +41,9 @@ export const SETTING_DEFAULTS: SettingsMap = {
   restCompoundSec: 150,
   restIsolationSec: 90,
   deviceCheck: null,
+  deloadFrom: null,
+  deloadUntil: null,
+  deloadSnoozedUntil: null,
 }
 
 /** Keys that never go into a backup file (secrets and per-device state). */

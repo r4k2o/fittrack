@@ -6,11 +6,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { db, type Exercise, type Session as SessionRow, type SetLog } from '../../db'
+import { db, type Exercise, type PlanExercise, type Session as SessionRow, type SetLog } from '../../db'
 import { useNow, useSetting, useWakeLock } from '../../hooks'
 import { formatDayShort } from '../../lib/dates'
 import { fmt2, fmtDuration } from '../../lib/format'
-import { defaultRepRange, defaultRestSec, loadStep, nextTarget } from '../../lib/training'
+import { defaultRepRange, defaultRestSec, loadStep, nextTarget, roundToStep } from '../../lib/training'
+import { deloadActive, detectStall } from '../../store/plans'
 import {
   deleteSession,
   deleteSet,
@@ -22,8 +23,8 @@ import {
   updateSet,
   type LastTime,
 } from '../../store/training'
-import { IconCheck, IconChevronDown, IconDots, IconPlus, IconTrendUp, IconTrophy } from '../../ui/icons'
-import { Button, cx, EmptyState, Group, IconButton, ListRow, NumberInput, Sheet, TextInput } from '../../ui/kit'
+import { IconCheck, IconChevronDown, IconDots, IconPlus, IconRepeat, IconTrendUp, IconTrophy } from '../../ui/icons'
+import { Button, cx, EmptyState, Group, IconButton, ListRow, Notice, NumberInput, Sheet, TextInput } from '../../ui/kit'
 import { haptic } from '../../ui/motion'
 import { useToast } from '../../ui/toast'
 import { ExercisePicker } from './ExercisePicker'
@@ -168,21 +169,37 @@ function ExerciseCard({
   index,
   session,
   logged,
+  prescription,
+  partner,
+  deload,
   onRest,
   onMenu,
+  onSwap,
 }: {
   ex: Exercise
   index: number
   session: SessionRow
   logged: SetLog[]
+  /** The plan's prescription when the workout was started from a plan or routine. */
+  prescription?: PlanExercise
+  /** Name of the superset partner. */
+  partner?: string
+  /** A lighter week halves the planned sets. */
+  deload?: boolean
   onRest: (sec: number) => void
   onMenu: () => void
+  onSwap: () => void
 }) {
   const toast = useToast()
   const restCompound = useSetting('restCompoundSec')
   const restIsolation = useSetting('restIsolationSec')
   const last = useLiveQuery(() => lastTime(ex.id, session.id), [ex.id, session.id])
-  const range = defaultRepRange(ex)
+  const stall = useLiveQuery(() => detectStall(ex.id, session.id), [ex.id, session.id])
+  const [stallDismissed, setStallDismissed] = useState(false)
+  const repMin = prescription?.repMin
+  const repMax = prescription?.repMax
+  const range = useMemo<[number, number]>(() => (repMin != null && repMax != null ? [repMin, repMax] : defaultRepRange(ex)), [repMin, repMax, ex])
+  const plannedSets = prescription ? (deload ? Math.ceil(prescription.sets / 2) : prescription.sets) : null
   const step = loadStep(ex)
   const seconds = ex.unit === 'seconds'
   const progression = useMemo(() => (last ? nextTarget(last.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps })), range, step) : null), [last, range, step])
@@ -190,9 +207,12 @@ function ExerciseCard({
 
   useEffect(() => {
     if (planned || last === undefined) return
-    if (progression) setPlanned(progression.sets.map((s) => ({ weight: s.weightKg, reps: s.reps })))
-    else setPlanned(Array.from({ length: 3 }, () => ({ weight: null, reps: null })))
-  }, [last, progression, planned])
+    const count = plannedSets ?? progression?.sets.length ?? 3
+    if (progression) {
+      const from = progression.sets
+      setPlanned(Array.from({ length: count }, (_, i) => from[Math.min(i, from.length - 1)]).map((s) => ({ weight: s.weightKg, reps: s.reps })))
+    } else setPlanned(Array.from({ length: count }, () => ({ weight: null, reps: null })))
+  }, [last, progression, planned, plannedSets])
 
   const byIndex = new Map(logged.map((s) => [s.setIndex, s]))
   const rowCount = Math.max(planned?.length ?? 0, logged.length ? Math.max(...logged.map((s) => s.setIndex)) + 1 : 0)
@@ -225,7 +245,7 @@ function ExerciseCard({
     }
     await logSet(session, ex.id, i, { weightKg: weight, reps: p.reps })
     haptic('success')
-    onRest(defaultRestSec(ex, restCompound ?? 150, restIsolation ?? 90))
+    onRest(prescription?.restSec ?? defaultRestSec(ex, restCompound ?? 150, restIsolation ?? 90))
   }
 
   const edit = (i: number, patch: Partial<Planned>) => {
@@ -264,8 +284,14 @@ function ExerciseCard({
           <p className="mt-0.5 text-[13px] text-ink-2">{lastTimeText(last)}</p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <span className="rounded-full bg-fill px-2.5 py-1 text-[12px] font-semibold text-ink-2">
-              {range[0]}–{range[1]} {seconds ? 'sec' : 'reps'} · 1–3 in reserve
+              {range[0]}–{range[1]} {seconds ? 'sec' : 'reps'} · {prescription ? `${prescription.targetRir}` : '1–3'} in reserve
             </span>
+            {partner && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-train px-2.5 py-1 text-[12px] font-bold text-white">
+                <IconRepeat size={12} strokeWidth={2.6} /> Superset · {partner}
+              </span>
+            )}
+            {deload && prescription && <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand-ink">Lighter week</span>}
             {progression?.increased && (
               <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand-ink">
                 <IconTrendUp size={13} strokeWidth={2.6} /> +{fmt2(step)} kg
@@ -282,6 +308,33 @@ function ExerciseCard({
           <IconDots size={20} className="rotate-90" />
         </IconButton>
       </div>
+
+      {stall && !stallDismissed && logged.length === 0 && (
+        <Notice tone="warn" className="mt-3">
+          <p>No progress for 3 sessions. Try about 10% less and build back up, or swap the variation.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {step > 0 && stall.topKg > 0 && (
+              <Button
+                size="sm"
+                variant="ink"
+                onClick={() => {
+                  const kg = roundToStep(stall.topKg * 0.9, step)
+                  setPlanned((cur) => (cur ?? []).map((p) => ({ ...p, weight: kg })))
+                  setStallDismissed(true)
+                }}
+              >
+                Use {fmt2(roundToStep(stall.topKg * 0.9, step))} kg
+              </Button>
+            )}
+            <Button size="sm" variant="secondary" onClick={onSwap}>
+              Swap exercise
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setStallDismissed(true)}>
+              Keep going
+            </Button>
+          </div>
+        </Notice>
+      )}
 
       <div className="mt-3 grid grid-cols-[2rem_1fr_1fr_3.25rem] items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-wider text-ink-3">
         <span className="text-center">Set</span>
@@ -347,6 +400,9 @@ export default function Session() {
     const rows = await db.exercises.bulkGet(ids)
     return rows.filter((e): e is Exercise => !!e)
   }, [order])
+  const planDayId = session?.planDayId ?? null
+  const prescriptions = useLiveQuery(async () => (planDayId ? db.planExercises.where('planDayId').equals(planDayId).toArray() : []), [planDayId])
+  const deload = useLiveQuery(async () => (planDayId ? deloadActive() : false), [planDayId])
   const now = useNow(1000)
   const [rest, setRestState] = useState<Rest | null>(() => loadRest(id))
   const [picker, setPicker] = useState<{ mode: 'add' } | { mode: 'swap'; index: number } | null>(null)
@@ -367,7 +423,7 @@ export default function Session() {
     if (session?.endedAt) navigate(`/train/summary/${id}`, { replace: true })
   }, [session?.endedAt, id, navigate])
 
-  if (session === undefined || !exercises || !sets) return null
+  if (session === undefined || !exercises || !sets || prescriptions === undefined || deload === undefined) return null
   if (session === null) {
     return (
       <div className="p-6">
@@ -382,6 +438,13 @@ export default function Session() {
 
   const workSets = sets.filter((s) => s.kind === 'work').length
   const ids = session.exerciseIds
+  const byExercise = new Map((prescriptions ?? []).map((p) => [p.exerciseId, p]))
+  const byRow = new Map((prescriptions ?? []).map((p) => [p.id, p]))
+  const partnerOf = (exId: string) => {
+    const p = byExercise.get(exId)
+    const other = p?.supersetWith ? byRow.get(p.supersetWith) : undefined
+    return other && ids.includes(other.exerciseId) ? exercises.find((e) => e.id === other.exerciseId)?.name : undefined
+  }
 
   const pick = async (ex: Exercise) => {
     if (!picker) return
@@ -467,8 +530,12 @@ export default function Session() {
             index={index}
             session={session}
             logged={sets.filter((s) => s.exerciseId === ex.id && s.kind === 'work')}
+            prescription={byExercise.get(ex.id)}
+            partner={partnerOf(ex.id)}
+            deload={!!deload}
             onRest={(sec) => setRest({ endsAt: Date.now() + sec * 1000, total: sec })}
             onMenu={() => setMenu(index)}
+            onSwap={() => setPicker({ mode: 'swap', index })}
           />
         ))}
         {exercises.length === 0 && (

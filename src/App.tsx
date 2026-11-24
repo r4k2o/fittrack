@@ -28,6 +28,8 @@ const Progress = lazy(() => import('./screens/progress/Progress'))
 const Backup = lazy(() => import('./screens/more/Backup'))
 const FoodList = lazy(() => import('./screens/more/FoodList'))
 const DeviceCheck = lazy(() => import('./screens/more/DeviceCheck'))
+const NewPlan = lazy(() => import('./screens/train/plan/NewPlan'))
+const PlanEditor = lazy(() => import('./screens/train/plan/PlanEditor'))
 
 const TABS = [
   { to: '/today', label: 'Today', Icon: IconToday },
@@ -38,7 +40,7 @@ const TABS = [
 ] as const
 
 /** Full-screen flows hide the tab bar. */
-const NO_TABS = [/^\/welcome/, /^\/food\/scan/, /^\/train\/session\//]
+const NO_TABS = [/^\/welcome/, /^\/food\/scan/, /^\/train\/session\//, /^\/train\/plan\/new/]
 
 function TabBar() {
   return (
@@ -131,6 +133,8 @@ const router = createHashRouter([
       { path: 'train/session/:id', element: <Session /> },
       { path: 'train/summary/:id', element: <Summary /> },
       { path: 'train/exercises', element: <ExerciseLibrary /> },
+      { path: 'train/plan', element: <PlanEditor /> },
+      { path: 'train/plan/new', element: <NewPlan /> },
       { path: 'progress', element: <Progress /> },
       { path: 'more', element: <More /> },
       { path: 'more/profile', element: <Profile /> },

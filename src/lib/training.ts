@@ -87,6 +87,14 @@ export function sessionStats(sets: readonly SetLog[]): SessionStats {
   }
 }
 
+/**
+ * One number per set for spotting progress: the estimated 1RM by Epley at any rep
+ * count, or the reps alone when there is no external load.
+ */
+export function performanceScore(weightKg: number, reps: number): number {
+  return weightKg > 0 ? weightKg * (1 + reps / 30) : reps
+}
+
 export function bestE1rm(sets: readonly Pick<SetLog, 'kind' | 'weightKg' | 'reps'>[]): number | null {
   let best: number | null = null
   for (const s of sets) {
