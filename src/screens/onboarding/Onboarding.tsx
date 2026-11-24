@@ -119,7 +119,7 @@ export default function Onboarding() {
   }
 
   const footer = (
-    <div className="fixed inset-x-0 bottom-0 z-20 px-4 pb-[max(env(safe-area-inset-bottom),1rem)] pt-3">
+    <div className="fixed inset-x-0 bottom-0 z-20 px-4 pb-[max(env(safe-area-inset-bottom),1rem)] pt-10" style={{ background: 'linear-gradient(to top, var(--page) 58%, transparent)' }}>
       <div className="mx-auto max-w-xl">
         {step === 0 && (
           <Button block size="lg" disabled={!adult} onClick={next}>

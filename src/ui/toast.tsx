@@ -1,4 +1,6 @@
-// Destructive actions show an Undo toast instead of a confirmation dialog.
+// Destructive actions show an Undo toast instead of a confirmation dialog. Toasts sit at
+// the top, clear of the tab bar, the + button, the rest timer and sheet buttons, and
+// stay narrow enough to leave the header buttons in both corners free.
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { IconCheckCircle } from './icons'
@@ -29,15 +31,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={show}>
       {children}
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6.25rem)] z-[60] flex justify-center px-4">
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+0.5rem)] z-[60] flex justify-center px-4">
         {toast && (
-          <div key={toast.id} className="animate-toast pointer-events-auto flex max-w-md items-center gap-2.5 rounded-full bg-ink py-1.5 pl-4 pr-1.5 text-page shadow-float">
+          <div key={toast.id} className="animate-drop pointer-events-auto flex w-max max-w-[min(28rem,calc(100%-6.5rem))] items-center gap-2 rounded-full bg-ink py-1 pl-3.5 pr-1 text-page shadow-float">
             <IconCheckCircle size={18} className="shrink-0 opacity-80" />
-            <span className="flex-1 py-1.5 text-[15px] font-medium">{toast.message}</span>
+            <span className="min-w-0 flex-1 truncate py-1.5 text-[14px] font-medium">{toast.message}</span>
             {toast.action ? (
               <button
                 type="button"
-                className="press min-h-9 rounded-full bg-page/15 px-4 text-[14px] font-bold active:opacity-70"
+                className="press min-h-9 shrink-0 rounded-full bg-page/15 px-3.5 text-[14px] font-bold active:opacity-70"
                 onClick={async () => {
                   const a = toast.action
                   setToast(null)

@@ -722,6 +722,7 @@ export interface SwipeAction {
 export function SwipeRow({ children, actions, onTap, className }: { children: ReactNode; actions: SwipeAction[]; onTap?: () => void; className?: string }) {
   const width = actions.length * 76
   const [x, setX] = useState(0)
+  const [dragging, setDragging] = useState(false)
   const st = useRef<{ x0: number; y0: number; base: number; mode: 'idle' | 'h' | 'v' } | null>(null)
   const moved = useRef(false)
   const down = (e: ReactPointerEvent) => {
@@ -736,6 +737,7 @@ export function SwipeRow({ children, actions, onTap, className }: { children: Re
     if (s.mode === 'idle') {
       if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
         s.mode = 'h'
+        setDragging(true)
         ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
       } else if (Math.abs(dy) > 8) s.mode = 'v'
     }
@@ -748,6 +750,7 @@ export function SwipeRow({ children, actions, onTap, className }: { children: Re
     const s = st.current
     st.current = null
     if (!s || s.mode !== 'h') return
+    setDragging(false)
     setX((cur) => (cur < -width / 2 ? -width : 0))
   }
   return (
@@ -774,15 +777,18 @@ export function SwipeRow({ children, actions, onTap, className }: { children: Re
       </div>
       <div
         className="relative bg-surface"
-        style={{ transform: `translateX(${x}px)`, transition: st.current?.mode === 'h' ? 'none' : 'transform 280ms var(--ease-spring)', touchAction: 'pan-y' }}
+        style={{ transform: `translateX(${x}px)`, transition: dragging ? 'none' : 'transform 280ms var(--ease-spring)', touchAction: 'pan-y' }}
         onPointerDown={down}
         onPointerMove={move}
         onPointerUp={up}
         onPointerCancel={up}
         onClick={() => {
-          // a slide, or a tap on an open row, only closes it
-          if (moved.current || x !== 0) {
+          // the click that ends a slide changes nothing; a tap on an open row closes it
+          if (moved.current) {
             moved.current = false
+            return
+          }
+          if (x !== 0) {
             setX(0)
             return
           }

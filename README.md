@@ -2,6 +2,8 @@
 
 A private, local-first fitness logbook for the iPhone: food, training and body weight. It is a web app (PWA) installed from Safari with **Add to Home Screen**. Every record stays in IndexedDB on the phone; the only copy elsewhere is a backup file you export. It costs €0 to build and run, needs no Mac and no Apple developer account, and works offline after the first load.
 
+**Live at <https://r4k2o.github.io/fittrack/>.** Open it in Safari on the iPhone, tap **Share → Add to Home Screen**, and start the app from its icon.
+
 **Status: phase 1 (MVP), daily logging.** Phases 2–4 follow the roadmap below; each phase leaves a working app.
 
 ## What phase 1 does
@@ -18,6 +20,7 @@ A private, local-first fitness logbook for the iPhone: food, training and body w
 | Progress | Body weight: daily readings, exponentially smoothed trend, weekly averages (only with 4 of 7 days), weekly rate against the goal's band, warning when faster than 1% down or 0.5% up per week |
 | Backup | One `.zip` (manifest + one JSON file per store, photos optional) through the iOS share sheet; restore validates every row with Zod, previews adds/updates/removals per store, then Merge (newer `updatedAt` wins) or Replace, in one transaction. CSV export of diary, sets, cardio and metrics |
 | Device check | Under More: installed mode, persistent storage, wake lock, a barcode with its Open Food Facts lookup, and a backup saved and read back. Run it before entering real data and after each iOS update |
+| Speed | One tap on **+** next to a recent food logs its usual portion; whole earlier meals repeat in one tap; swipe a diary row left to copy or delete it (both undoable) |
 
 ## Run it locally
 
@@ -37,13 +40,22 @@ Opened from the phone, the dev server's `http://192.168…` address is not a sec
 
 ## Deploy and install on the iPhone
 
-1. In the repository on GitHub, open **Settings → Pages** and set **Source** to **GitHub Actions**.
-2. Merge to `main`. [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs the tests, builds and publishes to `https://r4k2o.github.io/fittrack/`. Every push to `main` redeploys; the app picks up the new version at its next launch.
-3. On the iPhone, open that address in Safari, tap **Share → Add to Home Screen** (on iOS 26 and later, leave "Open as Web App" on).
-4. Open the app from its icon and do the onboarding there: the installed app has its own storage, separate from Safari's.
-5. Switch on airplane mode, reopen the app, then run **More → Device check**.
+Deployment is automatic. Every push to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): it installs, runs the tests, builds, and force-pushes `dist/` (with `.nojekyll`) to the `gh-pages` branch, which GitHub Pages serves at <https://r4k2o.github.io/fittrack/>. The installed app picks up a new version the next time it starts. No repository setting has to be changed.
+
+1. On the iPhone, open <https://r4k2o.github.io/fittrack/> in Safari, tap **Share → Add to Home Screen** (on iOS 26 and later, leave "Open as Web App" on).
+2. Open the app from its icon and do the onboarding there: the installed app has its own storage, separate from Safari's.
+3. Switch on airplane mode, reopen the app, then run **More → Device check**.
 
 `base` in `vite.config.ts` must equal the repository name. The database belongs to the address: a new repository name or host means an empty app, so export a backup before moving. GitHub Pages on the free plan needs a public repository; Cloudflare Pages accepts a private one (set `base: '/'` there).
+
+## Design
+
+The interface follows the conventions of a current iOS app, built with plain CSS and Tailwind tokens in `src/index.css`:
+
+- **Look.** Light and dark themes, each chosen rather than flipped, following the system setting. A volt-green brand; every area has a tone (food orange, training violet, body cyan) that tints the ambient light behind the page and its hero card. Glass (blurred, translucent) is reserved for things that float: the tab bar, headers on scroll, the search field, the rest timer.
+- **Structure.** Large titles on the tab roots that hand over to a compact bar on scroll; one hero number per screen; inset grouped lists with coloured icon tiles; bottom sheets with a grabber that close on a drag down.
+- **Data visuals.** Protein, carbs and fat use a categorical trio (blue, yellow, magenta) checked with a colour-vision-deficiency validator in both themes; meters have tinted tracks; values and labels stay in text colours, and status always comes with an icon and a word. The weight chart has a legend, a hover crosshair, hairline gridlines, and tables (weekly averages, readings) as its accessible twin.
+- **Motion and feel.** Rings and numbers animate in, cards rise in sequence, buttons respond to the press, and ticking a set or logging food gives a haptic tap where the phone supports it. Everything honours "Reduce Motion". Tap targets are at least 44 points, and fields use 17 px text so iOS does not zoom.
 
 ## Food list
 
@@ -75,8 +87,8 @@ Bump `LIBRARY_VERSION` in `scripts/build-exercises.mjs` when the output changes;
 | `src/lib/` | Rules as plain, tested functions: nutrition targets, trends and e1RM, macros, progression, backup format, CSV, food search and import, barcode checks |
 | `src/store/` | Database operations: diary, foods, metrics, profile and targets, training, backup, settings, library seeding |
 | `src/adapters/` | Thin modules for the outside world: Open Food Facts, the barcode decoder, the share sheet |
-| `src/screens/` | The interface, one folder per tab |
-| `src/ui/` | Building blocks, icons and the Undo toast |
+| `src/screens/` | The interface, one folder per tab; `shared/` holds pieces several tabs use (week strip, targets editor, weight sheet) |
+| `src/ui/` | Building blocks (`kit.tsx`), icons, motion helpers (count-up numbers, haptics) and the Undo toast |
 
 Data rules: ids are UUIDs (library exercises and imported foods use stable ids so references survive a restore); every row carries `createdAt` and `updatedAt`; days are local `YYYY-MM-DD` strings and timestamps UTC; a diary entry stores its own macro snapshot; targets are never overwritten but superseded by a row with a new `effectiveFrom`; `metrics` is unique on type, date and source.
 

@@ -61,7 +61,7 @@ export function WeekStrip({
   )
 }
 
-export const MEAL_TONE: Record<Meal, IconTone> = {
+const MEAL_TONE: Record<Meal, IconTone> = {
   breakfast: 'amber',
   lunch: 'food',
   dinner: 'indigo',
