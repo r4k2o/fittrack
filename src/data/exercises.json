@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "source": "free-exercise-db (Unlicense) plus Fittrack additions",
  "exercises": [
   {
@@ -166,6 +166,156 @@
    ]
   },
   {
+   "id": "fedb:Bench_Press_-_With_Bands",
+   "name": "Band Bench Press",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "shoulders",
+    "triceps"
+   ],
+   "equipment": "band",
+   "pattern": "hpush",
+   "joints": [
+    "shoulder",
+    "elbow"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": [
+    "Using a flat bench secure a band under the leg of the bench that is nearest to your head.",
+    "Once the band is secure, grab it by both handles and lie down on the bench.",
+    "Extend your arms so that you are holding the band handles in front of you at shoulder width.",
+    "Once at shoulder width, rotate your wrists forward so that the palms of your hands are facing away from you. This will be your starting position.",
+    "Bring down the handles slowly until your elbow forms a 90 degree angle. Keep full control at all times.",
+    "As you breathe out, bring the handles up using your pectoral muscles. Lock your arms in the contracted position, squeeze your chest, hold for a second and then start coming down slowly. Tip: It should take at least twice as long to go down than to come up.",
+    "Repeat the movement for the prescribed amount of repetitions of your training program."
+   ]
+  },
+  {
+   "id": "fedb:Calf_Raises_-_With_Bands",
+   "name": "Band Calf Raise",
+   "primary": [
+    "calves"
+   ],
+   "secondary": [],
+   "equipment": "band",
+   "pattern": "isolation",
+   "joints": [],
+   "compound": false,
+   "level": "beginner",
+   "instructions": [
+    "Grab an exercise band and stand on it with your toes making sure that the length of the band between the foot and the arms is the same for both sides.",
+    "While holding the handles of the band, raise the arms to the side of your head as if you were getting ready to perform a shoulder press. The palms should be facing forward with the elbows bent and to the sides. This movement will create tension on the band. This will be your starting position.",
+    "Keeping the hands by your shoulder, stand up on your toes as you exhale and contract the calves hard at the top of the movement.",
+    "After a one second contraction, slowly go back down to the starting position.",
+    "Repeat for the recommended amount of repetitions."
+   ]
+  },
+  {
+   "id": "fedb:Cross_Over_-_With_Bands",
+   "name": "Band Chest Fly",
+   "primary": [
+    "chest"
+   ],
+   "secondary": [
+    "shoulders"
+   ],
+   "equipment": "band",
+   "pattern": "isolation",
+   "joints": [
+    "shoulder"
+   ],
+   "compound": false,
+   "level": "beginner",
+   "instructions": [
+    "Secure an exercise band around a stationary post.",
+    "While facing away from the post, grab the handles on both ends of the band and step forward enough to create tension on the band.",
+    "Raise your arms to the sides, parallel to the floor, perpendicular to your torso (your torso and the arms should resemble the letter \"T\") and with the palms facing forward. Have them extended with a slight bend at the elbows. This will be your starting position.",
+    "While keeping your arms straight, bring them across your chest in a semicircular motion to the front as you exhale and flex your pecs. Hold the contraction for a second.",
+    "Slowly return to the starting position as you inhale.",
+    "Perform for the recommended amount of repetitions."
+   ]
+  },
+  {
+   "id": "ft:band_curl",
+   "name": "Band Curl",
+   "primary": [
+    "biceps"
+   ],
+   "secondary": [
+    "forearms"
+   ],
+   "equipment": "band",
+   "pattern": "isolation",
+   "joints": [
+    "elbow"
+   ],
+   "compound": false,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
+   "id": "ft:band_face_pull",
+   "name": "Band Face Pull",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "midBack"
+   ],
+   "equipment": "band",
+   "pattern": "isolation",
+   "joints": [],
+   "compound": false,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
+   "id": "fedb:Band_Good_Morning",
+   "name": "Band Good Morning",
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [
+    "glutes",
+    "lowerBack"
+   ],
+   "equipment": "band",
+   "pattern": "hinge",
+   "joints": [
+    "lowerBack"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": [
+    "Using a 41 inch band, stand on one end, spreading your feet a small amount. Bend at the hips to loop the end of the band behind your neck. This will be your starting position.",
+    "Keeping your legs straight, extend through the hips to come to a near vertical position.",
+    "Ensure that you do not round your back as you go down back to the starting position."
+   ]
+  },
+  {
+   "id": "ft:band_lat_pulldown",
+   "name": "Band Lat Pulldown",
+   "primary": [
+    "lats"
+   ],
+   "secondary": [
+    "biceps",
+    "midBack"
+   ],
+   "equipment": "band",
+   "pattern": "vpull",
+   "joints": [
+    "shoulder",
+    "elbow"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
    "id": "fedb:Lateral_Raise_-_With_Bands",
    "name": "Band Lateral Raise",
    "primary": [
@@ -185,6 +335,39 @@
     "Lower the handles back down slowly to the starting position. Inhale as you perform this portion of the movement.",
     "Repeat for the recommended amount of repetitions."
    ]
+  },
+  {
+   "id": "ft:band_leg_curl",
+   "name": "Band Leg Curl",
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [],
+   "equipment": "band",
+   "pattern": "isolation",
+   "joints": [
+    "knee"
+   ],
+   "compound": false,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
+   "id": "ft:band_overhead_triceps",
+   "name": "Band Overhead Triceps Extension",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [],
+   "equipment": "band",
+   "pattern": "isolation",
+   "joints": [
+    "elbow",
+    "shoulder"
+   ],
+   "compound": false,
+   "level": "beginner",
+   "instructions": []
   },
   {
    "id": "fedb:Band_Pull_Apart",
@@ -207,6 +390,115 @@
     "Keep your elbows extended as you perform the movement, bringing the band to your chest. Ensure that you keep your shoulders back during the exercise.",
     "Pause as you complete the movement, returning to the starting position under control."
    ]
+  },
+  {
+   "id": "fedb:Back_Flyes_-_With_Bands",
+   "name": "Band Reverse Fly",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "midBack"
+   ],
+   "equipment": "band",
+   "pattern": "isolation",
+   "joints": [],
+   "compound": false,
+   "level": "beginner",
+   "instructions": [
+    "Run a band around a stationary post like that of a squat rack.",
+    "Grab the band by the handles and stand back so that the tension in the band rises.",
+    "Extend and lift the arms straight in front of you. Tip: Your arms should be straight and parallel to the floor while perpendicular to your torso. Your feet should be firmly planted on the floor spread at shoulder width. This will be your starting position.",
+    "As you exhale, move your arms to the sides and back. Keep your arms extended and parallel to the floor. Continue the movement until the arms are extended to your sides.",
+    "After a pause, go back to the original position as you inhale.",
+    "Repeat for the recommended amount of repetitions."
+   ]
+  },
+  {
+   "id": "ft:band_row",
+   "name": "Band Row",
+   "primary": [
+    "midBack"
+   ],
+   "secondary": [
+    "lats",
+    "biceps",
+    "shoulders"
+   ],
+   "equipment": "band",
+   "pattern": "hpull",
+   "joints": [
+    "elbow"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
+   "id": "fedb:Shoulder_Press_-_With_Bands",
+   "name": "Band Shoulder Press",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "triceps"
+   ],
+   "equipment": "band",
+   "pattern": "vpush",
+   "joints": [
+    "shoulder",
+    "elbow"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": [
+    "To begin, stand on an exercise band so that tension begins at arm's length. Grasp the handles and lift them so that the hands are at shoulder height at each side.",
+    "Rotate the wrists so that the palms of your hands are facing forward. Your elbows should be bent, with the upper arms and forearms in line to the torso. This is your starting position.",
+    "As you exhale, lift the handles up until your arms are fully extended overhead."
+   ]
+  },
+  {
+   "id": "fedb:Squats_-_With_Bands",
+   "name": "Band Squat",
+   "primary": [
+    "quads"
+   ],
+   "secondary": [
+    "calves",
+    "glutes",
+    "hamstrings",
+    "lowerBack"
+   ],
+   "equipment": "band",
+   "pattern": "squat",
+   "joints": [
+    "knee"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": [
+    "To start out, make sure that the exercise band is at an even split between both the left and right side of the body. To do this, use your hands to grab both sides of the band and place both feet in the middle of the band. Your feet should be shoulder width apart from each other.",
+    "When holding the bands, they should be the same height on each side. You should be using a pronated grip (palms facing forward) and have the handles of the bands next to your face for this exercise. This is the starting position.",
+    "Slowly start to bend the knees and lower the legs so that your thighs are parallel to the floor while exhaling.",
+    "Use the heel of your feet to push your body up to the starting position as you exhale.",
+    "Repeat for the recommended amount of repetitions."
+   ]
+  },
+  {
+   "id": "ft:band_pushdown",
+   "name": "Band Triceps Pushdown",
+   "primary": [
+    "triceps"
+   ],
+   "secondary": [],
+   "equipment": "band",
+   "pattern": "isolation",
+   "joints": [
+    "elbow"
+   ],
+   "compound": false,
+   "level": "beginner",
+   "instructions": []
   },
   {
    "id": "fedb:Barbell_Squat",
@@ -533,6 +825,44 @@
    ]
   },
   {
+   "id": "ft:bodyweight_reverse_lunge",
+   "name": "Bodyweight Reverse Lunge",
+   "primary": [
+    "quads"
+   ],
+   "secondary": [
+    "glutes",
+    "hamstrings"
+   ],
+   "equipment": "bodyweight",
+   "pattern": "squat",
+   "joints": [
+    "knee"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
+   "id": "ft:bodyweight_split_squat",
+   "name": "Bodyweight Split Squat",
+   "primary": [
+    "quads"
+   ],
+   "secondary": [
+    "glutes",
+    "hamstrings"
+   ],
+   "equipment": "bodyweight",
+   "pattern": "squat",
+   "joints": [
+    "knee"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
    "id": "fedb:Box_Squat",
    "name": "Box Squat",
    "primary": [
@@ -719,10 +1049,7 @@
    "primary": [
     "shoulders"
    ],
-   "secondary": [
-    "midBack",
-    "traps"
-   ],
+   "secondary": [],
    "equipment": "cable",
    "pattern": "isolation",
    "joints": [
@@ -1257,6 +1584,24 @@
    ]
   },
   {
+   "id": "ft:dumbbell_hip_thrust",
+   "name": "Dumbbell Hip Thrust",
+   "primary": [
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings"
+   ],
+   "equipment": "dumbbell",
+   "pattern": "hinge",
+   "joints": [
+    "hip"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
    "id": "fedb:Tricep_Dumbbell_Kickback",
    "name": "Dumbbell Kickback",
    "primary": [
@@ -1421,10 +1766,7 @@
    "primary": [
     "triceps"
    ],
-   "secondary": [
-    "chest",
-    "shoulders"
-   ],
+   "secondary": [],
    "equipment": "dumbbell",
    "pattern": "isolation",
    "joints": [
@@ -1708,6 +2050,26 @@
    ]
   },
   {
+   "id": "fedb:Butt_Lift_Bridge",
+   "name": "Glute Bridge",
+   "primary": [
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings"
+   ],
+   "equipment": "bodyweight",
+   "pattern": "hinge",
+   "joints": [],
+   "compound": true,
+   "level": "beginner",
+   "instructions": [
+    "Lie flat on the floor on your back with the hands by your side and your knees bent. Your feet should be placed around shoulder width. This will be your starting position.",
+    "Pushing mainly with your heels, lift your hips off the floor while keeping your back straight. Breathe out as you perform this part of the motion and hold at the top for a second.",
+    "Slowly go back to the starting position as you breathe in."
+   ]
+  },
+  {
    "id": "fedb:Glute_Ham_Raise",
    "name": "Glute Ham Raise",
    "primary": [
@@ -1737,10 +2099,8 @@
     "quads"
    ],
    "secondary": [
-    "calves",
     "glutes",
-    "hamstrings",
-    "shoulders"
+    "hamstrings"
    ],
    "equipment": "dumbbell",
    "pattern": "squat",
@@ -1920,6 +2280,24 @@
     "Feel the contraction for a second and begin to move your legs back to the starting position while breathing in. Note: Remember to keep your upper body stationary and avoid fast jerking motions in order to prevent any injuries from occurring.",
     "Repeat for the recommended amount of repetitions."
    ]
+  },
+  {
+   "id": "ft:machine_hip_thrust",
+   "name": "Hip Thrust Machine",
+   "primary": [
+    "glutes"
+   ],
+   "secondary": [
+    "hamstrings"
+   ],
+   "equipment": "machine",
+   "pattern": "hinge",
+   "joints": [
+    "hip"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": []
   },
   {
    "id": "fedb:Barbell_Incline_Bench_Press_-_Medium_Grip",
@@ -2507,6 +2885,29 @@
    ]
   },
   {
+   "id": "fedb:Natural_Glute_Ham_Raise",
+   "name": "Nordic Hamstring Curl",
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [
+    "glutes"
+   ],
+   "equipment": "bodyweight",
+   "pattern": "isolation",
+   "joints": [
+    "knee"
+   ],
+   "compound": false,
+   "level": "intermediate",
+   "instructions": [
+    "Using the leg pad of a lat pulldown machine or a preacher bench, position yourself so that your ankles are under the pads, knees on the seat, and you are facing away from the machine. You should be upright and maintaining good posture.",
+    "This will be your starting position. Lower yourself under control until your knees are almost completely straight.",
+    "Remaining in control, raise yourself back up to the starting position.",
+    "If you are unable to complete a rep, use a band, a partner, or push off of a box to aid in completing a repetition."
+   ]
+  },
+  {
    "id": "fedb:One-Arm_Dumbbell_Row",
    "name": "One-Arm Dumbbell Row",
    "primary": [
@@ -2613,11 +3014,7 @@
    "primary": [
     "abs"
    ],
-   "secondary": [
-    "chest",
-    "shoulders",
-    "triceps"
-   ],
+   "secondary": [],
    "equipment": "cable",
    "pattern": "isolation",
    "joints": [],
@@ -2670,6 +3067,27 @@
    "joints": [
     "lowerBack",
     "elbow"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
+   "id": "ft:pike_push_up",
+   "name": "Pike Push-Up",
+   "primary": [
+    "shoulders"
+   ],
+   "secondary": [
+    "triceps",
+    "chest"
+   ],
+   "equipment": "bodyweight",
+   "pattern": "vpush",
+   "joints": [
+    "shoulder",
+    "elbow",
+    "wrist"
    ],
    "compound": true,
    "level": "beginner",
@@ -2748,7 +3166,6 @@
     "shoulders"
    ],
    "secondary": [
-    "quads",
     "triceps"
    ],
    "equipment": "barbell",
@@ -3212,6 +3629,20 @@
    ]
   },
   {
+   "id": "ft:single_leg_calf_raise",
+   "name": "Single-Leg Calf Raise",
+   "primary": [
+    "calves"
+   ],
+   "secondary": [],
+   "equipment": "bodyweight",
+   "pattern": "isolation",
+   "joints": [],
+   "compound": false,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
    "id": "ft:leg_press_single_leg",
    "name": "Single-Leg Leg Press",
    "primary": [
@@ -3225,6 +3656,25 @@
    "pattern": "squat",
    "joints": [
     "knee"
+   ],
+   "compound": true,
+   "level": "beginner",
+   "instructions": []
+  },
+  {
+   "id": "ft:single_leg_rdl",
+   "name": "Single-Leg Romanian Deadlift",
+   "primary": [
+    "hamstrings"
+   ],
+   "secondary": [
+    "glutes",
+    "lowerBack"
+   ],
+   "equipment": "bodyweight",
+   "pattern": "hinge",
+   "joints": [
+    "lowerBack"
    ],
    "compound": true,
    "level": "beginner",

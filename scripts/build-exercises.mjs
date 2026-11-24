@@ -14,7 +14,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const LIBRARY_VERSION = 1
+const LIBRARY_VERSION = 2
 
 const here = dirname(fileURLToPath(import.meta.url))
 const src = process.argv[2]
@@ -55,6 +55,8 @@ const EQUIPMENT = {
 }
 
 // [source id, pattern, joints, overrides]
+// overrides: name, equipment, compound, unit, and secondary (in Fittrack's muscle keys)
+// where the source's assisting muscles would distort the weekly-set count
 // pattern: squat | hinge | hpush | hpull | vpush | vpull | isolation
 // joints:  shoulder | elbow | wrist | lowerBack | hip | knee
 const PICKS = [
@@ -122,7 +124,7 @@ const PICKS = [
   ['Barbell_Squat', 'squat', ['knee', 'hip', 'lowerBack'], { name: 'Barbell Back Squat' }],
   ['Front_Barbell_Squat', 'squat', ['knee', 'wrist', 'lowerBack'], { name: 'Front Squat' }],
   ['Box_Squat', 'squat', ['knee', 'hip', 'lowerBack']],
-  ['Goblet_Squat', 'squat', ['knee'], { equipment: 'dumbbell' }],
+  ['Goblet_Squat', 'squat', ['knee'], { equipment: 'dumbbell', secondary: ['glutes', 'hamstrings'] }],
   ['Dumbbell_Squat', 'squat', ['knee']],
   ['Hack_Squat', 'squat', ['knee'], { name: 'Hack Squat Machine' }],
   ['Leg_Press', 'squat', ['knee']],
@@ -170,11 +172,11 @@ const PICKS = [
   ['Arnold_Dumbbell_Press', 'vpush', ['shoulder', 'elbow'], { name: 'Arnold Press' }],
   ['Machine_Shoulder_Military_Press', 'vpush', ['shoulder', 'elbow'], { name: 'Machine Shoulder Press' }],
   ['Smith_Machine_Overhead_Shoulder_Press', 'vpush', ['shoulder', 'elbow'], { name: 'Smith Machine Shoulder Press' }],
-  ['Push_Press', 'vpush', ['shoulder', 'elbow']],
+  ['Push_Press', 'vpush', ['shoulder', 'elbow'], { secondary: ['triceps'] }],
   ['Handstand_Push-Ups', 'vpush', ['shoulder', 'elbow', 'wrist'], { name: 'Handstand Push-Up' }],
   // Shoulder isolation
   ['Side_Lateral_Raise', 'isolation', ['shoulder'], { name: 'Dumbbell Lateral Raise' }],
-  ['Cable_Seated_Lateral_Raise', 'isolation', ['shoulder'], { name: 'Cable Lateral Raise' }],
+  ['Cable_Seated_Lateral_Raise', 'isolation', ['shoulder'], { name: 'Cable Lateral Raise', secondary: [] }],
   ['Lateral_Raise_-_With_Bands', 'isolation', ['shoulder'], { name: 'Band Lateral Raise' }],
   ['Front_Dumbbell_Raise', 'isolation', ['shoulder'], { name: 'Dumbbell Front Raise' }],
   ['Reverse_Flyes', 'isolation', [], { name: 'Dumbbell Reverse Fly' }],
@@ -204,7 +206,7 @@ const PICKS = [
   ['Triceps_Pushdown_-_Rope_Attachment', 'isolation', ['elbow'], { name: 'Rope Pushdown' }],
   ['Cable_Rope_Overhead_Triceps_Extension', 'isolation', ['elbow', 'shoulder'], { name: 'Overhead Cable Triceps Extension' }],
   ['EZ-Bar_Skullcrusher', 'isolation', ['elbow'], { name: 'EZ-Bar Skull Crusher' }],
-  ['Lying_Dumbbell_Tricep_Extension', 'isolation', ['elbow'], { name: 'Dumbbell Skull Crusher' }],
+  ['Lying_Dumbbell_Tricep_Extension', 'isolation', ['elbow'], { name: 'Dumbbell Skull Crusher', secondary: [] }],
   ['Standing_Dumbbell_Triceps_Extension', 'isolation', ['elbow', 'shoulder'], { name: 'Overhead Dumbbell Triceps Extension' }],
   ['Tricep_Dumbbell_Kickback', 'isolation', ['elbow'], { name: 'Dumbbell Kickback' }],
   ['Machine_Triceps_Extension', 'isolation', ['elbow']],
@@ -219,8 +221,18 @@ const PICKS = [
   ['Crunches', 'isolation', [], { name: 'Crunch' }],
   ['Reverse_Crunch', 'isolation', []],
   ['Russian_Twist', 'isolation', ['lowerBack']],
-  ['Pallof_Press', 'isolation', []],
+  ['Pallof_Press', 'isolation', [], { secondary: [] }],
   ['Dead_Bug', 'isolation', [], { compound: false }],
+  // Bands and bodyweight (library v2), so "bodyweight and bands" fills every slot
+  ['Squats_-_With_Bands', 'squat', ['knee'], { name: 'Band Squat' }],
+  ['Band_Good_Morning', 'hinge', ['lowerBack']],
+  ['Butt_Lift_Bridge', 'hinge', [], { name: 'Glute Bridge', compound: true }],
+  ['Bench_Press_-_With_Bands', 'hpush', ['shoulder', 'elbow'], { name: 'Band Bench Press' }],
+  ['Shoulder_Press_-_With_Bands', 'vpush', ['shoulder', 'elbow'], { name: 'Band Shoulder Press' }],
+  ['Cross_Over_-_With_Bands', 'isolation', ['shoulder'], { name: 'Band Chest Fly', compound: false, secondary: ['shoulders'] }],
+  ['Back_Flyes_-_With_Bands', 'isolation', [], { name: 'Band Reverse Fly', compound: false, secondary: ['midBack'] }],
+  ['Calf_Raises_-_With_Bands', 'isolation', [], { name: 'Band Calf Raise' }],
+  ['Natural_Glute_Ham_Raise', 'isolation', ['knee'], { name: 'Nordic Hamstring Curl', compound: false, secondary: ['glutes'] }],
 ]
 
 // Common lifts that free-exercise-db lacks. Names and tags only; no third-party text.
@@ -232,6 +244,21 @@ const EXTRAS = [
   { id: 'ft:assisted_pull_up_machine', name: 'Assisted Pull-Up Machine', primary: ['lats'], secondary: ['biceps', 'midBack'], equipment: 'machine', pattern: 'vpull', joints: ['shoulder', 'elbow'], compound: true },
   { id: 'ft:machine_lateral_raise', name: 'Machine Lateral Raise', primary: ['shoulders'], secondary: [], equipment: 'machine', pattern: 'isolation', joints: ['shoulder'], compound: false },
   { id: 'ft:leg_press_single_leg', name: 'Single-Leg Leg Press', primary: ['quads'], secondary: ['glutes', 'hamstrings'], equipment: 'machine', pattern: 'squat', joints: ['knee'], compound: true },
+  // Library v2
+  { id: 'ft:machine_hip_thrust', name: 'Hip Thrust Machine', primary: ['glutes'], secondary: ['hamstrings'], equipment: 'machine', pattern: 'hinge', joints: ['hip'], compound: true },
+  { id: 'ft:dumbbell_hip_thrust', name: 'Dumbbell Hip Thrust', primary: ['glutes'], secondary: ['hamstrings'], equipment: 'dumbbell', pattern: 'hinge', joints: ['hip'], compound: true },
+  { id: 'ft:single_leg_rdl', name: 'Single-Leg Romanian Deadlift', primary: ['hamstrings'], secondary: ['glutes', 'lowerBack'], equipment: 'bodyweight', pattern: 'hinge', joints: ['lowerBack'], compound: true },
+  { id: 'ft:bodyweight_split_squat', name: 'Bodyweight Split Squat', primary: ['quads'], secondary: ['glutes', 'hamstrings'], equipment: 'bodyweight', pattern: 'squat', joints: ['knee'], compound: true },
+  { id: 'ft:bodyweight_reverse_lunge', name: 'Bodyweight Reverse Lunge', primary: ['quads'], secondary: ['glutes', 'hamstrings'], equipment: 'bodyweight', pattern: 'squat', joints: ['knee'], compound: true },
+  { id: 'ft:pike_push_up', name: 'Pike Push-Up', primary: ['shoulders'], secondary: ['triceps', 'chest'], equipment: 'bodyweight', pattern: 'vpush', joints: ['shoulder', 'elbow', 'wrist'], compound: true },
+  { id: 'ft:band_row', name: 'Band Row', primary: ['midBack'], secondary: ['lats', 'biceps', 'shoulders'], equipment: 'band', pattern: 'hpull', joints: ['elbow'], compound: true },
+  { id: 'ft:band_lat_pulldown', name: 'Band Lat Pulldown', primary: ['lats'], secondary: ['biceps', 'midBack'], equipment: 'band', pattern: 'vpull', joints: ['shoulder', 'elbow'], compound: true },
+  { id: 'ft:band_face_pull', name: 'Band Face Pull', primary: ['shoulders'], secondary: ['midBack'], equipment: 'band', pattern: 'isolation', joints: [], compound: false },
+  { id: 'ft:band_curl', name: 'Band Curl', primary: ['biceps'], secondary: ['forearms'], equipment: 'band', pattern: 'isolation', joints: ['elbow'], compound: false },
+  { id: 'ft:band_pushdown', name: 'Band Triceps Pushdown', primary: ['triceps'], secondary: [], equipment: 'band', pattern: 'isolation', joints: ['elbow'], compound: false },
+  { id: 'ft:band_overhead_triceps', name: 'Band Overhead Triceps Extension', primary: ['triceps'], secondary: [], equipment: 'band', pattern: 'isolation', joints: ['elbow', 'shoulder'], compound: false },
+  { id: 'ft:band_leg_curl', name: 'Band Leg Curl', primary: ['hamstrings'], secondary: [], equipment: 'band', pattern: 'isolation', joints: ['knee'], compound: false },
+  { id: 'ft:single_leg_calf_raise', name: 'Single-Leg Calf Raise', primary: ['calves'], secondary: [], equipment: 'bodyweight', pattern: 'isolation', joints: [], compound: false },
 ]
 
 const source = JSON.parse(readFileSync(resolve(src), 'utf8'))
@@ -257,7 +284,7 @@ for (const [id, pattern, joints, o = {}] of PICKS) {
     id: `fedb:${id}`,
     name: o.name ?? x.name,
     primary: muscles(x.primaryMuscles),
-    secondary: muscles(x.secondaryMuscles),
+    secondary: o.secondary ?? muscles(x.secondaryMuscles),
     equipment,
     pattern,
     joints,
