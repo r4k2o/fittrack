@@ -6,8 +6,8 @@ import { useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db, type DiaryEntry, type Meal } from '../db'
 import { useNow, useSetting, useTarget, useToday } from '../hooks'
-import { addDays, daysBetween, formatDayLong, localDay, weekStart } from '../lib/dates'
-import { fmt1, fmt2, fmtDuration, fmtInt } from '../lib/format'
+import { addDays, daysBetween, formatDayLong, formatDayShort, localDay, weekStart } from '../lib/dates'
+import { fmt1, fmt2, fmtDuration, fmtInt, fmtSleep } from '../lib/format'
 import { sumNutrients } from '../lib/macros'
 import { GOALS } from '../lib/nutrition'
 import { ema, ratePctPerWeek } from '../lib/trends'
@@ -33,6 +33,8 @@ import {
   IconTrendFlat,
   IconTrendUp,
   IconTimer,
+  IconFootprints,
+  IconMoon,
 } from '../ui/icons'
 import { AnimatedNumber, Button, Card, cx, IconTile, MacroBar, Ring, Screen, Sheet, Sparkline } from '../ui/kit'
 import { haptic } from '../ui/motion'
@@ -245,6 +247,49 @@ function WeightTile({ today, onLog }: { today: string; onLog: () => void }) {
   )
 }
 
+/** Steps from the Health import: today's if imported, else the latest day. */
+function StepsTile({ today }: { today: string }) {
+  const navigate = useNavigate()
+  const series = useLiveQuery(() => metricSeries('steps', addDays(today, -13), today), [today])
+  const latest = series?.at(-1)
+  const week = (series ?? []).filter((p) => p.date > addDays(today, -7))
+  const avg = week.length ? week.reduce((n, p) => n + p.value, 0) / week.length : null
+  return (
+    <Card tone="body" onClick={() => navigate(latest ? '/progress?tab=sleep' : '/more/health')} className="animate-rise flex flex-col !p-4" style={{ '--i': 7 } as CSSProperties}>
+      <IconTile tone="indigo" size={34}>
+        <IconFootprints size={20} />
+      </IconTile>
+      <p className="mt-3 text-[13px] font-semibold text-ink-2">{latest ? (latest.date === today ? 'Steps today' : latest.date === addDays(today, -1) ? 'Steps yesterday' : `Steps ${formatDayShort(latest.date)}`) : 'Steps'}</p>
+      <p className="text-[17px] font-bold tabular-nums">{latest ? fmtInt(latest.value) : 'No data yet'}</p>
+      <p className="text-[13px] text-ink-2">{avg != null ? `${fmtInt(avg)} a day this week` : 'Import from Apple Health'}</p>
+    </Card>
+  )
+}
+
+/** Last night's sleep and score; the label says whether the score is typed in or the app's own. */
+function SleepTile({ today }: { today: string }) {
+  const navigate = useNavigate()
+  const night = useLiveQuery(async () => {
+    const mins = await metricSeries('sleepMin', addDays(today, -6), today)
+    const last = mins.at(-1)
+    if (!last) return null
+    const scores = await db.metrics.where('[type+date]').equals(['sleepScore', last.date]).toArray()
+    const typed = scores.find((s) => s.source !== 'computed')
+    const score = typed ?? scores.find((s) => s.source === 'computed')
+    return { ...last, score: score?.value ?? null, computed: !!score && !typed }
+  }, [today])
+  return (
+    <Card tone="body" onClick={() => navigate(night ? '/progress?tab=sleep' : '/more/health')} className="animate-rise flex flex-col !p-4" style={{ '--i': 8 } as CSSProperties}>
+      <IconTile tone="indigo" size={34}>
+        <IconMoon size={20} />
+      </IconTile>
+      <p className="mt-3 text-[13px] font-semibold text-ink-2">{night ? (night.date === today ? 'Last night' : `Night to ${formatDayShort(night.date)}`) : 'Sleep'}</p>
+      <p className="text-[17px] font-bold tabular-nums">{night ? fmtSleep(night.value) : 'No data yet'}</p>
+      <p className="text-[13px] text-ink-2">{night ? (night.score != null ? `Score ${night.score}${night.computed ? ' (app)' : ''}` : 'Asleep, all stages') : 'Import from Apple Health'}</p>
+    </Card>
+  )
+}
+
 export default function Today() {
   const navigate = useNavigate()
   const today = useToday()
@@ -280,6 +325,8 @@ export default function Today() {
       <div className="mt-3 grid grid-cols-2 gap-3">
         <WorkoutTile today={today} />
         <WeightTile today={today} onLog={() => setWeightOpen(true)} />
+        <StepsTile today={today} />
+        <SleepTile today={today} />
       </div>
 
       <button

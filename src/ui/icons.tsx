@@ -240,3 +240,19 @@ export const IconLock = make(
 )
 export const IconWifiOff = make(<path d="M3 3l18 18M8.5 16.5a5 5 0 0 1 7 0M5 12.5a10 10 0 0 1 5-2.6M14.5 9.9A10 10 0 0 1 19 12.5M2 8.8a15 15 0 0 1 4.3-2.6M10.4 5.1A15 15 0 0 1 22 8.8M12 20h.01" />)
 export const IconZap = make(<path d="M13 2.5L4.5 13.5H12l-1 8 8.5-11H12l1-8z" />)
+export const IconHeart = make(<path d="M12 20s-7-4.4-9.2-9A5 5 0 0 1 12 6.2 5 5 0 0 1 21.2 11C19 15.6 12 20 12 20z" />)
+export const IconFootprints = make(
+  <>
+    <path d="M7.5 3.5c1.7 0 2.8 1.9 2.6 4.6-.2 2.3-1.3 3.4-2.7 3.4S5 10.4 4.9 8.1C4.7 5.4 5.8 3.5 7.5 3.5zM5.5 14h4.2l-.3 2.6a2 2 0 0 1-3.9 0z" />
+    <path d="M16.5 7.5c1.7 0 2.8 1.9 2.6 4.6-.2 2.3-1.3 3.4-2.7 3.4s-2.4-1.1-2.5-3.4c-.2-2.7.9-4.6 2.6-4.6zM14.5 18h4.2l-.3 2.6a2 2 0 0 1-3.9 0z" />
+  </>,
+)
+export const IconBed = make(<path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5M7 11.5a1.5 1.5 0 1 0 0-.01" />)
+export const IconImage = make(
+  <>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="3" />
+    <circle cx="9" cy="10" r="1.6" />
+    <path d="M20.5 16l-5-5L6 19.5" />
+  </>,
+)
+export const IconSparkle = make(<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z" />)

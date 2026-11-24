@@ -36,3 +36,12 @@ export function fmtWeight(kg: number): string {
 export function pluralize(n: number, one: string, many = `${one}s`): string {
   return `${fmtInt(n)} ${n === 1 ? one : many}`
 }
+
+/** Minutes as "7 h 12 min" (or "45 min"). */
+export function fmtSleep(min: number): string {
+  const m = Math.round(min)
+  const h = Math.floor(m / 60)
+  const r = m % 60
+  if (h === 0) return `${r} min`
+  return r ? `${h} h ${r} min` : `${h} h`
+}

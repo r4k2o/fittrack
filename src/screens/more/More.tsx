@@ -1,12 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useNavigate } from 'react-router-dom'
 import { useSetting, useTarget, useToday } from '../../hooks'
-import { daysBetween, localDay } from '../../lib/dates'
+import { daysBetween, formatDate, localDay } from '../../lib/dates'
+import { listImports } from '../../store/health'
 import { fmt1, fmtInt } from '../../lib/format'
 import { GOALS } from '../../lib/nutrition'
 import { latestMetric } from '../../store/metrics'
 import { getActiveGoal } from '../../store/profile'
-import { IconChevronRight, IconDatabase, IconFood, IconInfo, IconPhone, IconScale, IconShield, IconTarget, IconTrain, IconUser } from '../../ui/icons'
+import { IconChevronRight, IconFood, IconHeart, IconInfo, IconPhone, IconScale, IconShield, IconTarget, IconTrain, IconUser } from '../../ui/icons'
 import { Card, Group, ListRow, Screen, SectionTitle } from '../../ui/kit'
 
 export default function More() {
@@ -18,6 +19,7 @@ export default function More() {
   const lastBackupAt = useSetting('lastBackupAt')
   const foodList = useSetting('foodList')
   const deviceCheck = useSetting('deviceCheck')
+  const lastImport = useLiveQuery(async () => (await listImports())[0] ?? null, [])
   const go = (to: string) => navigate(to)
 
   const backupAge = lastBackupAt ? daysBetween(localDay(new Date(lastBackupAt)), today) : null
@@ -78,6 +80,7 @@ export default function More() {
           subtitle={foodList ? `${foodList.name} · ${fmtInt(foodList.count)} foods` : 'No food list imported'}
           onClick={() => go('/more/foods')}
         />
+        <ListRow icon={<IconHeart size={18} />} iconTone="pink" title="Apple Health" subtitle={lastImport ? `Last import ${formatDate(lastImport.createdAt.slice(0, 10))}` : 'Steps, weight, sleep and workouts'} onClick={() => go('/more/health')} />
         <ListRow icon={<IconTrain size={18} />} iconTone="train" title="Exercises" subtitle="Library, load steps, your own" onClick={() => go('/train/exercises')} />
       </Group>
 
@@ -95,7 +98,6 @@ export default function More() {
 
       <SectionTitle>Coming in later phases</SectionTitle>
       <Group className="opacity-60">
-        <ListRow icon={<IconDatabase size={18} />} iconTone="body" title="Apple Health import" subtitle="Steps, weight, body fat and sleep from a Shortcut" chevron={false} />
         <ListRow icon={<IconScale size={18} />} iconTone="indigo" title="Photo logging" subtitle="Meal photo to foods, with your own key" chevron={false} />
       </Group>
     </Screen>

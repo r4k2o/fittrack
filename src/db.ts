@@ -261,6 +261,9 @@ export interface ImportLog extends Row {
   toDate: string
   counts: Record<string, number>
   fileHash: string
+  /** What the import added and what it overwrote, so the latest import can be undone. */
+  added?: { metrics: string[]; cardio: string[] }
+  previous?: { metrics: Metric[]; cardio: CardioSession[] }
 }
 
 export interface Setting {

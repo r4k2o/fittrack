@@ -30,6 +30,7 @@ const FoodList = lazy(() => import('./screens/more/FoodList'))
 const DeviceCheck = lazy(() => import('./screens/more/DeviceCheck'))
 const NewPlan = lazy(() => import('./screens/train/plan/NewPlan'))
 const RecipeEditor = lazy(() => import('./screens/food/RecipeEditor'))
+const HealthImport = lazy(() => import('./screens/more/HealthImport'))
 const Cardio = lazy(() => import('./screens/train/Cardio'))
 const CardioForm = lazy(() => import('./screens/train/CardioForm'))
 const PlanEditor = lazy(() => import('./screens/train/plan/PlanEditor'))
@@ -151,6 +152,7 @@ const router = createHashRouter([
       { path: 'more/foods', element: <FoodList /> },
       { path: 'more/device-check', element: <DeviceCheck /> },
       { path: 'more/about', element: <About /> },
+      { path: 'more/health', element: <HealthImport /> },
       { path: '*', element: <Navigate to="/today" replace /> },
     ],
   },
