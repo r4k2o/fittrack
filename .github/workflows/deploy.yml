@@ -26,6 +26,9 @@ jobs:
       - run: npm test
       - run: npm run build
       - uses: actions/configure-pages@v6
+        with:
+          # switches Pages on (source: GitHub Actions) the first time, if the token may
+          enablement: true
       - uses: actions/upload-pages-artifact@v5
         with:
           path: './dist'
