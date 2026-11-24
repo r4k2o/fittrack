@@ -1,82 +1,210 @@
 @import "tailwindcss";
 
-/* Semantic colours; the theme follows the system light or dark setting. */
+/*
+ * Fittrack design tokens. Light and dark are each chosen (not an automatic flip)
+ * and follow the system setting. Macro colours are the validated categorical trio
+ * (blue, yellow, magenta: CVD ΔE ≥ 13 all-pairs in both modes); text never wears
+ * a data colour, so values and labels stay in ink.
+ */
 @theme inline {
-  --color-canvas: var(--canvas);
+  --color-page: var(--page);
   --color-surface: var(--surface);
-  --color-sunken: var(--sunken);
-  --color-ink: var(--ink);
-  --color-muted: var(--muted);
-  --color-faint: var(--faint);
+  --color-raised: var(--raised);
+  --color-fill: var(--fill);
+  --color-fill-strong: var(--fill-strong);
   --color-line: var(--line);
-  --color-accent: var(--accent);
-  --color-accent-ink: var(--accent-ink);
-  --color-accent-soft: var(--accent-soft);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-food: var(--food);
+  --color-train: var(--train);
+  --color-body: var(--body);
   --color-protein: var(--protein);
   --color-carbs: var(--carbs);
   --color-fat: var(--fat);
+  --color-good: var(--good);
   --color-warn: var(--warn);
+  --color-warn-ink: var(--warn-ink);
   --color-warn-soft: var(--warn-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  /* legacy aliases used by a few screens */
+  --color-canvas: var(--page);
+  --color-sunken: var(--fill);
+  --color-muted: var(--ink-2);
+  --color-faint: var(--ink-3);
+  --color-accent: var(--brand);
+  --color-accent-ink: var(--btn-ink);
+  --color-accent-soft: var(--brand-soft);
+
+  --font-sans: -apple-system, system-ui, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  --text-hero: 3.5rem;
+  --text-hero--line-height: 1;
+  --text-hero--letter-spacing: -0.04em;
+  --text-hero--font-weight: 700;
+  --text-title: 2.125rem;
+  --text-title--line-height: 1.1;
+  --text-title--letter-spacing: -0.03em;
+  --text-title--font-weight: 750;
+  --text-title2: 1.375rem;
+  --text-title2--line-height: 1.2;
+  --text-title2--letter-spacing: -0.02em;
+  --text-title2--font-weight: 700;
+  --text-headline: 1.0625rem;
+  --text-headline--line-height: 1.3;
+  --text-headline--font-weight: 600;
+  --text-footnote: 0.8125rem;
+  --text-footnote--line-height: 1.35;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.3;
+
+  --radius-card: 1.75rem;
+  --radius-tile: 0.625rem;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 :root {
-  --canvas: #f4f4f5;
+  --page: #f2f2f6;
   --surface: #ffffff;
-  --sunken: #ececef;
-  --ink: #18181b;
-  --muted: #62626b;
-  --faint: #9a9aa3;
-  --line: #e2e2e6;
-  --accent: #047857;
-  --accent-ink: #ffffff;
-  --accent-soft: #d5f5e6;
-  --protein: #0369a1;
-  --carbs: #b45309;
-  --fat: #be123c;
-  --warn: #92400e;
-  --warn-soft: #fdf1d3;
-  --danger: #b91c1c;
-  --danger-soft: #fde4e4;
+  --raised: #f6f6f9;
+  --fill: rgba(118, 118, 128, 0.12);
+  --fill-strong: rgba(118, 118, 128, 0.2);
+  --line: rgba(60, 60, 67, 0.12);
+  --ink: #0b0b0f;
+  --ink-2: #5f5f68;
+  --ink-3: #8e8e96;
+
+  --brand: #16a34a;
+  --brand-2: #10b981;
+  --brand-ink: #15803d;
+  --brand-soft: #dcfce7;
+  --brand-track: #d7f3df;
+  --btn-from: #5ce38a;
+  --btn-to: #22c55e;
+  --btn-ink: #052e16;
+
+  --food: #f97316;
+  --train: #7c3aed;
+  --body: #0891b2;
+  --amber: #f59e0b;
+  --pink: #ec4899;
+  --indigo: #6366f1;
+  --slate: #8e8e93;
+
+  --protein: #2a78d6;
+  --protein-track: #dce9fa;
+  --carbs: #eda100;
+  --carbs-track: #fcefcf;
+  --fat: #d55181;
+  --fat-track: #f9dce7;
+
+  --good: #0ca30c;
+  --warn: #fab219;
+  --warn-ink: #8a5a00;
+  --warn-soft: #fff4d6;
+  --danger: #d03b3b;
+  --danger-soft: #fde8e8;
+
+  --grid: #e9e9ee;
+  --glass: rgba(255, 255, 255, 0.74);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --card-border: rgba(0, 0, 0, 0);
+  --shadow-card: 0 1px 2px rgba(16, 16, 24, 0.04), 0 10px 28px -14px rgba(16, 16, 24, 0.16);
+  --shadow-float: 0 14px 36px -12px rgba(16, 16, 24, 0.3), 0 2px 6px rgba(16, 16, 24, 0.06);
+  --glow-strength: 22%;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --canvas: #0b0b0c;
-    --surface: #161618;
-    --sunken: #222226;
-    --ink: #f4f4f5;
-    --muted: #a8a8b0;
-    --faint: #74747c;
-    --line: #2a2a2e;
-    --accent: #34d399;
-    --accent-ink: #04261a;
-    --accent-soft: #0f2c21;
-    --protein: #38bdf8;
-    --carbs: #fbbf24;
-    --fat: #fb7185;
-    --warn: #fcd34d;
-    --warn-soft: #2b2312;
-    --danger: #f87171;
-    --danger-soft: #331717;
+    --page: #050506;
+    --surface: #141417;
+    --raised: #1d1d22;
+    --fill: rgba(120, 120, 128, 0.22);
+    --fill-strong: rgba(120, 120, 128, 0.34);
+    --line: rgba(255, 255, 255, 0.08);
+    --ink: #f5f5f7;
+    --ink-2: #a3a3ad;
+    --ink-3: #6f6f79;
+
+    --brand: #b2f04c;
+    --brand-2: #4ade80;
+    --brand-ink: #c3f569;
+    --brand-soft: rgba(178, 240, 76, 0.14);
+    --brand-track: rgba(178, 240, 76, 0.16);
+    --btn-from: #d8fb82;
+    --btn-to: #a8eb3a;
+    --btn-ink: #132400;
+
+    --food: #fb923c;
+    --train: #a78bfa;
+    --body: #22d3ee;
+
+    --protein: #3987e5;
+    --protein-track: rgba(57, 135, 229, 0.22);
+    --carbs: #c98500;
+    --carbs-track: rgba(201, 133, 0, 0.26);
+    --fat: #d55181;
+    --fat-track: rgba(213, 81, 129, 0.26);
+
+    --warn-ink: #fcd34d;
+    --warn-soft: rgba(250, 178, 25, 0.14);
+    --danger: #ef6b6b;
+    --danger-soft: rgba(208, 59, 59, 0.18);
+
+    --grid: #25252b;
+    --glass: rgba(28, 28, 32, 0.68);
+    --glass-border: rgba(255, 255, 255, 0.09);
+    --card-border: rgba(255, 255, 255, 0.06);
+    --shadow-card: none;
+    --shadow-float: 0 18px 44px -12px rgba(0, 0, 0, 0.75);
+    --glow-strength: 30%;
   }
+}
+
+/* Each area of the app has a tone; it tints the ambient light behind the page. */
+.tone-brand {
+  --tone: var(--brand);
+  --tone-2: var(--brand-2);
+}
+.tone-food {
+  --tone: var(--food);
+  --tone-2: var(--amber);
+}
+.tone-train {
+  --tone: var(--train);
+  --tone-2: var(--indigo);
+}
+.tone-body {
+  --tone: var(--body);
+  --tone-2: var(--brand-2);
+}
+.tone-neutral {
+  --tone: var(--slate);
+  --tone-2: var(--indigo);
 }
 
 html {
   color-scheme: light dark;
   -webkit-text-size-adjust: 100%;
-  background: var(--canvas);
+  background: var(--page);
 }
 
 body {
   margin: 0;
-  background: var(--canvas);
+  background: var(--page);
   color: var(--ink);
   font-family: var(--font-sans);
+  font-optical-sizing: auto;
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;
   overscroll-behavior-y: none;
 }
@@ -85,7 +213,7 @@ body {
 input,
 select,
 textarea {
-  font-size: 16px;
+  font-size: 17px;
 }
 
 button {
@@ -99,7 +227,7 @@ button:disabled {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2.5px solid var(--brand);
   outline-offset: 2px;
 }
 
@@ -109,8 +237,61 @@ input[type='number']::-webkit-outer-spin-button {
   margin: 0;
 }
 
+input[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
 input[type='range'] {
-  accent-color: var(--accent);
+  accent-color: var(--brand);
+}
+
+@utility glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+@utility card {
+  background: var(--surface);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-card);
+}
+
+@utility shadow-float {
+  box-shadow: var(--shadow-float);
+}
+
+@utility press {
+  transition:
+    transform 180ms var(--ease-out),
+    opacity 180ms var(--ease-out),
+    background-color 180ms var(--ease-out);
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+@utility btn-primary {
+  background: linear-gradient(180deg, var(--btn-from), var(--btn-to));
+  color: var(--btn-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 8px 20px -10px color-mix(in oklab, var(--btn-to) 80%, transparent);
+}
+
+@utility tinted {
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--tone) 26%, transparent), transparent 62%),
+    radial-gradient(100% 90% at 100% 100%, color-mix(in oklab, var(--tone-2) 16%, transparent), transparent 60%),
+    var(--surface);
+}
+
+@utility ambient {
+  background:
+    radial-gradient(110% 55% at 0% 0%, color-mix(in oklab, var(--tone) var(--glow-strength), transparent), transparent 62%),
+    radial-gradient(80% 45% at 100% 0%, color-mix(in oklab, var(--tone-2) calc(var(--glow-strength) * 0.6), transparent), transparent 58%);
 }
 
 @keyframes sheet-in {
@@ -131,17 +312,73 @@ input[type='range'] {
   }
 }
 
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.85);
+  }
+  55% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .animate-sheet {
-  animation: sheet-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: sheet-in 340ms var(--ease-spring);
 }
 
 .animate-fade {
-  animation: fade-in 160ms ease-out;
+  animation: fade-in 200ms ease-out;
+}
+
+.animate-rise {
+  animation: rise 420ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.animate-pop {
+  animation: pop 320ms var(--ease-out);
+}
+
+.animate-toast {
+  animation: toast-in 260ms var(--ease-out);
+}
+
+/* No fill mode: once finished the animation leaves no stacking context behind, so
+   sheets and fixed bars inside the page still layer above the tab bar. */
+.animate-page {
+  animation: fade-in 220ms ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-sheet,
-  .animate-fade {
-    animation: none;
+  *,
+  ::before,
+  ::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
   }
 }

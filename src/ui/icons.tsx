@@ -183,3 +183,60 @@ export const IconTarget = make(
 )
 export const IconList = make(<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01" />)
 export const IconShield = make(<path d="M12 3l7 3v6c0 4.4-3 7.8-7 9-4-1.2-7-4.6-7-9V6l7-3z" />)
+export const IconAlert = make(
+  <>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5v5.5M12 16.5h.01" />
+  </>,
+)
+export const IconCheckCircle = make(
+  <>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M8.5 12.2l2.4 2.4 4.6-5" />
+  </>,
+)
+export const IconFlame = make(<path d="M12 21c3.9 0 6.5-2.6 6.5-6.3 0-3.3-2.2-5.3-3.6-7.2-.4 1.6-1.2 2.6-2.4 3.2.3-2.9-1-5.6-3.5-7.7.2 2.9-1.4 4.8-2.9 6.6C4.9 11.1 5.5 13.1 5.5 14.7 5.5 18.4 8.1 21 12 21z" />)
+export const IconSunrise = make(
+  <>
+    <path d="M5 17a7 7 0 0 1 14 0" />
+    <path d="M3 21h18M12 3v4M5.6 8.6l1.4 1.4M18.4 8.6L17 10M2 17h1.5M20.5 17H22" />
+  </>,
+)
+export const IconMoon = make(<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />)
+export const IconApple = make(
+  <>
+    <path d="M12 7.5c-1.4-1-3.1-1.3-4.6-.6C4.9 8 4 11.4 5.2 14.8 6.3 18 8.5 20.5 10.4 20c.6-.2 1-.4 1.6-.4s1 .2 1.6.4c1.9.5 4.1-2 5.2-5.2 1.2-3.4.3-6.8-2.2-7.9-1.5-.7-3.2-.4-4.6.6z" />
+    <path d="M12 7.5c0-2 .8-3.5 2.5-4.5" />
+  </>,
+)
+export const IconCalendar = make(
+  <>
+    <rect x="4" y="5" width="16" height="15" rx="3" />
+    <path d="M4 10h16M8.5 3v4M15.5 3v4" />
+  </>,
+)
+export const IconTrendUp = make(<path d="M4 16.5l5.5-5.5 3.5 3.5L20 7.5M14.5 7.5H20V13" />)
+export const IconTrendDown = make(<path d="M4 7.5l5.5 5.5 3.5-3.5 7 7M14.5 16.5H20V11" />)
+export const IconTrendFlat = make(<path d="M4 12h15M15 8l4 4-4 4" />)
+export const IconPlay = make(<path d="M8 5.5v13l10.5-6.5L8 5.5z" fill="currentColor" stroke="none" />)
+export const IconTimer = make(
+  <>
+    <circle cx="12" cy="13.5" r="7" />
+    <path d="M12 10v4l2.5 1.5M9.5 3h5M19 6.5l-1.3 1.3" />
+  </>,
+)
+export const IconArrowRight = make(<path d="M5 12h14M13 6l6 6-6 6" />)
+export const IconGear = make(
+  <>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+  </>,
+)
+export const IconLock = make(
+  <>
+    <rect x="5" y="11" width="14" height="10" rx="2.5" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </>,
+)
+export const IconWifiOff = make(<path d="M3 3l18 18M8.5 16.5a5 5 0 0 1 7 0M5 12.5a10 10 0 0 1 5-2.6M14.5 9.9A10 10 0 0 1 19 12.5M2 8.8a15 15 0 0 1 4.3-2.6M10.4 5.1A15 15 0 0 1 22 8.8M12 20h.01" />)
+export const IconZap = make(<path d="M13 2.5L4.5 13.5H12l-1 8 8.5-11H12l1-8z" />)

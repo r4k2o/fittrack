@@ -19,6 +19,7 @@ import { seedExercises } from './store/seed'
 import { getSetting, setSetting } from './store/settings'
 import { IconFood, IconMore, IconProgress, IconToday, IconTrain } from './ui/icons'
 import { cx, Spinner } from './ui/kit'
+import { haptic } from './ui/motion'
 import { ToastProvider } from './ui/toast'
 
 // Heavier screens load on first use: the barcode decoder, charts and zip handling.
@@ -41,16 +42,26 @@ const NO_TABS = [/^\/welcome/, /^\/food\/scan/, /^\/train\/session\//]
 
 function TabBar() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
-      <div className="mx-auto flex max-w-xl">
+    <nav aria-label="Main" className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
+      <div className="glass shadow-float pointer-events-auto mx-auto flex max-w-md items-stretch gap-1 rounded-[30px] p-1.5">
         {TABS.map(({ to, label, Icon }) => (
           <NavLink
             key={to}
             to={to}
-            className={({ isActive }) => cx('flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold', isActive ? 'text-accent' : 'text-faint')}
+            onClick={() => haptic()}
+            className={({ isActive }) =>
+              cx(
+                'press flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-[24px] text-[10.5px] font-semibold tracking-wide transition-colors',
+                isActive ? 'bg-fill text-ink' : 'text-ink-3',
+              )
+            }
           >
-            <Icon size={24} />
-            {label}
+            {({ isActive }) => (
+              <>
+                <Icon size={23} strokeWidth={isActive ? 2.4 : 2} className={isActive ? 'text-brand-ink' : undefined} />
+                {label}
+              </>
+            )}
           </NavLink>
         ))}
       </div>
@@ -92,7 +103,10 @@ function Root() {
   return (
     <>
       <Suspense fallback={<Splash />}>
-        <Outlet />
+        {/* a quick fade on each page change; opacity only, so fixed elements inside stay put */}
+        <div key={pathname} className="animate-page">
+          <Outlet />
+        </div>
       </Suspense>
       {showTabs && <TabBar />}
     </>

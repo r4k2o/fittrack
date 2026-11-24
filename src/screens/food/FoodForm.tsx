@@ -107,7 +107,7 @@ export default function FoodForm() {
   }
 
   return (
-    <Screen back title={existing ? 'Edit food' : 'New food'} subtitle={existing ? undefined : 'Values per 100 g, from the nutrition label'}>
+    <Screen tone="food" back title={existing ? 'Edit food' : 'New food'} subtitle={existing ? undefined : 'Values per 100 g, from the nutrition label'}>
       <div className="space-y-4 pt-2">
         <Field label="Name">
           <TextInput value={name} autoFocus={!foodId && !name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Skyr natur" />
@@ -137,7 +137,7 @@ export default function FoodForm() {
               <NumberInput value={v.fat} unit="g" ariaLabel="Fat per 100 g" onChange={set('fat')} />
             </Field>
           </div>
-          <button type="button" className="mt-3 flex items-center gap-1 text-sm font-semibold text-accent" onClick={() => setMore(!more)} aria-expanded={more}>
+          <button type="button" className="mt-3 flex items-center gap-1 text-sm font-semibold text-brand-ink" onClick={() => setMore(!more)} aria-expanded={more}>
             Fibre, sugar, saturated fat, salt
             <IconChevronDown size={16} className={cx('transition-transform', more && 'rotate-180')} />
           </button>

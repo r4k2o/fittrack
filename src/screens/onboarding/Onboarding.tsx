@@ -2,49 +2,81 @@
 // One decision per screen, progress dots, Back everywhere, no account, no email,
 // no "calculating" interstitials. Training questions follow in phase 2.
 
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import type { GoalType, Sex } from '../../db'
 import { isIos, isStandalone } from '../../hooks'
 import { DISCLAIMER } from '../../lib/copy'
 import { ageOn, localDay } from '../../lib/dates'
-import { validateAbout, type AboutDraft } from '../../lib/validate'
 import { ACTIVITY_LEVELS, GOALS, type TargetInputs } from '../../lib/nutrition'
+import { validateAbout, type AboutDraft } from '../../lib/validate'
 import { buildInputs, completeOnboarding, saveProfileAndTargets, type AboutYou } from '../../store/profile'
-import { IconCheck, IconChevronLeft, IconPhone, IconPlus, IconShare } from '../../ui/icons'
-import { Button, cx, Dots, Field, IconButton, Notice, NumberInput, Segmented, TextInput } from '../../ui/kit'
+import { IconCheck, IconChevronDown, IconChevronLeft, IconLock, IconPhone, IconPlus, IconShare, IconTrendDown, IconTrendFlat, IconTrendUp, IconWifiOff, IconZap } from '../../ui/icons'
+import { Button, cx, Dots, Field, IconButton, IconTile, Notice, NumberInput, Segmented, TextInput } from '../../ui/kit'
+import { haptic } from '../../ui/motion'
 import { TargetsEditor } from '../shared/TargetsEditor'
 
 type Overrides = Pick<TargetInputs, 'goalAdjustPct' | 'proteinPerKg' | 'fatPerKg' | 'kcalOverride' | 'useLeanMass'>
 
 function InstallCard() {
+  const steps = [
+    {
+      icon: <IconShare size={18} />,
+      text: (
+        <>
+          Tap <b>Share</b> in Safari's toolbar.
+        </>
+      ),
+    },
+    {
+      icon: <IconPlus size={18} />,
+      text: (
+        <>
+          Choose <b>Add to Home Screen</b>. On iOS 26 and later, leave "Open as Web App" on.
+        </>
+      ),
+    },
+    { icon: <IconPhone size={18} />, text: <>Open Fittrack from its new icon and start there.</> },
+  ]
   return (
-    <div className="flex min-h-dvh flex-col justify-center px-6 pb-10 pt-[env(safe-area-inset-top)]">
-      <div className="mx-auto w-full max-w-sm rounded-3xl bg-surface p-6">
-        <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-          <IconPhone size={28} />
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight">Install Fittrack first</h1>
-        <ol className="mt-5 space-y-4 text-[15px]">
-          <li className="flex gap-3">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sunken text-sm font-bold">1</span>
-            <span>
-              Tap <IconShare size={18} className="inline -translate-y-0.5 text-accent" /> <b>Share</b> in Safari's toolbar.
-            </span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sunken text-sm font-bold">2</span>
-            <span>
-              Choose <IconPlus size={18} className="inline -translate-y-0.5" /> <b>Add to Home Screen</b>. On iOS 26 and later, leave "Open as Web App" on.
-            </span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-sunken text-sm font-bold">3</span>
-            <span>Open Fittrack from its new icon and start there.</span>
-          </li>
-        </ol>
-        <p className="mt-5 text-sm text-muted">Your data lives in the installed app, which keeps its own storage, separate from Safari's.</p>
+    <div className="tone-brand relative flex min-h-dvh flex-col justify-center px-5 pb-10 pt-[env(safe-area-inset-top)]">
+      <div aria-hidden className="ambient pointer-events-none fixed inset-0 -z-10" />
+      <img src={`${import.meta.env.BASE_URL}pwa-192.png`} alt="" className="mx-auto size-20 rounded-[22px] shadow-float" />
+      <h1 className="mt-6 text-center text-title">Install Fittrack</h1>
+      <p className="mt-2 text-center text-[16px] text-ink-2">It runs from your Home Screen, like any app.</p>
+      <div className="card mx-auto mt-8 w-full max-w-sm space-y-4 p-5">
+        {steps.map((s, i) => (
+          <div key={i} className="flex items-start gap-3">
+            <IconTile tone="brand" size={34}>
+              {s.icon}
+            </IconTile>
+            <p className="pt-1.5 text-[15px] leading-snug">{s.text}</p>
+          </div>
+        ))}
       </div>
+      <p className="mx-auto mt-5 max-w-sm text-center text-[13px] text-ink-2">Your data lives in the installed app, which keeps its own storage, separate from Safari's.</p>
     </div>
+  )
+}
+
+const FEATURES = [
+  { icon: <IconLock size={18} />, tone: 'brand' as const, title: 'Private by design', text: 'No account. Everything stays on this phone.' },
+  { icon: <IconWifiOff size={18} />, tone: 'indigo' as const, title: 'Works offline', text: 'Log at the gym or in the shop without signal.' },
+  { icon: <IconZap size={18} />, tone: 'amber' as const, title: 'Fast logging', text: 'Repeat a meal in one tap; sets start from last time.' },
+]
+
+const GOAL_ICON: Record<GoalType, { icon: typeof IconTrendUp; tone: 'brand' | 'indigo' | 'food' }> = {
+  bulk: { icon: IconTrendUp, tone: 'brand' },
+  maintain: { icon: IconTrendFlat, tone: 'indigo' },
+  cut: { icon: IconTrendDown, tone: 'food' },
+}
+
+function Intensity({ level }: { level: number }) {
+  return (
+    <span className="flex h-5 items-end gap-[3px]" aria-hidden>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} className={cx('w-1.5 rounded-full', i <= level ? 'bg-brand' : 'bg-fill-strong')} style={{ height: 4 + i * 3 }} />
+      ))}
+    </span>
   )
 }
 
@@ -57,6 +89,7 @@ export default function Onboarding() {
   const [overrides, setOverrides] = useState<Overrides>({ useLeanMass: false })
   const [showErrors, setShowErrors] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [noticeOpen, setNoticeOpen] = useState(false)
 
   if (isIos() && !isStandalone()) return <InstallCard />
 
@@ -71,6 +104,7 @@ export default function Onboarding() {
       setShowErrors(true)
       return
     }
+    haptic()
     setStep(step + 1)
     window.scrollTo(0, 0)
   }
@@ -78,17 +112,18 @@ export default function Onboarding() {
   const finish = async () => {
     if (!aboutYou || !inputs) return
     setSaving(true)
+    haptic('success')
     await saveProfileAndTargets(aboutYou, inputs)
     // the app shell moves on to Today once it reads the saved flag back
     await completeOnboarding(new Date().toISOString())
   }
 
   const footer = (
-    <div className="fixed inset-x-0 bottom-0 z-20 bg-canvas/95 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 backdrop-blur-md">
+    <div className="fixed inset-x-0 bottom-0 z-20 px-4 pb-[max(env(safe-area-inset-bottom),1rem)] pt-3">
       <div className="mx-auto max-w-xl">
         {step === 0 && (
           <Button block size="lg" disabled={!adult} onClick={next}>
-            Start
+            Get started
           </Button>
         )}
         {(step === 1 || step === 2) && (
@@ -106,7 +141,8 @@ export default function Onboarding() {
   )
 
   return (
-    <div className="mx-auto min-h-dvh max-w-xl px-4 pb-32 pt-[env(safe-area-inset-top)]">
+    <div className="tone-brand relative mx-auto min-h-dvh max-w-xl px-4 pb-32 pt-[env(safe-area-inset-top)]">
+      <div aria-hidden className="ambient pointer-events-none fixed inset-x-0 top-0 -z-10 mx-auto h-[75vh] max-w-xl" />
       <div className="flex min-h-14 items-center">
         {step > 0 ? (
           <IconButton label="Back" onClick={() => setStep(step - 1)}>
@@ -122,21 +158,49 @@ export default function Onboarding() {
       </div>
 
       {step === 0 && (
-        <section className="pt-6">
-          <img src={`${import.meta.env.BASE_URL}pwa-192.png`} alt="" className="size-16 rounded-2xl" />
-          <h1 className="mt-5 text-3xl font-bold tracking-tight">Fittrack</h1>
-          <p className="mt-2 text-lg text-muted">A private logbook for food, training and body weight.</p>
-          <div className="mt-6 flex items-center gap-3 rounded-2xl bg-accent-soft px-4 py-3 font-semibold text-accent">
-            <IconCheck size={20} />
-            Your data stays on this phone.
+        <section className="pt-4">
+          <img src={`${import.meta.env.BASE_URL}pwa-192.png`} alt="" className="animate-pop size-[72px] rounded-[20px] shadow-[0_16px_40px_-12px_color-mix(in_oklab,var(--brand)_70%,transparent)]" />
+          <h1 className="mt-6 text-[40px] font-bold leading-none tracking-[-0.04em]">Fittrack</h1>
+          <p className="mt-3 text-[19px] leading-snug text-ink-2">A private logbook for food, training and body weight.</p>
+
+          <div className="mt-8 space-y-4">
+            {FEATURES.map((f, i) => (
+              <div key={f.title} className="animate-rise flex items-start gap-3.5" style={{ '--i': i + 1 } as CSSProperties}>
+                <IconTile tone={f.tone} size={38}>
+                  {f.icon}
+                </IconTile>
+                <div>
+                  <p className="text-[16px] font-semibold">{f.title}</p>
+                  <p className="text-[14px] text-ink-2">{f.text}</p>
+                </div>
+              </div>
+            ))}
           </div>
+
           {!isStandalone() && (
-            <Notice className="mt-3">Installing to the Home Screen protects your data from browser clean-up. On an iPhone, open this page in Safari and use Share → Add to Home Screen.</Notice>
+            <Notice className="mt-7">Installing to the Home Screen protects your data from browser clean-up. On an iPhone, open this page in Safari and use Share → Add to Home Screen.</Notice>
           )}
-          <div className="mt-6 rounded-2xl bg-surface p-4 text-sm leading-relaxed text-muted">{DISCLAIMER}</div>
-          <label className="mt-4 flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl bg-surface px-4">
-            <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="size-6 accent-[var(--accent)]" />
-            <span className="font-medium">I am 18 or older and have read this notice</span>
+
+          <div className="card mt-4 p-4">
+            <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => setNoticeOpen(!noticeOpen)} aria-expanded={noticeOpen}>
+              <span className="text-[15px] font-semibold">Health notice</span>
+              <IconChevronDown size={18} className={cx('text-ink-2 transition-transform duration-300', noticeOpen && 'rotate-180')} />
+            </button>
+            <p className={cx('mt-2 text-[14px] leading-relaxed text-ink-2', !noticeOpen && 'line-clamp-3')}>{DISCLAIMER}</p>
+          </div>
+
+          <label className="card press mt-3 flex min-h-[60px] cursor-pointer items-center gap-3 px-4">
+            <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="peer sr-only" />
+            <span
+              aria-hidden
+              className={cx(
+                'flex size-7 shrink-0 items-center justify-center rounded-full border-2 transition-colors peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-brand',
+                adult ? 'border-transparent btn-primary' : 'border-fill-strong',
+              )}
+            >
+              {adult && <IconCheck size={16} strokeWidth={3.2} />}
+            </span>
+            <span className="text-[15px] font-medium">I am 18 or older and have read this notice</span>
           </label>
         </section>
       )}
@@ -144,33 +208,35 @@ export default function Onboarding() {
       {step === 1 && (
         <section className="space-y-5 pt-2">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">About you</h1>
-            <p className="mt-1 text-muted">These go into the energy equation. Metric units.</p>
+            <h1 className="text-title">About you</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">These go into the energy equation. Metric units.</p>
           </div>
-          <Field group label="Sex" hint="The equation differs for men and women." error={showErrors && check.errors.sex}>
-            <Segmented
-              value={about.sex ?? ('' as Sex)}
-              options={[
-                { value: 'male' as Sex, label: 'Male' },
-                { value: 'female' as Sex, label: 'Female' },
-              ]}
-              onChange={(sex) => setAbout({ ...about, sex })}
-            />
-          </Field>
-          <Field label="Birth date" error={showErrors && check.errors.birthDate}>
-            <TextInput type="date" value={about.birthDate} max={localDay()} onChange={(e) => setAbout({ ...about, birthDate: e.target.value })} />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Height" error={showErrors && check.errors.heightCm}>
-              <NumberInput value={about.heightCm} unit="cm" ariaLabel="Height" onChange={(heightCm) => setAbout({ ...about, heightCm })} />
+          <div className="card space-y-5 p-4">
+            <Field group label="Sex" hint="The equation differs for men and women." error={showErrors && check.errors.sex}>
+              <Segmented
+                value={about.sex ?? ('' as Sex)}
+                options={[
+                  { value: 'male' as Sex, label: 'Male' },
+                  { value: 'female' as Sex, label: 'Female' },
+                ]}
+                onChange={(sex) => setAbout({ ...about, sex })}
+              />
             </Field>
-            <Field label="Weight" error={showErrors && check.errors.weightKg}>
-              <NumberInput value={about.weightKg} unit="kg" ariaLabel="Weight" onChange={(weightKg) => setAbout({ ...about, weightKg })} />
+            <Field label="Birth date" error={showErrors && check.errors.birthDate}>
+              <TextInput type="date" value={about.birthDate} max={localDay()} onChange={(e) => setAbout({ ...about, birthDate: e.target.value })} />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Height" error={showErrors && check.errors.heightCm}>
+                <NumberInput value={about.heightCm} unit="cm" ariaLabel="Height" onChange={(heightCm) => setAbout({ ...about, heightCm })} />
+              </Field>
+              <Field label="Weight" error={showErrors && check.errors.weightKg}>
+                <NumberInput value={about.weightKg} unit="kg" ariaLabel="Weight" onChange={(weightKg) => setAbout({ ...about, weightKg })} />
+              </Field>
+            </div>
+            <Field label="Body fat (optional)" hint="Lets you use the lean-mass equation." error={showErrors && check.errors.bodyFatPct}>
+              <NumberInput value={about.bodyFatPct} unit="%" ariaLabel="Body fat" onChange={(bodyFatPct) => setAbout({ ...about, bodyFatPct })} />
             </Field>
           </div>
-          <Field label="Body fat (optional)" hint="Lets you use the lean-mass equation." error={showErrors && check.errors.bodyFatPct}>
-            <NumberInput value={about.bodyFatPct} unit="%" ariaLabel="Body fat" onChange={(bodyFatPct) => setAbout({ ...about, bodyFatPct })} />
-          </Field>
           {about.birthDate && ageOn(about.birthDate, localDay()) < 18 && (
             <Notice tone="warn">Under 18 the app sets no deficit target. Please talk to a doctor or dietitian before changing how you eat.</Notice>
           )}
@@ -180,51 +246,67 @@ export default function Onboarding() {
       {step === 2 && (
         <section className="space-y-6 pt-2">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Goal and activity</h1>
-            <p className="mt-1 text-muted">You can change both later under More.</p>
+            <h1 className="text-title">Your goal</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">You can change it any time under More.</p>
           </div>
-          <div className="space-y-2" role="radiogroup" aria-label="Goal">
-            {(Object.keys(GOALS) as GoalType[]).map((g) => (
-              <button
-                key={g}
-                type="button"
-                role="radio"
-                aria-checked={goal === g}
-                onClick={() => {
-                  setGoal(g)
-                  setOverrides({ ...overrides, goalAdjustPct: undefined })
-                }}
-                className={cx('block w-full rounded-3xl border-2 bg-surface p-4 text-left transition', goal === g ? 'border-accent' : 'border-transparent')}
-              >
-                <span className="flex items-center justify-between">
-                  <span className="text-lg font-bold">{GOALS[g].label}</span>
-                  {goal === g && <IconCheck className="text-accent" />}
-                </span>
-                <span className="mt-0.5 block text-sm text-muted">{GOALS[g].blurb}</span>
-              </button>
-            ))}
-          </div>
-          <div>
-            <h2 className="mb-2 font-semibold">How active are you, training included?</h2>
-            <div className="divide-y divide-line overflow-hidden rounded-3xl bg-surface" role="radiogroup" aria-label="Activity">
-              {ACTIVITY_LEVELS.map((l) => (
+          <div className="space-y-2.5" role="radiogroup" aria-label="Goal">
+            {(Object.keys(GOALS) as GoalType[]).map((g) => {
+              const { icon: Icon, tone } = GOAL_ICON[g]
+              const sel = goal === g
+              return (
                 <button
-                  key={l.factor}
+                  key={g}
                   type="button"
                   role="radio"
-                  aria-checked={activity === l.factor}
-                  onClick={() => setActivity(l.factor)}
-                  className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left active:bg-sunken"
+                  aria-checked={sel}
+                  onClick={() => {
+                    haptic()
+                    setGoal(g)
+                    setOverrides({ ...overrides, goalAdjustPct: undefined })
+                  }}
+                  className={cx('card press flex w-full items-center gap-4 p-4 text-left transition-shadow', sel && 'ring-2 ring-brand')}
                 >
-                  <span className={cx('flex size-6 shrink-0 items-center justify-center rounded-full border-2', activity === l.factor ? 'border-accent bg-accent text-accent-ink' : 'border-line')}>
-                    {activity === l.factor && <IconCheck size={14} strokeWidth={3} />}
+                  <IconTile tone={tone} size={44}>
+                    <Icon size={24} strokeWidth={2.4} />
+                  </IconTile>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[18px] font-bold">{GOALS[g].label}</span>
+                    <span className="block text-[14px] text-ink-2">{GOALS[g].blurb}</span>
                   </span>
-                  <span>
-                    <span className="block font-semibold">{l.label}</span>
-                    <span className="block text-sm text-muted">{l.detail}</span>
+                  <span className={cx('flex size-7 shrink-0 items-center justify-center rounded-full border-2', sel ? 'border-transparent btn-primary' : 'border-fill-strong')}>
+                    {sel && <IconCheck size={16} strokeWidth={3.2} />}
                   </span>
                 </button>
-              ))}
+              )
+            })}
+          </div>
+          <div>
+            <h2 className="mb-2.5 px-1 text-[20px] font-bold tracking-tight">How active are you?</h2>
+            <p className="-mt-1.5 mb-3 px-1 text-[14px] text-ink-2">Training included.</p>
+            <div className="card divide-y divide-line overflow-hidden" role="radiogroup" aria-label="Activity">
+              {ACTIVITY_LEVELS.map((l, i) => {
+                const sel = activity === l.factor
+                return (
+                  <button
+                    key={l.factor}
+                    type="button"
+                    role="radio"
+                    aria-checked={sel}
+                    onClick={() => {
+                      haptic()
+                      setActivity(l.factor)
+                    }}
+                    className={cx('flex min-h-16 w-full items-center gap-3.5 px-4 py-3 text-left transition-colors', sel ? 'bg-brand-soft' : 'active:bg-fill')}
+                  >
+                    <Intensity level={i + 1} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[16px] font-semibold">{l.label}</span>
+                      <span className="block text-[13px] text-ink-2">{l.detail}</span>
+                    </span>
+                    {sel && <IconCheck size={20} strokeWidth={3} className="shrink-0 text-brand-ink" />}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </section>
@@ -233,8 +315,8 @@ export default function Onboarding() {
       {step === 3 && inputs && (
         <section className="space-y-4 pt-2">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Your targets</h1>
-            <p className="mt-1 text-muted">Every number can be changed, now or later.</p>
+            <h1 className="text-title">Your targets</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">Every number can be changed, now or later.</p>
           </div>
           <TargetsEditor
             inputs={inputs}

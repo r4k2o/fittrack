@@ -14,7 +14,7 @@ import { IconUpload } from '../../ui/icons'
 import { Button, Card, EmptyState, Field, Group, ListRow, Notice, Screen, SectionTitle, Sheet, Spinner, TextInput } from '../../ui/kit'
 import { useToast } from '../../ui/toast'
 
-const selectCls = 'min-h-11 w-full rounded-xl bg-sunken px-3 text-[15px] outline-none focus:ring-2 focus:ring-accent'
+const selectCls = 'min-h-11 w-full rounded-xl bg-fill px-3 text-[15px] outline-none focus:ring-2 focus:ring-accent'
 
 export default function FoodList() {
   const navigate = useNavigate()
@@ -59,19 +59,19 @@ export default function FoodList() {
   }
 
   return (
-    <Screen back title="Food list and my foods">
+    <Screen tone="food" back title="Food list and my foods">
       <Card>
         {meta ? (
           <>
             <p className="text-xl font-bold">{meta.name}</p>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-ink-2">
               {fmtInt(meta.count)} foods · imported {formatDate(localDay(new Date(meta.importedAt)))}
             </p>
           </>
         ) : (
           <>
             <p className="text-xl font-bold">No food list yet</p>
-            <p className="mt-1 text-sm text-muted">Search covers what you have scanned or added. Import a food table to search generic foods too.</p>
+            <p className="mt-1 text-sm text-ink-2">Search covers what you have scanned or added. Import a food table to search generic foods too.</p>
           </>
         )}
       </Card>
@@ -87,10 +87,10 @@ export default function FoodList() {
       )}
 
       <SectionTitle>Where to get one</SectionTitle>
-      <Card className="space-y-2 text-sm text-muted">
+      <Card className="space-y-2 text-sm text-ink-2">
         <p>
           <b className="text-ink">BLS 4.0</b>, Germany's national food table (7,140 foods), is free from{' '}
-          <a className="text-accent underline" href="https://blsdb.de" target="_blank" rel="noreferrer">
+          <a className="text-brand-ink underline" href="https://blsdb.de" target="_blank" rel="noreferrer">
             blsdb.de
           </a>
           . Open the download in Numbers or Excel, export it as CSV, and import that file here. Read its licence before sharing the file anywhere public.
@@ -135,7 +135,7 @@ export default function FoodList() {
       >
         {table && mapped && (
           <div className="space-y-4 pb-2">
-            <p className="text-sm text-muted">
+            <p className="text-sm text-ink-2">
               {fmtInt(table.rows.length)} rows, {table.header.length} columns. Each value below was matched to a column; change any that are wrong.
             </p>
             <Field label="Name of the list">
@@ -169,13 +169,13 @@ export default function FoodList() {
             {missing.length > 0 && <Notice tone="danger">Choose a column for: {missing.map((m) => FIELD_LABEL[m]).join(', ')}.</Notice>}
             {mapped.foods.length > 0 && (
               <div>
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted">Preview, per 100 g</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-2">Preview, per 100 g</p>
                 <table className="w-full text-sm tabular-nums">
                   <tbody className="divide-y divide-line">
                     {mapped.foods.slice(0, 5).map((f) => (
                       <tr key={f.key}>
                         <td className="py-1.5 pr-2">{f.name}</td>
-                        <td className="whitespace-nowrap py-1.5 text-right text-muted">
+                        <td className="whitespace-nowrap py-1.5 text-right text-ink-2">
                           {fmtInt(f.per100.kcal)} kcal · P {fmt1(f.per100.protein)} · C {fmt1(f.per100.carbs)} · F {fmt1(f.per100.fat)}
                         </td>
                       </tr>
@@ -213,7 +213,7 @@ export default function FoodList() {
           </Button>
         }
       >
-        <p className="pb-2 text-muted">Your diary keeps every entry, since each stores its own values. Scanned and saved foods stay. You can import the list again at any time.</p>
+        <p className="pb-2 text-ink-2">Your diary keeps every entry, since each stores its own values. Scanned and saved foods stay. You can import the list again at any time.</p>
       </Sheet>
     </Screen>
   )

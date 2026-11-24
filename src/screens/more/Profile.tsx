@@ -55,7 +55,7 @@ export default function Profile() {
   }
 
   return (
-    <Screen back title="Profile and goal">
+    <Screen tone="brand" back title="Profile and goal">
       <div className="space-y-4 pt-2">
         <Field group label="Sex" error={check.errors.sex}>
           <Segmented
@@ -84,21 +84,21 @@ export default function Profile() {
 
         <SectionTitle>Goal</SectionTitle>
         <Segmented value={goal} options={(Object.keys(GOALS) as GoalType[]).map((g) => ({ value: g, label: GOALS[g].label }))} onChange={setGoal} />
-        <p className="px-1 text-sm text-muted">{GOALS[goal].blurb}</p>
+        <p className="px-1 text-sm text-ink-2">{GOALS[goal].blurb}</p>
 
         <SectionTitle>Activity, training included</SectionTitle>
         <div className="overflow-hidden rounded-3xl bg-surface">
           {ACTIVITY_LEVELS.map((l) => (
             <label key={l.factor} className="flex min-h-14 cursor-pointer items-center gap-3 border-t border-line px-4 py-2 first:border-t-0">
-              <input type="radio" name="activity" className="size-5 accent-[var(--accent)]" checked={Math.abs(activity - l.factor) < 0.001} onChange={() => setActivity(l.factor)} />
+              <input type="radio" name="activity" className="size-5 accent-[var(--brand)]" checked={Math.abs(activity - l.factor) < 0.001} onChange={() => setActivity(l.factor)} />
               <span>
                 <span className="block font-semibold">{l.label}</span>
-                <span className="block text-sm text-muted">{l.detail}</span>
+                <span className="block text-sm text-ink-2">{l.detail}</span>
               </span>
             </label>
           ))}
         </div>
-        {!ACTIVITY_LEVELS.some((l) => Math.abs(activity - l.factor) < 0.001) && <p className="px-1 text-sm text-muted">Your factor of {activity} was set with the slider under Targets.</p>}
+        {!ACTIVITY_LEVELS.some((l) => Math.abs(activity - l.factor) < 0.001) && <p className="px-1 text-sm text-ink-2">Your factor of {activity} was set with the slider under Targets.</p>}
 
         {preview && (
           <Notice>

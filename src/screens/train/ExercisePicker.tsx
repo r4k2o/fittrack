@@ -29,7 +29,7 @@ export function ExercisePicker({ onPick, exclude = [], autoFocus }: { onPick: (e
   return (
     <div>
       <div className="relative">
-        <IconSearch size={20} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-faint" />
+        <IconSearch size={20} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-3" />
         <input
           type="search"
           autoFocus={autoFocus}
@@ -39,7 +39,7 @@ export function ExercisePicker({ onPick, exclude = [], autoFocus }: { onPick: (e
           placeholder="Search exercises"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="min-h-12 w-full rounded-2xl bg-sunken pl-12 pr-4 outline-none placeholder:text-faint focus:ring-2 focus:ring-accent"
+          className="min-h-12 w-full rounded-2xl bg-fill pl-12 pr-4 outline-none placeholder:text-ink-3 focus:ring-2 focus:ring-accent"
         />
       </div>
       <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
@@ -54,11 +54,11 @@ export function ExercisePicker({ onPick, exclude = [], autoFocus }: { onPick: (e
       </div>
       <div className="mt-3">
         {!list ? (
-          <div className="flex justify-center py-8 text-muted">
+          <div className="flex justify-center py-8 text-ink-2">
             <Spinner />
           </div>
         ) : list.length ? (
-          <Group className="bg-sunken">
+          <Group className="bg-fill">
             {list.map((e) => (
               <ListRow key={e.id} title={e.name} subtitle={exerciseSubtitle(e)} detail={e.custom ? 'Custom' : undefined} chevron={false} onClick={() => onPick(e)} />
             ))}

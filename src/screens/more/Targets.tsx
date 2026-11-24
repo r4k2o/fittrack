@@ -48,7 +48,7 @@ export default function Targets() {
   }
 
   return (
-    <Screen back title="Targets" subtitle={`In effect since ${formatDate(saved.from)}`}>
+    <Screen tone="brand" back title="Targets" subtitle={`In effect since ${formatDate(saved.from)}`}>
       <div className="space-y-4 pt-2">
         {Math.abs(saved.weightKg - inputs.weightKg) >= 0.1 && (
           <Notice>
@@ -59,7 +59,7 @@ export default function Targets() {
         <Button block size="lg" onClick={() => void save()}>
           Save targets
         </Button>
-        <p className="pb-4 text-center text-sm text-muted">Saving starts a new target from today. Charts compare each day with the target that was valid that day.</p>
+        <p className="pb-4 text-center text-sm text-ink-2">Saving starts a new target from today. Charts compare each day with the target that was valid that day.</p>
       </div>
     </Screen>
   )

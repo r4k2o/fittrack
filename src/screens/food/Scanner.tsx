@@ -203,20 +203,22 @@ export default function Scanner() {
     <div className="fixed inset-0 z-40 bg-black text-white">
       <video ref={videoRef} playsInline muted autoPlay className={cx('absolute inset-0 size-full object-cover', phase.kind !== 'scanning' && 'opacity-30')} />
 
-      {/* framing box: everything outside it is dimmed */}
+      {/* framing box: everything outside it is dimmed; corner brackets mark the target */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="relative aspect-[16/9] w-[80%] max-w-md rounded-3xl shadow-[0_0_0_200vmax_rgba(0,0,0,0.55)]">
-          <div className={cx('absolute inset-0 rounded-3xl border-2', phase.kind === 'scanning' ? 'border-white/80' : 'border-white/20')} />
-          {phase.kind === 'scanning' && <div className="absolute inset-x-6 top-1/2 h-0.5 -translate-y-1/2 animate-pulse rounded-full bg-[var(--accent)]" />}
+        <div className="relative aspect-[16/9] w-[80%] max-w-md rounded-[28px] shadow-[0_0_0_200vmax_rgba(0,0,0,0.55)]">
+          {(['left-0 top-0 border-l-[3px] border-t-[3px] rounded-tl-[28px]', 'right-0 top-0 border-r-[3px] border-t-[3px] rounded-tr-[28px]', 'bottom-0 left-0 border-b-[3px] border-l-[3px] rounded-bl-[28px]', 'bottom-0 right-0 border-b-[3px] border-r-[3px] rounded-br-[28px]'] as const).map((c) => (
+            <span key={c} className={cx('absolute size-10 transition-colors', c, phase.kind === 'scanning' ? 'border-white' : 'border-white/30')} />
+          ))}
+          {phase.kind === 'scanning' && <div className="absolute inset-x-8 top-1/2 h-[3px] -translate-y-1/2 animate-pulse rounded-full bg-[var(--brand)] shadow-[0_0_18px_var(--brand)]" />}
         </div>
       </div>
 
       <div className="absolute inset-x-0 top-0 flex items-center justify-between px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
-        <button type="button" aria-label="Close scanner" onClick={() => navigate(-1)} className="flex size-12 items-center justify-center rounded-full bg-black/50 backdrop-blur">
+        <button type="button" aria-label="Close scanner" onClick={() => navigate(-1)} className="press flex size-12 items-center justify-center rounded-full bg-white/15 backdrop-blur-xl">
           <IconX />
         </button>
         {torch.supported && (
-          <button type="button" aria-label="Torch" aria-pressed={torch.on} onClick={toggleTorch} className={cx('flex size-12 items-center justify-center rounded-full backdrop-blur', torch.on ? 'bg-white text-black' : 'bg-black/50')}>
+          <button type="button" aria-label="Torch" aria-pressed={torch.on} onClick={toggleTorch} className={cx('press flex size-12 items-center justify-center rounded-full backdrop-blur-xl', torch.on ? 'bg-white text-black' : 'bg-white/15')}>
             <IconBolt />
           </button>
         )}
@@ -234,10 +236,10 @@ export default function Scanner() {
           {phase.kind === 'noCamera' && phase.reason}
         </p>
         <div className="mx-auto grid max-w-md grid-cols-2 gap-2">
-          <button type="button" onClick={() => setManualOpen(true)} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white/15 font-semibold backdrop-blur active:bg-white/25">
+          <button type="button" onClick={() => setManualOpen(true)} className="press flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-white/15 font-semibold backdrop-blur-xl active:bg-white/25">
             <IconKeyboard size={20} /> Type the code
           </button>
-          <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white/15 font-semibold backdrop-blur active:bg-white/25">
+          <button type="button" onClick={() => fileRef.current?.click()} className="press flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-white/15 font-semibold backdrop-blur-xl active:bg-white/25">
             <IconCamera size={20} /> Take a photo
           </button>
         </div>
@@ -282,10 +284,10 @@ export default function Scanner() {
           <div className="space-y-3 text-ink">
             <div>
               <p className="text-lg font-bold">{product.name}</p>
-              <p className="text-sm text-muted">{[product.brand, product.barcode].filter(Boolean).join(' · ')}</p>
+              <p className="text-sm text-ink-2">{[product.brand, product.barcode].filter(Boolean).join(' · ')}</p>
             </div>
             <table className="w-full text-sm tabular-nums">
-              <caption className="pb-1 text-left text-xs font-semibold uppercase tracking-wide text-muted">Per 100 g</caption>
+              <caption className="pb-1 text-left text-xs font-semibold uppercase tracking-wide text-ink-2">Per 100 g</caption>
               <tbody className="divide-y divide-line">
                 {[
                   ['Energy', `${fmtInt(product.per100.kcal)} kcal`],
@@ -300,7 +302,7 @@ export default function Scanner() {
                   .filter((r) => r[1] != null)
                   .map(([k, val]) => (
                     <tr key={k}>
-                      <td className="py-2 text-muted">{k}</td>
+                      <td className="py-2 text-ink-2">{k}</td>
                       <td className="py-2 text-right font-semibold">{val}</td>
                     </tr>
                   ))}
@@ -314,7 +316,7 @@ export default function Scanner() {
                 </span>
               </div>
             )}
-            <p className="text-xs text-faint">Product data from Open Food Facts, available under the Open Database License.</p>
+            <p className="text-xs text-ink-3">Product data from Open Food Facts, available under the Open Database License.</p>
           </div>
         )}
       </Sheet>

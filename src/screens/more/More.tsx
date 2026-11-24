@@ -6,8 +6,8 @@ import { fmt1, fmtInt } from '../../lib/format'
 import { GOALS } from '../../lib/nutrition'
 import { latestMetric } from '../../store/metrics'
 import { getActiveGoal } from '../../store/profile'
-import { IconDatabase, IconFood, IconInfo, IconPhone, IconShield, IconTarget, IconTrain, IconUser } from '../../ui/icons'
-import { Group, ListRow, Screen, SectionTitle } from '../../ui/kit'
+import { IconChevronRight, IconDatabase, IconFood, IconInfo, IconPhone, IconScale, IconShield, IconTarget, IconTrain, IconUser } from '../../ui/icons'
+import { Card, Group, ListRow, Screen, SectionTitle } from '../../ui/kit'
 
 export default function More() {
   const navigate = useNavigate()
@@ -18,60 +18,85 @@ export default function More() {
   const lastBackupAt = useSetting('lastBackupAt')
   const foodList = useSetting('foodList')
   const deviceCheck = useSetting('deviceCheck')
+  const go = (to: string) => navigate(to)
 
   const backupAge = lastBackupAt ? daysBetween(localDay(new Date(lastBackupAt)), today) : null
   const checks = deviceCheck ? Object.values(deviceCheck.results) : []
 
   return (
-    <Screen title="More">
-      <SectionTitle>You</SectionTitle>
+    <Screen tone="neutral" title="More">
+      <Card tone="brand" onClick={() => go('/more/profile')} className="animate-rise !p-5">
+        <div className="flex items-center gap-4">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-full btn-primary">
+            <IconUser size={28} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-semibold text-ink-2">Your plan</p>
+            <p className="truncate text-[20px] font-bold tracking-tight">{goal ? GOALS[goal.type].label : 'No goal yet'}</p>
+            <p className="truncate text-[14px] text-ink-2">{[weight ? `${fmt1(weight.value)} kg` : null, target ? `${fmtInt(target.kcal)} kcal a day` : null].filter(Boolean).join(' · ')}</p>
+          </div>
+          <IconChevronRight size={18} className="text-ink-3" />
+        </div>
+        {target && (
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+            {[
+              { label: 'Protein', g: target.proteinG, c: 'var(--protein)' },
+              { label: 'Carbs', g: target.carbsG, c: 'var(--carbs)' },
+              { label: 'Fat', g: target.fatG, c: 'var(--fat)' },
+            ].map((m) => (
+              <div key={m.label} className="rounded-[18px] bg-surface/70 py-2">
+                <div className="text-[17px] font-bold">{m.g} g</div>
+                <div className="flex items-center justify-center gap-1 text-[12px] font-semibold text-ink-2">
+                  <span className="size-2 rounded-full" style={{ background: m.c }} />
+                  {m.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <SectionTitle>Plan</SectionTitle>
       <Group>
-        <ListRow
-          icon={<IconUser size={20} />}
-          title="Profile and goal"
-          subtitle={[goal ? GOALS[goal.type].label : null, weight ? `${fmt1(weight.value)} kg` : null].filter(Boolean).join(' · ')}
-          onClick={() => navigate('/more/profile')}
-        />
-        <ListRow
-          icon={<IconTarget size={20} />}
-          title="Targets"
-          subtitle={target ? `${fmtInt(target.kcal)} kcal · P ${target.proteinG} · C ${target.carbsG} · F ${target.fatG} g` : 'Not set'}
-          onClick={() => navigate('/more/targets')}
-        />
+        <ListRow icon={<IconTarget size={18} />} iconTone="brand" title="Targets" subtitle="Calories, macros and why" onClick={() => go('/more/targets')} />
+        <ListRow icon={<IconUser size={18} />} iconTone="pink" title="Profile and goal" subtitle="Body data, goal, activity" onClick={() => go('/more/profile')} />
       </Group>
 
       <SectionTitle>Data</SectionTitle>
       <Group>
         <ListRow
-          icon={<IconShield size={20} />}
+          icon={<IconShield size={18} />}
+          iconTone="amber"
           title="Backup and restore"
           subtitle={backupAge == null ? 'No backup yet' : backupAge === 0 ? 'Last backup today' : `Last backup ${backupAge} ${backupAge === 1 ? 'day' : 'days'} ago`}
-          onClick={() => navigate('/more/backup')}
+          onClick={() => go('/more/backup')}
         />
         <ListRow
-          icon={<IconFood size={20} />}
+          icon={<IconFood size={18} />}
+          iconTone="food"
           title="Food list and my foods"
           subtitle={foodList ? `${foodList.name} · ${fmtInt(foodList.count)} foods` : 'No food list imported'}
-          onClick={() => navigate('/more/foods')}
+          onClick={() => go('/more/foods')}
         />
-        <ListRow icon={<IconTrain size={20} />} title="Exercises" subtitle="Library, load steps, your own" onClick={() => navigate('/train/exercises')} />
+        <ListRow icon={<IconTrain size={18} />} iconTone="train" title="Exercises" subtitle="Library, load steps, your own" onClick={() => go('/train/exercises')} />
       </Group>
 
       <SectionTitle>This phone</SectionTitle>
       <Group>
         <ListRow
-          icon={<IconPhone size={20} />}
+          icon={<IconPhone size={18} />}
+          iconTone="slate"
           title="Device check"
           subtitle={deviceCheck ? `${checks.filter((c) => c.ok).length} of ${checks.length} checks passed` : 'Run it before entering real data'}
-          onClick={() => navigate('/more/device-check')}
+          onClick={() => go('/more/device-check')}
         />
-        <ListRow icon={<IconInfo size={20} />} title="About and disclaimer" subtitle={`Version ${__APP_VERSION__}`} onClick={() => navigate('/more/about')} />
+        <ListRow icon={<IconInfo size={18} />} iconTone="indigo" title="About and disclaimer" subtitle={`Version ${__APP_VERSION__}`} onClick={() => go('/more/about')} />
       </Group>
 
-      <SectionTitle>Later phases</SectionTitle>
-      <Group>
-        <ListRow icon={<IconDatabase size={20} />} title="Apple Health import" subtitle="Steps, weight, body fat and sleep from a Shortcut file" chevron={false} className="opacity-50" />
-        <ListRow icon={<IconDatabase size={20} />} title="Photo logging" subtitle="Your own key on a vision API, optional" chevron={false} className="opacity-50" />
+      <SectionTitle>Coming in later phases</SectionTitle>
+      <Group className="opacity-60">
+        <ListRow icon={<IconDatabase size={18} />} iconTone="body" title="Apple Health import" subtitle="Steps, weight, body fat and sleep from a Shortcut" chevron={false} />
+        <ListRow icon={<IconScale size={18} />} iconTone="indigo" title="Photo logging" subtitle="Meal photo to foods, with your own key" chevron={false} />
       </Group>
     </Screen>
   )

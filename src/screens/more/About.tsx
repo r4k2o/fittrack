@@ -16,7 +16,7 @@ export default function About() {
     <Screen back title="About">
       <Card>
         <p className="text-lg font-bold">Fittrack {__APP_VERSION__}</p>
-        <p className="mt-1 text-sm text-muted">A private logbook for food, training and body weight. No account, no server: every record stays in this app on this phone.</p>
+        <p className="mt-1 text-sm text-ink-2">A private logbook for food, training and body weight. No account, no server: every record stays in this app on this phone.</p>
       </Card>
 
       <SectionTitle>Disclaimer</SectionTitle>
@@ -36,17 +36,17 @@ export default function About() {
       </Group>
 
       <SectionTitle>Credits</SectionTitle>
-      <Card className="space-y-2 text-sm text-muted">
+      <Card className="space-y-2 text-sm text-ink-2">
         <p>
           Product data from{' '}
-          <a className="text-accent underline" href="https://world.openfoodfacts.org" target="_blank" rel="noreferrer">
+          <a className="text-brand-ink underline" href="https://world.openfoodfacts.org" target="_blank" rel="noreferrer">
             Open Food Facts
           </a>
           , available under the Open Database License.
         </p>
         <p>
           Exercise library seeded from{' '}
-          <a className="text-accent underline" href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">
+          <a className="text-brand-ink underline" href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">
             free-exercise-db
           </a>{' '}
           (public domain).

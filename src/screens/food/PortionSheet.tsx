@@ -4,8 +4,9 @@ import { localDay, relativeDay } from '../../lib/dates'
 import { fmt1, fmt2, fmtInt } from '../../lib/format'
 import { checkEnergy, scaleNutrients } from '../../lib/macros'
 import { deleteEntries, logFood, MEAL_LABEL, MEALS, restoreEntries, updatePortion } from '../../store/diary'
-import { IconWarn } from '../../ui/icons'
-import { Button, Chip, cx, NumberInput, Segmented, Sheet, Stepper } from '../../ui/kit'
+import { IconMinus, IconPlus } from '../../ui/icons'
+import { Button, Chip, Notice, NumberInput, Segmented, Sheet } from '../../ui/kit'
+import { haptic } from '../../ui/motion'
 import { useToast } from '../../ui/toast'
 
 interface Props {
@@ -19,6 +20,9 @@ interface Props {
   onClose: () => void
   onDone?: () => void
 }
+
+/** Grams step for the − / + buttons, scaled to the amount. */
+const gramStep = (g: number) => (g >= 200 ? 25 : g >= 50 ? 10 : 5)
 
 export function PortionSheet({ open, food, date, meal: initialMeal, entry, source = 'search', onClose, onDone }: Props) {
   const toast = useToast()
@@ -54,30 +58,43 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
     setGrams(s.grams)
   }
 
+  const nudge = (dir: 1 | -1) => {
+    haptic()
+    if (serving) {
+      const c = Math.max(0.5, Math.round((count + dir * 0.5) * 10) / 10)
+      setCount(c)
+      setGrams(Math.round(serving.grams * c * 10) / 10)
+    } else {
+      const step = gramStep(g)
+      setGrams(Math.max(step, Math.round((g + dir * step) / step) * step))
+    }
+  }
+
+  const portion = { grams: g, servingName: serving?.name ?? null, servingCount: serving ? count : null }
+
   const add = async () => {
     if (!valid) return
-    const e = await logFood(food, { grams: g, servingName: serving?.name ?? null, servingCount: serving ? count : null }, meal, date, source)
-    toast({
-      message: `Added ${food.name} · ${fmtInt(e.macros.kcal)} kcal`,
-      action: { label: 'Undo', onClick: () => void deleteEntries([e.id]) },
-    })
+    const e = await logFood(food, portion, meal, date, source)
+    haptic('success')
+    toast({ message: `${food.name} · ${fmtInt(e.macros.kcal)} kcal added`, action: { label: 'Undo', onClick: () => void deleteEntries([e.id]) } })
     onDone?.()
   }
 
   const save = async () => {
     if (!valid || !entry) return
-    await updatePortion(entry, food, { grams: g, servingName: serving?.name ?? null, servingCount: serving ? count : null }, meal)
+    await updatePortion(entry, food, portion, meal)
+    haptic()
     onDone?.()
   }
 
   const remove = async () => {
     if (!entry) return
     const rows = await deleteEntries([entry.id])
-    toast({ message: `Deleted ${entry.name}`, action: { label: 'Undo', onClick: () => restoreEntries(rows) } })
+    toast({ message: `${entry.name} deleted`, action: { label: 'Undo', onClick: () => restoreEntries(rows) } })
     onDone?.()
   }
 
-  // servings scale with the stepper; plain gram presets just set the amount
+  // servings scale with − / +; plain gram presets just set the amount
   const chips: { name: string; grams: number; label: string; plain: boolean }[] = [
     ...food.servings.map((s) => ({ ...s, plain: false, label: `${s.name}${/\d\s*g\b/i.test(s.name) ? '' : ` · ${fmt1(s.grams)} g`}` })),
     { name: '100 g', grams: 100, label: '100 g', plain: true },
@@ -93,13 +110,13 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
       title={
         <span className="block leading-tight">
           <span className="block truncate">{food.name}</span>
-          {food.brand && <span className="block truncate text-sm font-medium text-muted">{food.brand}</span>}
+          {food.brand && <span className="block truncate text-[14px] font-medium text-ink-2">{food.brand}</span>}
         </span>
       }
       footer={
         entry ? (
           <div className="flex gap-2">
-            <Button variant="danger" onClick={remove}>
+            <Button variant="danger" size="lg" onClick={remove}>
               Delete
             </Button>
             <Button className="flex-1" size="lg" disabled={!valid} onClick={save}>
@@ -116,47 +133,41 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
     >
       <div className="space-y-4 pt-1">
         {(!energy.ok || food.flagged) && (
-          <div className="flex gap-3 rounded-2xl bg-warn-soft px-4 py-3 text-sm text-warn">
-            <IconWarn size={18} className="mt-0.5 shrink-0" />
-            <span>
-              The calories ({fmtInt(food.per100.kcal)} kcal per 100 g) do not match the macros ({fmtInt(energy.computedKcal)} kcal). Check the label.
-            </span>
-          </div>
+          <Notice tone="warn">
+            The calories ({fmtInt(food.per100.kcal)} kcal per 100 g) do not match the macros ({fmtInt(energy.computedKcal)} kcal). Check the label.
+          </Notice>
         )}
 
-        <div className="flex items-end gap-3">
-          <div className="flex-1">
+        <div className="flex items-center justify-between gap-3 rounded-[24px] bg-fill p-2">
+          <button type="button" aria-label="Less" onClick={() => nudge(-1)} className="press flex size-12 items-center justify-center rounded-full bg-surface shadow-[0_2px_8px_-3px_rgba(0,0,0,0.2)]">
+            <IconMinus size={22} strokeWidth={2.6} />
+          </button>
+          <div className="flex min-w-0 flex-1 flex-col items-center">
             <NumberInput
               value={grams}
-              unit="g"
               ariaLabel="Amount in grams"
               onChange={(n) => {
                 setGrams(n)
                 setServing(null)
               }}
               onEnter={entry ? save : add}
+              className="w-full"
+              inputClassName="!min-h-12 !bg-transparent !border-transparent text-center !text-[34px] font-bold tracking-tight !shadow-none !px-2"
             />
+            <span className="-mt-1 text-[13px] font-semibold text-ink-2">{serving ? `grams · ${fmt2(count)} × ${serving.name}` : 'grams'}</span>
           </div>
-          {serving && (
-            <Stepper
-              value={count}
-              step={0.5}
-              min={0.5}
-              format={(n) => `${fmt2(n)}×`}
-              onChange={(n) => {
-                setCount(n)
-                setGrams(Math.round(serving.grams * n * 10) / 10)
-              }}
-            />
-          )}
+          <button type="button" aria-label="More" onClick={() => nudge(1)} className="press flex size-12 items-center justify-center rounded-full bg-surface shadow-[0_2px_8px_-3px_rgba(0,0,0,0.2)]">
+            <IconPlus size={22} strokeWidth={2.6} />
+          </button>
         </div>
 
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none]">
           {chips.map((c) => (
             <Chip
               key={`${c.label}-${c.grams}`}
               active={c.plain ? !serving && grams === c.grams : serving?.name === c.name}
               onClick={() => {
+                haptic()
                 if (c.plain) {
                   setServing(null)
                   setGrams(c.grams)
@@ -168,10 +179,10 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
           ))}
         </div>
 
-        <div className="grid grid-cols-4 gap-2 rounded-3xl bg-sunken p-3 text-center">
+        <div className="grid grid-cols-4 divide-x divide-line rounded-[22px] border border-line py-3 text-center">
           <div>
-            <div className="text-xl font-bold tabular-nums">{fmtInt(m.kcal)}</div>
-            <div className="text-xs font-semibold text-muted">kcal</div>
+            <div className="text-[22px] font-bold tracking-tight">{fmtInt(m.kcal)}</div>
+            <div className="text-[12px] font-semibold text-ink-2">kcal</div>
           </div>
           {[
             { label: 'Protein', v: m.protein, c: 'var(--protein)' },
@@ -179,9 +190,9 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
             { label: 'Fat', v: m.fat, c: 'var(--fat)' },
           ].map((x) => (
             <div key={x.label}>
-              <div className="text-xl font-bold tabular-nums">{fmt1(x.v)}</div>
-              <div className="flex items-center justify-center gap-1 text-xs font-semibold text-muted">
-                <span className="size-1.5 rounded-full" style={{ background: x.c }} />
+              <div className="text-[22px] font-bold tracking-tight">{fmt1(x.v)}</div>
+              <div className="flex items-center justify-center gap-1 text-[12px] font-semibold text-ink-2">
+                <span className="size-2 rounded-full" style={{ background: x.c }} />
                 {x.label}
               </div>
             </div>
@@ -189,8 +200,8 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
         </div>
 
         <Segmented size="sm" value={meal} options={MEALS.map((x) => ({ value: x, label: MEAL_LABEL[x] }))} onChange={setMeal} />
-        <p className={cx('text-center text-xs text-faint')}>
-          Per 100 g: {fmtInt(food.per100.kcal)} kcal · P {fmt1(food.per100.protein)} · C {fmt1(food.per100.carbs)} · F {fmt1(food.per100.fat)}
+        <p className="text-center text-[12px] text-ink-3">
+          Per 100 g: {fmtInt(food.per100.kcal)} kcal · P {fmt1(food.per100.protein)} · C {fmt1(food.per100.carbs)} · F {fmt1(food.per100.fat)} g
         </p>
       </div>
     </Sheet>

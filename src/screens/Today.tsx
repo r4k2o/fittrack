@@ -1,23 +1,48 @@
-// Today answers "what is left today": calories and macros remaining, the next
-// workout, the weight trend, and a backup reminder once the last backup is 7 days old.
+// Today answers "what is left today": calories and macros remaining, each meal,
+// the next workout and the weight trend, plus a backup reminder after 7 days.
 
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { db } from '../db'
+import { db, type DiaryEntry, type Meal } from '../db'
 import { useNow, useSetting, useTarget, useToday } from '../hooks'
 import { addDays, daysBetween, formatDayLong, localDay } from '../lib/dates'
 import { fmt1, fmt2, fmtDuration, fmtInt } from '../lib/format'
 import { sumNutrients } from '../lib/macros'
 import { GOALS } from '../lib/nutrition'
 import { ema, ratePctPerWeek } from '../lib/trends'
-import { mealForNow } from '../store/diary'
+import { MEAL_LABEL, MEALS, mealForNow } from '../store/diary'
 import { metricSeries } from '../store/metrics'
 import { getActiveGoal } from '../store/profile'
 import { activeSession, listRoutines, startSession } from '../store/training'
-import { IconBarcode, IconChevronRight, IconFood, IconPlus, IconScale, IconSearch, IconShield, IconTrain } from '../ui/icons'
-import { Button, Card, cx, ListRow, Group, MacroBar, Ring, Screen, SectionTitle, Sheet } from '../ui/kit'
+import {
+  IconAlert,
+  IconBarcode,
+  IconCheckCircle,
+  IconChevronRight,
+  IconFood,
+  IconPlay,
+  IconPlus,
+  IconScale,
+  IconSearch,
+  IconShield,
+  IconTrain,
+  IconTrendDown,
+  IconTrendFlat,
+  IconTrendUp,
+} from '../ui/icons'
+import { AnimatedNumber, Button, Card, cx, IconTile, MacroBar, Ring, Screen, Sheet, Sparkline } from '../ui/kit'
+import { haptic } from '../ui/motion'
+import { MealIcon } from './shared/WeekStrip'
 import { WeightSheet } from './shared/WeightSheet'
+
+function greeting(d = new Date()): string {
+  const h = d.getHours()
+  if (h < 5) return 'Good night'
+  if (h < 12) return 'Good morning'
+  if (h < 18) return 'Good afternoon'
+  return 'Good evening'
+}
 
 function BackupReminder() {
   const navigate = useNavigate()
@@ -29,20 +54,85 @@ function BackupReminder() {
   const days = daysBetween(localDay(new Date(since)), localDay())
   if (days < 7) return null
   return (
-    <Card className="mb-3 flex items-center gap-3" onClick={() => navigate('/more/backup')}>
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-warn-soft text-warn">
-        <IconShield size={20} />
-      </span>
-      <span className="min-w-0 flex-1">
+    <button
+      type="button"
+      onClick={() => navigate('/more/backup')}
+      className="press mb-3 flex w-full items-center gap-3 rounded-[22px] bg-warn-soft px-4 py-3 text-left text-warn-ink"
+    >
+      <IconShield size={22} className="shrink-0" />
+      <span className="min-w-0 flex-1 text-[14px]">
         <span className="block font-semibold">{lastBackupAt ? `Last backup ${days} days ago` : 'No backup yet'}</span>
-        <span className="block text-sm text-muted">All your data sits on this phone. Save a copy to Files.</span>
+        <span className="block opacity-80">Everything lives on this phone. Save a copy to Files.</span>
       </span>
-      <IconChevronRight size={18} className="text-faint" />
+      <IconChevronRight size={18} className="shrink-0 opacity-70" />
+    </button>
+  )
+}
+
+function EnergyCard({ today }: { today: string }) {
+  const navigate = useNavigate()
+  const target = useTarget(today)
+  const entries = useLiveQuery(() => db.diaryEntries.where('date').equals(today).toArray(), [today])
+  const totals = sumNutrients(entries?.map((e) => e.macros) ?? [])
+  const kcalTarget = target?.kcal ?? 0
+  const left = kcalTarget - totals.kcal
+  const over = left < 0
+  return (
+    <Card onClick={() => navigate('/food')} className="animate-rise !p-5">
+      <div className="flex flex-col items-center">
+        <Ring fraction={kcalTarget ? totals.kcal / kcalTarget : 0} over={over} size={188} stroke={16}>
+          {over && <IconAlert size={18} className="mb-0.5 text-warn-ink" />}
+          <AnimatedNumber value={Math.abs(left)} className="text-[48px] font-bold leading-none tracking-[-0.045em]" />
+          <span className="mt-1.5 text-[13px] font-semibold text-ink-2">{over ? 'kcal over target' : 'kcal left'}</span>
+        </Ring>
+        <p className="mt-3 text-[14px] text-ink-2">
+          <span className="font-semibold text-ink">{fmtInt(totals.kcal)}</span> eaten of {fmtInt(kcalTarget)} kcal
+        </p>
+      </div>
+      <div className="mt-5 grid grid-cols-3 gap-3">
+        <MacroBar compact label="Protein" value={totals.protein} target={target?.proteinG ?? 0} color="var(--protein)" track="var(--protein-track)" />
+        <MacroBar compact label="Carbs" value={totals.carbs} target={target?.carbsG ?? 0} color="var(--carbs)" track="var(--carbs-track)" />
+        <MacroBar compact label="Fat" value={totals.fat} target={target?.fatG ?? 0} color="var(--fat)" track="var(--fat-track)" />
+      </div>
     </Card>
   )
 }
 
-function WorkoutCard({ today }: { today: string }) {
+function MealTiles({ today }: { today: string }) {
+  const navigate = useNavigate()
+  const entries = useLiveQuery(() => db.diaryEntries.where('date').equals(today).toArray(), [today])
+  const kcal = (m: Meal) => (entries ?? []).filter((e: DiaryEntry) => e.meal === m).reduce((s, e) => s + e.macros.kcal, 0)
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-3">
+      {MEALS.map((m, i) => {
+        const k = kcal(m)
+        return (
+          <button
+            key={m}
+            type="button"
+            style={{ '--i': i + 1 } as CSSProperties}
+            onClick={() => {
+              haptic()
+              navigate(`/food/add?meal=${m}`)
+            }}
+            className="card press animate-rise flex flex-col !rounded-[22px] p-3.5 text-left"
+          >
+            <span className="flex items-start justify-between">
+              <MealIcon meal={m} size={36} />
+              <span className="flex size-7 items-center justify-center rounded-full bg-fill text-ink-2">
+                <IconPlus size={16} strokeWidth={2.6} />
+              </span>
+            </span>
+            <span className="mt-2.5 block truncate text-[15px] font-semibold">{MEAL_LABEL[m]}</span>
+            <span className="block text-[13px] text-ink-2">{k > 0 ? `${fmtInt(k)} kcal` : 'Nothing yet'}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function WorkoutTile({ today }: { today: string }) {
   const navigate = useNavigate()
   const now = useNow(30_000)
   const session = useLiveQuery(() => activeSession())
@@ -52,61 +142,50 @@ function WorkoutCard({ today }: { today: string }) {
     return db.setLogs.where('sessionId').anyOf(done.map((s) => s.id)).filter((s) => s.kind === 'work').count()
   }, [done])
   const routines = useLiveQuery(() => listRoutines())
+  const next = routines?.[0]
 
-  if (session) {
-    return (
-      <Card className="flex items-center gap-3" onClick={() => navigate(`/train/session/${session.id}`)}>
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent text-accent-ink">
-          <IconTrain />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-semibold">Workout in progress</span>
-          <span className="block text-sm text-muted">
-            {session.name} · {fmtDuration((now - new Date(session.startedAt).getTime()) / 1000)}
-          </span>
-        </span>
-        <span className="font-semibold text-accent">Resume</span>
-      </Card>
-    )
-  }
-
-  const start = async (name: string, exerciseIds: string[] = [], planDayId: string | null = null) => {
-    const s = await startSession(name, exerciseIds, planDayId)
+  const start = async () => {
+    haptic()
+    const s = next ? await startSession(next.day.name, next.exercises.map((e) => e.exerciseId), next.day.id) : await startSession('Workout')
     navigate(`/train/session/${s.id}`)
   }
-  const next = routines?.[0]
+
+  if (session)
+    return (
+      <Card tone="train" onClick={() => navigate(`/train/session/${session.id}`)} className="animate-rise flex flex-col !p-4" style={{ '--i': 5 } as CSSProperties}>
+        <IconTile tone="train" size={34}>
+          <IconTrain size={20} />
+        </IconTile>
+        <p className="mt-3 text-[13px] font-semibold text-ink-2">In progress</p>
+        <p className="truncate text-[17px] font-bold">{session.name}</p>
+        <p className="text-[13px] text-ink-2">{fmtDuration((now - new Date(session.startedAt).getTime()) / 1000)}</p>
+        <span className="mt-3 inline-flex min-h-9 items-center justify-center rounded-full bg-ink text-[14px] font-semibold text-page">Resume</span>
+      </Card>
+    )
+
   return (
-    <Card>
-      <div className="flex items-start gap-3">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-sunken text-muted">
-          <IconTrain />
-        </span>
-        <div className="min-w-0 flex-1">
-          {done?.length ? (
-            <>
-              <p className="font-semibold">Trained today</p>
-              <p className="text-sm text-muted">
-                {done.map((s) => s.name).join(', ')} · {doneSets ?? 0} sets
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="font-semibold">{next ? `Next: ${next.day.name}` : 'No workout yet today'}</p>
-              <p className="text-sm text-muted">{next ? `${next.exercises.length} exercises` : 'Start an empty workout, or save one as a routine afterwards.'}</p>
-            </>
-          )}
-        </div>
-      </div>
-      <div className="mt-3 flex gap-2">
-        {next && (
-          <Button className="flex-1" onClick={() => start(next.day.name, next.exercises.map((e) => e.exerciseId), next.day.id)}>
-            Start {next.day.name}
-          </Button>
-        )}
-        <Button className="flex-1" variant={next ? 'secondary' : 'primary'} onClick={() => start('Workout')}>
-          {next ? 'Empty' : 'Start workout'}
-        </Button>
-      </div>
+    <Card tone="train" className="animate-rise flex flex-col !p-4" style={{ '--i': 5 } as CSSProperties}>
+      <IconTile tone="train" size={34}>
+        <IconTrain size={20} />
+      </IconTile>
+      {done?.length ? (
+        <>
+          <p className="mt-3 flex items-center gap-1 text-[13px] font-semibold text-ink-2">
+            <IconCheckCircle size={15} /> Done today
+          </p>
+          <p className="truncate text-[17px] font-bold">{done.map((s) => s.name).join(', ')}</p>
+          <p className="text-[13px] text-ink-2">{doneSets ?? 0} sets logged</p>
+        </>
+      ) : (
+        <>
+          <p className="mt-3 text-[13px] font-semibold text-ink-2">{next ? 'Next workout' : 'Training'}</p>
+          <p className="truncate text-[17px] font-bold">{next ? next.day.name : 'Free workout'}</p>
+          <p className="text-[13px] text-ink-2">{next ? `${next.exercises.length} exercises` : 'Log sets as you go'}</p>
+        </>
+      )}
+      <Button size="sm" className="mt-3" onClick={() => void start()}>
+        <IconPlay size={14} /> {done?.length ? 'Again' : 'Start'}
+      </Button>
     </Card>
   )
 }
@@ -114,36 +193,35 @@ function WorkoutCard({ today }: { today: string }) {
 function WeightTile({ today, onLog }: { today: string; onLog: () => void }) {
   const series = useLiveQuery(() => metricSeries('weight', addDays(today, -120), today), [today])
   const goal = useLiveQuery(() => getActiveGoal())
-  if (!series) return null
-  const trend = ema(series)
+  const trend = series ? ema(series) : []
   const latest = trend.at(-1)
   const rate = ratePctPerWeek(trend, today)
   const band = goal ? GOALS[goal.type].rateBand : null
-  const inBand = rate != null && band ? rate >= band[0] - 0.05 && rate <= band[1] + 0.05 : null
   const tooFast = rate != null && (rate < -1 || rate > 0.5)
+  const inBand = rate != null && band ? rate >= band[0] - 0.05 && rate <= band[1] + 0.05 : null
+  const TrendIcon = rate == null || Math.abs(rate) < 0.05 ? IconTrendFlat : rate > 0 ? IconTrendUp : IconTrendDown
   return (
-    <Card className="flex items-center gap-3" onClick={onLog}>
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-sunken text-muted">
-        <IconScale />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm text-muted">Weight trend</span>
-        {latest ? (
-          <span className="block font-semibold tabular-nums">
-            {fmt2(Math.round(latest.value * 10) / 10)} kg
-            {rate != null && (
-              <span className={cx('ml-2 text-sm font-medium', tooFast ? 'text-warn' : inBand ? 'text-accent' : 'text-muted')}>
-                {rate > 0 ? '+' : ''}
-                {fmt2(Math.round(rate * 100) / 100)}% / week
-              </span>
-            )}
-          </span>
+    <Card tone="body" onClick={onLog} className="animate-rise flex flex-col !p-4" style={{ '--i': 6 } as CSSProperties}>
+      <div className="flex items-start justify-between">
+        <IconTile tone="body" size={34}>
+          <IconScale size={20} />
+        </IconTile>
+        <Sparkline values={trend.slice(-30).map((p) => p.value)} width={78} height={34} />
+      </div>
+      <p className="mt-3 text-[13px] font-semibold text-ink-2">Weight trend</p>
+      <p className="text-[17px] font-bold">{latest ? `${fmt1(latest.value)} kg` : 'No readings'}</p>
+      <p className="flex items-center gap-1 text-[13px] text-ink-2">
+        {rate != null ? (
+          <>
+            {tooFast ? <IconAlert size={14} className="text-warn-ink" /> : <TrendIcon size={14} />}
+            {`${rate > 0 ? '+' : ''}${fmt2(Math.round(rate * 100) / 100)}% a week`}
+            {inBand && !tooFast && <span className="sr-only">, within the goal's range</span>}
+          </>
         ) : (
-          <span className="block font-semibold">No readings yet</span>
+          'Rate after 14 days'
         )}
-        {tooFast && <span className="block text-sm text-warn">Faster than 1% a week down or 0.5% up. Check the targets.</span>}
-      </span>
-      <span className="font-semibold text-accent">Log</span>
+      </p>
+      <span className="mt-3 inline-flex min-h-9 items-center justify-center rounded-full bg-fill text-[14px] font-semibold">Log weight</span>
     </Card>
   )
 }
@@ -151,67 +229,65 @@ function WeightTile({ today, onLog }: { today: string; onLog: () => void }) {
 export default function Today() {
   const navigate = useNavigate()
   const today = useToday()
-  const target = useTarget(today)
-  const entries = useLiveQuery(() => db.diaryEntries.where('date').equals(today).toArray(), [today])
   const [menu, setMenu] = useState(false)
   const [weightOpen, setWeightOpen] = useState(false)
-  const totals = sumNutrients(entries?.map((e) => e.macros) ?? [])
-  const kcalTarget = target?.kcal ?? 0
-  const left = kcalTarget - totals.kcal
   const meal = mealForNow()
+  const go = (to: string) => {
+    setMenu(false)
+    navigate(to)
+  }
+  const actions = [
+    { label: 'Food', hint: 'Search and recent', icon: <IconSearch size={20} />, tone: 'food' as const, run: () => go(`/food/add?meal=${meal}`) },
+    { label: 'Scan', hint: 'Barcode', icon: <IconBarcode size={20} />, tone: 'brand' as const, run: () => go(`/food/scan?meal=${meal}`) },
+    { label: 'Quick add', hint: 'Just calories', icon: <IconFood size={20} />, tone: 'amber' as const, run: () => go(`/food/quick?meal=${meal}`) },
+    {
+      label: 'Weight',
+      hint: "Today's reading",
+      icon: <IconScale size={20} />,
+      tone: 'body' as const,
+      run: () => {
+        setMenu(false)
+        setWeightOpen(true)
+      },
+    },
+  ]
 
   return (
-    <Screen title="Today" subtitle={formatDayLong(today)}>
+    <Screen tone="brand" eyebrow={formatDayLong(today)} title={greeting()}>
       <BackupReminder />
-
-      <Card onClick={() => navigate('/food')} className="!p-5">
-        <div className="flex items-center gap-5">
-          <Ring fraction={kcalTarget ? totals.kcal / kcalTarget : 0} over={left < 0}>
-            <span className={cx('text-3xl font-bold tabular-nums tracking-tight', left < 0 && 'text-warn')}>{fmtInt(Math.abs(left))}</span>
-            <span className="text-xs font-semibold text-muted">{left < 0 ? 'kcal over' : 'kcal left'}</span>
-          </Ring>
-          <div className="min-w-0 flex-1 space-y-3">
-            <MacroBar label="Protein" value={totals.protein} target={target?.proteinG ?? 0} color="var(--protein)" />
-            <MacroBar label="Carbs" value={totals.carbs} target={target?.carbsG ?? 0} color="var(--carbs)" />
-            <MacroBar label="Fat" value={totals.fat} target={target?.fatG ?? 0} color="var(--fat)" />
-          </div>
-        </div>
-        <p className="mt-4 text-center text-sm text-muted tabular-nums">
-          Eaten {fmtInt(totals.kcal)} of {fmtInt(kcalTarget)} kcal
-          {entries && entries.length > 0 && ` · ${fmt1(totals.protein)} g protein`}
-        </p>
-      </Card>
-
-      <SectionTitle>Training</SectionTitle>
-      <WorkoutCard today={today} />
-
-      <SectionTitle>Body</SectionTitle>
-      <WeightTile today={today} onLog={() => setWeightOpen(true)} />
+      <EnergyCard today={today} />
+      <MealTiles today={today} />
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <WorkoutTile today={today} />
+        <WeightTile today={today} onLog={() => setWeightOpen(true)} />
+      </div>
 
       <button
         type="button"
         aria-label="Add"
-        onClick={() => setMenu(true)}
-        className="fixed bottom-[calc(env(safe-area-inset-bottom)+5rem)] right-[max(1rem,calc(50vw-17rem))] z-30 flex size-14 items-center justify-center rounded-full bg-accent text-accent-ink shadow-lg active:scale-95"
+        onClick={() => {
+          haptic()
+          setMenu(true)
+        }}
+        className="btn-primary press fixed bottom-[calc(max(env(safe-area-inset-bottom),0.75rem)+5.25rem)] right-[max(1.25rem,calc(50vw-17rem))] z-30 flex size-15 items-center justify-center rounded-full shadow-float"
       >
-        <IconPlus size={28} />
+        <IconPlus size={28} strokeWidth={2.6} />
       </button>
 
-      <Sheet open={menu} onClose={() => setMenu(false)} title="Add">
-        <Group className="bg-sunken">
-          <ListRow icon={<IconSearch size={20} />} title="Food" subtitle="Search, recent and saved" onClick={() => navigate(`/food/add?meal=${meal}`)} />
-          <ListRow icon={<IconBarcode size={20} />} title="Scan barcode" subtitle="Packaged products" onClick={() => navigate(`/food/scan?meal=${meal}`)} />
-          <ListRow icon={<IconFood size={20} />} title="Quick add" subtitle="Calories and macros without a food" onClick={() => navigate(`/food/quick?meal=${meal}`)} />
-          <ListRow
-            icon={<IconScale size={20} />}
-            title="Weight"
-            subtitle="Today's reading"
-            onClick={() => {
-              setMenu(false)
-              setWeightOpen(true)
-            }}
-          />
-        </Group>
+      <Sheet open={menu} onClose={() => setMenu(false)} title="Log">
+        <div className="grid grid-cols-2 gap-3 pb-1">
+          {actions.map((a) => (
+            <button key={a.label} type="button" onClick={a.run} className={cx('press flex flex-col items-start gap-3 rounded-[22px] bg-fill p-4 text-left')}>
+              <IconTile tone={a.tone} size={38}>
+                {a.icon}
+              </IconTile>
+              <span>
+                <span className="block text-[16px] font-semibold">{a.label}</span>
+                <span className="block text-[13px] text-ink-2">{a.hint}</span>
+              </span>
+            </button>
+          ))}
+        </div>
       </Sheet>
       <WeightSheet open={weightOpen} onClose={() => setWeightOpen(false)} />
     </Screen>

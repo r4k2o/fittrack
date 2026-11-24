@@ -62,7 +62,7 @@ export default function QuickAdd() {
   }
 
   return (
-    <Screen back={back} title={entry ? 'Edit quick add' : 'Quick add'} subtitle={date !== today ? relativeDay(date, today) : undefined}>
+    <Screen tone="food" back={back} title={entry ? 'Edit quick add' : 'Quick add'} subtitle={date !== today ? relativeDay(date, today) : undefined}>
       <div className="space-y-4 pt-2">
         <Field label="Calories">
           <NumberInput value={kcal} integer unit="kcal" autoFocus={!editId} ariaLabel="Calories" onChange={setKcal} onEnter={save} />

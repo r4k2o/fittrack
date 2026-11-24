@@ -118,9 +118,9 @@ export default function Backup() {
   return (
     <Screen back title="Backup and restore">
       <Card>
-        <p className="text-sm text-muted">Last backup</p>
+        <p className="text-sm text-ink-2">Last backup</p>
         <p className="text-xl font-bold">{age == null ? 'Never' : age === 0 ? 'Today' : `${age} ${age === 1 ? 'day' : 'days'} ago`}</p>
-        <p className="mt-2 text-sm text-muted">Everything you log lives only on this phone. Save a backup to Files (iCloud Drive) every week; the app reminds you on Today after 7 days.</p>
+        <p className="mt-2 text-sm text-ink-2">Everything you log lives only on this phone. Save a backup to Files (iCloud Drive) every week; the app reminds you on Today after 7 days.</p>
       </Card>
 
       <SectionTitle>Save a backup</SectionTitle>
@@ -136,7 +136,7 @@ export default function Backup() {
       <Button block size="lg" className="mt-3" disabled={busy != null} onClick={() => void doExport()}>
         {busy === 'export' ? <Spinner /> : <IconShare />} Save backup
       </Button>
-      <p className="mt-2 px-1 text-sm text-muted">In the share sheet choose "Save to Files". Files are dated and never overwritten.</p>
+      <p className="mt-2 px-1 text-sm text-ink-2">In the share sheet choose "Save to Files". Files are dated and never overwritten.</p>
 
       <SectionTitle>Restore</SectionTitle>
       <Button block variant="secondary" size="lg" disabled={busy != null} onClick={() => fileRef.current?.click()}>
@@ -158,7 +158,7 @@ export default function Backup() {
       <Button block variant="secondary" disabled={busy != null} onClick={() => void doCsv()}>
         {busy === 'csv' ? <Spinner /> : <IconShare />} Export CSV for Numbers or Excel
       </Button>
-      <p className="mt-2 px-1 text-sm text-muted">Diary, sets, cardio and body metrics as four CSV files. The backup's JSON files are readable without the app too.</p>
+      <p className="mt-2 px-1 text-sm text-ink-2">Diary, sets, cardio and body metrics as four CSV files. The backup's JSON files are readable without the app too.</p>
 
       <Notice className="mt-6">{BACKUP_ADVICE}</Notice>
 
@@ -177,7 +177,7 @@ export default function Backup() {
       >
         {restore && (
           <div className="space-y-4 pb-2">
-            <p className="text-sm text-muted">
+            <p className="text-sm text-ink-2">
               {restore.fileName} · made {new Date(restore.content.manifest.exportedAt).toLocaleString()}
             </p>
             <Segmented
@@ -188,7 +188,7 @@ export default function Backup() {
               ]}
               onChange={(m) => void changeMode(m)}
             />
-            <p className="text-sm text-muted">
+            <p className="text-sm text-ink-2">
               {mode === 'merge'
                 ? 'Adds rows that are missing and keeps the newer version of rows that exist on both. Rows deleted after the backup was made come back.'
                 : 'Makes this phone match the backup exactly. Use it for an empty app or a new phone. Anything logged after the backup is lost.'}
@@ -196,7 +196,7 @@ export default function Backup() {
             {restore.content.warnings.length > 0 && <Notice tone="warn">{restore.content.warnings.join(' ')}</Notice>}
             <table className="w-full text-sm tabular-nums">
               <thead>
-                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-muted">
+                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-ink-2">
                   <th className="py-1 font-semibold">Data</th>
                   <th className="py-1 text-right font-semibold">Add</th>
                   <th className="py-1 text-right font-semibold">Update</th>
@@ -215,14 +215,14 @@ export default function Backup() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="py-3 text-muted">
+                    <td colSpan={4} className="py-3 text-ink-2">
                       Nothing would change: this phone already holds everything in the backup.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
-            <p className="text-xs text-faint">The restore runs as one transaction: if it fails, nothing changes.</p>
+            <p className="text-xs text-ink-3">The restore runs as one transaction: if it fails, nothing changes.</p>
           </div>
         )}
       </Sheet>

@@ -4,7 +4,7 @@
 // the app is open.
 
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { db, type Exercise, type Session as SessionRow, type SetLog } from '../../db'
 import { useNow, useSetting, useWakeLock } from '../../hooks'
@@ -22,8 +22,9 @@ import {
   updateSet,
   type LastTime,
 } from '../../store/training'
-import { IconCheck, IconDots, IconPlus, IconTrophy } from '../../ui/icons'
+import { IconCheck, IconChevronDown, IconDots, IconPlus, IconTrendUp, IconTrophy } from '../../ui/icons'
 import { Button, cx, EmptyState, Group, IconButton, ListRow, NumberInput, Sheet, TextInput } from '../../ui/kit'
+import { haptic } from '../../ui/motion'
 import { useToast } from '../../ui/toast'
 import { ExercisePicker } from './ExercisePicker'
 
@@ -82,6 +83,7 @@ function saveRest(sessionId: string, r: Rest | null) {
   }
 }
 
+/** The rest timer: a floating capsule with a countdown ring. */
 function RestBar({ rest, onChange }: { rest: Rest | null; onChange: (r: Rest | null) => void }) {
   const now = useNow(250)
   const beeped = useRef(false)
@@ -100,31 +102,44 @@ function RestBar({ rest, onChange }: { rest: Rest | null; onChange: (r: Rest | n
   if (!rest) return null
   const done = remaining <= 0
   const frac = Math.max(0, Math.min(1, (rest.endsAt - now) / 1000 / rest.total))
+  const r = 19
+  const c = 2 * Math.PI * r
+  const small = 'press flex size-11 items-center justify-center rounded-full text-[14px] font-bold'
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 pb-[env(safe-area-inset-bottom)]">
-      <div className={cx('mx-auto max-w-xl px-3 pb-3 pt-2', done ? 'bg-accent text-accent-ink' : 'bg-ink text-canvas', 'rounded-t-3xl shadow-2xl')}>
-        <div className="mb-2 h-1 overflow-hidden rounded-full bg-white/20">
-          <div className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-200" style={{ width: `${frac * 100}%` }} />
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
+      <div className={cx('animate-toast pointer-events-auto mx-auto flex max-w-md items-center gap-3 rounded-[32px] p-2 pl-2.5 shadow-float', done ? 'btn-primary' : 'bg-ink text-page')}>
+        <svg width={48} height={48} className="-rotate-90 shrink-0" aria-hidden>
+          <circle cx={24} cy={24} r={r} fill="none" stroke="currentColor" strokeOpacity={0.18} strokeWidth={5} />
+          <circle
+            cx={24}
+            cy={24}
+            r={r}
+            fill="none"
+            stroke={done ? 'currentColor' : 'var(--brand)'}
+            strokeWidth={5}
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={c * (1 - (done ? 1 : frac))}
+            style={{ transition: 'stroke-dashoffset 250ms linear' }}
+          />
+        </svg>
+        <div className="min-w-0 flex-1">
+          <div className="text-[11px] font-bold uppercase tracking-wider opacity-70">{done ? 'Rest over' : 'Rest'}</div>
+          <div className="text-[28px] font-bold leading-none tabular-nums tracking-tight">{done ? 'Go!' : fmtDuration(remaining)}</div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 pl-2">
-            <div className="text-xs font-semibold uppercase tracking-wide opacity-70">{done ? 'Rest over' : 'Rest'}</div>
-            <div className="text-3xl font-bold tabular-nums">{done ? 'Go' : fmtDuration(remaining)}</div>
-          </div>
-          {!done && (
-            <>
-              <button type="button" className="min-h-11 rounded-2xl bg-white/10 px-3 font-semibold" onClick={() => onChange({ ...rest, endsAt: rest.endsAt - 15_000 })}>
-                −15
-              </button>
-              <button type="button" className="min-h-11 rounded-2xl bg-white/10 px-3 font-semibold" onClick={() => onChange({ endsAt: rest.endsAt + 15_000, total: rest.total + 15 })}>
-                +15
-              </button>
-            </>
-          )}
-          <button type="button" className="min-h-11 rounded-2xl bg-white/15 px-4 font-semibold" onClick={() => onChange(null)}>
-            {done ? 'Close' : 'Skip'}
-          </button>
-        </div>
+        {!done && (
+          <>
+            <button type="button" aria-label="15 seconds less" className={cx(small, 'bg-page/12')} onClick={() => onChange({ ...rest, endsAt: rest.endsAt - 15_000 })}>
+              −15
+            </button>
+            <button type="button" aria-label="15 seconds more" className={cx(small, 'bg-page/12')} onClick={() => onChange({ endsAt: rest.endsAt + 15_000, total: rest.total + 15 })}>
+              +15
+            </button>
+          </>
+        )}
+        <button type="button" className={cx('press min-h-11 rounded-full px-4 text-[15px] font-bold', done ? 'bg-black/10' : 'bg-page/18')} onClick={() => onChange(null)}>
+          {done ? 'Close' : 'Skip'}
+        </button>
       </div>
     </div>
   )
@@ -150,12 +165,14 @@ function lastTimeText(last: LastTime | null | undefined): string {
 
 function ExerciseCard({
   ex,
+  index,
   session,
   logged,
   onRest,
   onMenu,
 }: {
   ex: Exercise
+  index: number
   session: SessionRow
   logged: SetLog[]
   onRest: (sec: number) => void
@@ -181,6 +198,7 @@ function ExerciseCard({
   const rowCount = Math.max(planned?.length ?? 0, logged.length ? Math.max(...logged.map((s) => s.setIndex)) + 1 : 0)
   const rows = Array.from({ length: rowCount }, (_, i) => ({ i, set: byIndex.get(i), plan: planned?.[i] ?? { weight: null, reps: null } }))
   const bodyweight = ex.equipment === 'bodyweight' || ex.equipment === 'band'
+  const doneCount = rows.filter((r) => r.set).length
 
   const setPlan = (i: number, patch: Partial<Planned>) =>
     setPlanned((cur) => {
@@ -196,15 +214,17 @@ function ExerciseCard({
     if (existing) {
       setPlan(i, { weight: existing.weightKg, reps: existing.reps })
       await deleteSet(existing.id)
+      haptic()
       return
     }
     const p = planned?.[i]
     const weight = p?.weight ?? (bodyweight ? 0 : null)
     if (weight == null || p?.reps == null || p.reps <= 0) {
-      toast({ message: seconds ? 'Enter the weight and seconds first.' : 'Enter the weight and reps first.' })
+      toast({ message: seconds ? 'Enter the weight and seconds first' : 'Enter the weight and reps first' })
       return
     }
     await logSet(session, ex.id, i, { weightKg: weight, reps: p.reps })
+    haptic('success')
     onRest(defaultRestSec(ex, restCompound ?? 150, restIsolation ?? 90))
   }
 
@@ -220,7 +240,7 @@ function ExerciseCard({
 
   const addSet = () => {
     const lastRow = rows.at(-1)
-    const from = lastRow?.set ? { weight: lastRow.set.weightKg, reps: lastRow.set.reps } : lastRow?.plan ?? { weight: null, reps: null }
+    const from = lastRow?.set ? { weight: lastRow.set.weightKg, reps: lastRow.set.reps } : (lastRow?.plan ?? { weight: null, reps: null })
     setPlanned((cur) => {
       const next = [...(cur ?? [])]
       while (next.length < rowCount) next.push({ weight: null, reps: null })
@@ -236,46 +256,60 @@ function ExerciseCard({
   }
 
   return (
-    <section className="rounded-3xl bg-surface p-4">
-      <div className="flex items-start gap-2">
+    <section className="card animate-rise p-4" style={{ '--i': index } as CSSProperties}>
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-fill text-[14px] font-bold text-ink-2">{index + 1}</span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold leading-snug">{ex.name}</h2>
-          <p className="mt-0.5 text-sm text-muted">{lastTimeText(last)}</p>
-          <p className="mt-1 text-sm font-medium">
-            Target {range[0]}–{range[1]} {seconds ? 'seconds' : 'reps'}, 1–3 in reserve
-            {progression?.increased && <span className="ml-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent">+{fmt2(step)} kg</span>}
-          </p>
+          <h2 className="text-[18px] font-bold leading-snug tracking-tight">{ex.name}</h2>
+          <p className="mt-0.5 text-[13px] text-ink-2">{lastTimeText(last)}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span className="rounded-full bg-fill px-2.5 py-1 text-[12px] font-semibold text-ink-2">
+              {range[0]}–{range[1]} {seconds ? 'sec' : 'reps'} · 1–3 in reserve
+            </span>
+            {progression?.increased && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand-ink">
+                <IconTrendUp size={13} strokeWidth={2.6} /> +{fmt2(step)} kg
+              </span>
+            )}
+            {rowCount > 0 && (
+              <span className="ml-auto text-[12px] font-semibold text-ink-3">
+                {doneCount}/{rowCount} done
+              </span>
+            )}
+          </div>
         </div>
-        <IconButton label={`${ex.name} options`} className="-mr-2 -mt-1" onClick={onMenu}>
+        <IconButton label={`${ex.name} options`} className="-mr-2 -mt-1 size-9 text-ink-2" onClick={onMenu}>
           <IconDots size={20} className="rotate-90" />
         </IconButton>
       </div>
 
-      <div className="mt-3 grid grid-cols-[2rem_1fr_1fr_3rem] items-center gap-2 px-1 text-xs font-semibold uppercase tracking-wide text-faint">
-        <span>Set</span>
-        <span>kg</span>
-        <span>{seconds ? 'sec' : 'reps'}</span>
+      <div className="mt-3 grid grid-cols-[2rem_1fr_1fr_3.25rem] items-center gap-2 px-1 text-[11px] font-bold uppercase tracking-wider text-ink-3">
+        <span className="text-center">Set</span>
+        <span className="pl-1">kg</span>
+        <span className="pl-1">{seconds ? 'sec' : 'reps'}</span>
         <span />
       </div>
-      <div className="mt-1 space-y-2">
+      <div className="mt-1.5 space-y-1.5">
         {rows.map(({ i, set, plan }) => {
           const done = !!set
           return (
-            <div key={i} className={cx('grid grid-cols-[2rem_1fr_1fr_3rem] items-center gap-2 rounded-2xl p-1 transition', done && 'bg-accent-soft')}>
-              <span className={cx('text-center font-bold tabular-nums', done ? 'text-accent' : 'text-muted')}>{i + 1}</span>
+            <div key={i} className={cx('grid grid-cols-[2rem_1fr_1fr_3.25rem] items-center gap-2 rounded-[20px] p-1 transition-colors duration-300', done && 'bg-brand-soft')}>
+              <span className={cx('text-center text-[15px] font-bold', done ? 'text-brand-ink' : 'text-ink-3')}>{i + 1}</span>
+              <NumberInput value={set ? set.weightKg : plan.weight} ariaLabel={`Set ${i + 1} weight`} placeholder={bodyweight ? '0' : '–'} onChange={(n) => edit(i, { weight: n })} inputClassName="!min-h-12 text-[17px] font-semibold" />
               <NumberInput
-                value={set ? set.weightKg : plan.weight}
-                ariaLabel={`Set ${i + 1} weight`}
-                placeholder={bodyweight ? '0' : '–'}
-                onChange={(n) => edit(i, { weight: n })}
+                value={set ? set.reps : plan.reps}
+                integer
+                ariaLabel={`Set ${i + 1} ${seconds ? 'seconds' : 'reps'}`}
+                placeholder={String(range[1])}
+                onChange={(n) => edit(i, { reps: n })}
+                inputClassName="!min-h-12 text-[17px] font-semibold"
               />
-              <NumberInput value={set ? set.reps : plan.reps} integer ariaLabel={`Set ${i + 1} ${seconds ? 'seconds' : 'reps'}`} placeholder={String(range[1])} onChange={(n) => edit(i, { reps: n })} />
               <button
                 type="button"
                 aria-label={done ? `Undo set ${i + 1}` : `Done with set ${i + 1}`}
                 aria-pressed={done}
                 onClick={() => void tick(i)}
-                className={cx('flex size-12 items-center justify-center rounded-2xl transition active:scale-95', done ? 'bg-accent text-accent-ink' : 'bg-sunken text-faint')}
+                className={cx('press flex size-12 items-center justify-center rounded-[16px] transition-colors duration-200', done ? 'btn-primary animate-pop' : 'bg-fill text-ink-3')}
               >
                 <IconCheck size={26} strokeWidth={3} />
               </button>
@@ -285,7 +319,7 @@ function ExerciseCard({
       </div>
       <div className="mt-3 flex gap-2">
         <Button size="sm" variant="secondary" className="flex-1" onClick={addSet}>
-          <IconPlus size={18} /> Add set
+          <IconPlus size={17} strokeWidth={2.6} /> Add set
         </Button>
         {rows.length > 0 && !rows.at(-1)?.set && (
           <Button size="sm" variant="secondary" onClick={removeSet}>
@@ -357,6 +391,7 @@ export default function Session() {
       next[picker.index] = ex.id
       await setSessionExercises(session.id, next)
     }
+    haptic()
     setPicker(null)
   }
 
@@ -397,6 +432,7 @@ export default function Session() {
       return
     }
     await finishSession(session.id)
+    haptic('success')
     navigate(`/train/summary/${session.id}`, { replace: true })
   }
 
@@ -404,27 +440,31 @@ export default function Session() {
   const menuHasSets = menu != null && sets.some((s) => s.exerciseId === ids[menu])
 
   return (
-    <div className="mx-auto min-h-dvh max-w-xl pb-[calc(env(safe-area-inset-bottom)+8rem)]">
-      <header className="sticky top-0 z-20 bg-canvas/90 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-md">
-        <div className="flex min-h-16 items-center gap-3">
+    <div className="tone-train relative mx-auto min-h-dvh max-w-xl pb-[calc(env(safe-area-inset-bottom)+8.5rem)]">
+      <div aria-hidden className="ambient pointer-events-none fixed inset-x-0 top-0 -z-10 mx-auto h-[60vh] max-w-xl" />
+      <header className="sticky top-0 z-20 border-b border-line bg-page/75 px-3 pt-[env(safe-area-inset-top)] backdrop-blur-xl backdrop-saturate-150">
+        <div className="flex min-h-16 items-center gap-2">
+          <IconButton label="Minimise" variant="fill" className="size-10" onClick={() => navigate('/today')}>
+            <IconChevronDown size={20} />
+          </IconButton>
           <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setRenaming(session.name)}>
-            <span className="block truncate text-xl font-bold">{session.name}</span>
-            <span className="block text-sm tabular-nums text-muted">
+            <span className="block truncate text-[17px] font-bold">{session.name}</span>
+            <span className="block text-[13px] tabular-nums text-ink-2">
               {fmtDuration((now - new Date(session.startedAt).getTime()) / 1000)} · {workSets} {workSets === 1 ? 'set' : 'sets'}
             </span>
           </button>
-          <Button variant="secondary" onClick={() => navigate('/today')}>
-            Minimise
+          <Button size="md" onClick={() => setFinishing(true)}>
+            Finish
           </Button>
-          <Button onClick={() => setFinishing(true)}>Finish</Button>
         </div>
       </header>
 
-      <main className="space-y-3 px-4 pt-2">
+      <main className="space-y-3 px-4 pt-3">
         {exercises.map((ex, index) => (
           <ExerciseCard
             key={ex.id}
             ex={ex}
+            index={index}
             session={session}
             logged={sets.filter((s) => s.exerciseId === ex.id && s.kind === 'work')}
             onRest={(sec) => setRest({ endsAt: Date.now() + sec * 1000, total: sec })}
@@ -432,12 +472,12 @@ export default function Session() {
           />
         ))}
         {exercises.length === 0 && (
-          <EmptyState icon={<IconTrophy size={32} />} title="Add your first exercise">
+          <EmptyState icon={<IconTrophy size={28} />} title="Add your first exercise">
             Each set starts with last time's numbers; tick it to log it and start the rest timer.
           </EmptyState>
         )}
-        <Button block size="lg" variant="outline" onClick={() => setPicker({ mode: 'add' })}>
-          <IconPlus /> Add exercise
+        <Button block size="lg" variant="outline" className="!border-dashed" onClick={() => setPicker({ mode: 'add' })}>
+          <IconPlus size={20} strokeWidth={2.6} /> Add exercise
         </Button>
       </main>
 
@@ -449,7 +489,7 @@ export default function Session() {
 
       <Sheet open={menu != null} onClose={() => setMenu(null)} title={menuEx?.name}>
         {menu != null && (
-          <Group className="bg-sunken">
+          <Group className="!shadow-none">
             {!menuHasSets && (
               <ListRow
                 title="Swap for another exercise"
@@ -461,7 +501,7 @@ export default function Session() {
             )}
             {menu > 0 && <ListRow title="Move up" onClick={() => void move(menu, -1)} />}
             {menu < ids.length - 1 && <ListRow title="Move down" onClick={() => void move(menu, 1)} />}
-            <ListRow title={menuHasSets ? 'Remove with its sets' : 'Remove'} className="text-danger" onClick={() => void remove(menu)} />
+            <ListRow title={menuHasSets ? 'Remove with its sets' : 'Remove'} destructive onClick={() => void remove(menu)} />
           </Group>
         )}
       </Sheet>
@@ -472,16 +512,16 @@ export default function Session() {
         title={workSets ? 'Finish workout?' : 'Discard this workout?'}
         footer={
           <div className="flex gap-2">
-            <Button variant="secondary" className="flex-1" onClick={() => setFinishing(false)}>
+            <Button variant="secondary" size="lg" className="flex-1" onClick={() => setFinishing(false)}>
               Keep going
             </Button>
-            <Button variant={workSets ? 'primary' : 'danger'} className="flex-1" onClick={() => void finish()}>
+            <Button variant={workSets ? 'primary' : 'danger'} size="lg" className="flex-1" onClick={() => void finish()}>
               {workSets ? 'Finish' : 'Discard'}
             </Button>
           </div>
         }
       >
-        <p className="pb-2 text-muted">
+        <p className="pb-2 text-[15px] text-ink-2">
           {workSets
             ? `${workSets} work ${workSets === 1 ? 'set' : 'sets'} over ${new Set(sets.map((s) => s.exerciseId)).size} exercises. Unticked sets are not saved.`
             : 'No set has been ticked, so there is nothing to save.'}
@@ -495,6 +535,7 @@ export default function Session() {
         footer={
           <Button
             block
+            size="lg"
             disabled={!renaming?.trim()}
             onClick={async () => {
               if (renaming?.trim()) await renameSession(session.id, renaming.trim())

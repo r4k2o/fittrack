@@ -10,7 +10,7 @@ import { ExercisePicker } from './ExercisePicker'
 
 const JOINT_LABEL: Record<string, string> = { shoulder: 'shoulder', elbow: 'elbow', wrist: 'wrist', lowerBack: 'lower back', hip: 'hip', knee: 'knee' }
 
-const selectCls = 'min-h-12 w-full rounded-2xl bg-sunken px-4 outline-none focus:ring-2 focus:ring-accent'
+const selectCls = 'min-h-12 w-full rounded-2xl bg-fill px-4 outline-none focus:ring-2 focus:ring-accent'
 
 function Detail({ ex, onClose }: { ex: Exercise; onClose: () => void }) {
   const toast = useToast()
@@ -22,18 +22,18 @@ function Detail({ ex, onClose }: { ex: Exercise; onClose: () => void }) {
   }
   return (
     <div className="space-y-4 pb-2">
-      <p className="text-sm text-muted">{exerciseSubtitle(ex)}</p>
+      <p className="text-sm text-ink-2">{exerciseSubtitle(ex)}</p>
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-2xl bg-sunken p-3">
-          <div className="text-xs font-semibold text-muted">Movement</div>
+        <div className="rounded-2xl bg-fill p-3">
+          <div className="text-xs font-semibold text-ink-2">Movement</div>
           <div className="font-semibold">{PATTERN_LABEL[ex.pattern]}</div>
         </div>
-        <div className="rounded-2xl bg-sunken p-3">
-          <div className="text-xs font-semibold text-muted">Also works</div>
+        <div className="rounded-2xl bg-fill p-3">
+          <div className="text-xs font-semibold text-ink-2">Also works</div>
           <div className="font-semibold">{ex.secondary.map((m) => MUSCLE_LABEL[m]).join(', ') || '–'}</div>
         </div>
       </div>
-      {ex.jointStress.length > 0 && <p className="text-sm text-muted">Loads the {ex.jointStress.map((j) => JOINT_LABEL[j]).join(', ')}. Pain is a reason to stop.</p>}
+      {ex.jointStress.length > 0 && <p className="text-sm text-ink-2">Loads the {ex.jointStress.map((j) => JOINT_LABEL[j]).join(', ')}. Pain is a reason to stop.</p>}
       <div className="flex items-end gap-2">
         <Field label="Smallest load step" hint="Added when every set reaches the top of its rep range.">
           <NumberInput value={step} unit="kg" ariaLabel="Load step" onChange={setStep} />
@@ -49,7 +49,7 @@ function Detail({ ex, onClose }: { ex: Exercise; onClose: () => void }) {
           ))}
         </ol>
       )}
-      {!ex.custom && <p className="text-xs text-faint">Description from free-exercise-db (public domain).</p>}
+      {!ex.custom && <p className="text-xs text-ink-3">Description from free-exercise-db (public domain).</p>}
       {ex.custom === 1 && (
         <Button
           variant="danger"
@@ -144,6 +144,7 @@ export default function ExerciseLibrary() {
   const [creating, setCreating] = useState(false)
   return (
     <Screen
+      tone="train"
       back
       title="Exercises"
       subtitle="158 common lifts and your own"
@@ -160,7 +161,7 @@ export default function ExerciseLibrary() {
       <Sheet open={creating} onClose={() => setCreating(false)} title="New exercise">
         <NewExercise onDone={() => setCreating(false)} />
       </Sheet>
-      <p className="mt-4 text-center text-xs text-faint">Load steps by default: {Object.entries(DEFAULT_LOAD_STEP).filter(([, v]) => v > 0).map(([k, v]) => `${EQUIPMENT_LABEL[k as Equipment].toLowerCase()} ${fmt2(v)} kg`).join(', ')}.</p>
+      <p className="mt-4 text-center text-xs text-ink-3">Load steps by default: {Object.entries(DEFAULT_LOAD_STEP).filter(([, v]) => v > 0).map(([k, v]) => `${EQUIPMENT_LABEL[k as Equipment].toLowerCase()} ${fmt2(v)} kg`).join(', ')}.</p>
     </Screen>
   )
 }

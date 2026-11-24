@@ -152,14 +152,14 @@ export default function DeviceCheck() {
                 <span
                   className={cx(
                     'flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold',
-                    !r ? 'bg-sunken text-muted' : r.ok ? 'bg-accent text-accent-ink' : 'bg-warn-soft text-warn',
+                    !r ? 'bg-fill text-ink-2' : r.ok ? 'btn-primary' : 'bg-warn-soft text-warn',
                   )}
                 >
                   {!r ? i + 1 : r.ok ? <IconCheck size={18} strokeWidth={3} /> : <IconWarn size={18} />}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold">{c.title}</p>
-                  <p className="text-sm text-muted">{r ? r.detail : c.what}</p>
+                  <p className="text-sm text-ink-2">{r ? r.detail : c.what}</p>
                 </div>
               </div>
               <div className="mt-3 flex gap-2 pl-12">
@@ -183,7 +183,7 @@ export default function DeviceCheck() {
         })}
       </div>
       <input ref={fileRef} type="file" accept=".zip,application/zip" className="hidden" onChange={(e) => void readBack(e.target.files?.[0])} />
-      {saved?.ranAt && <p className="mt-4 text-center text-xs text-faint">Last run {new Date(saved.ranAt).toLocaleString()}</p>}
+      {saved?.ranAt && <p className="mt-4 text-center text-xs text-ink-3">Last run {new Date(saved.ranAt).toLocaleString()}</p>}
     </Screen>
   )
 }

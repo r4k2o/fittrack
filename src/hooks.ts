@@ -91,3 +91,17 @@ export function isIos(): boolean {
   const ua = navigator.userAgent
   return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
 }
+
+/** 'light' or 'dark', following the system setting live (charts read colours from CSS). */
+export function useColorScheme(): 'light' | 'dark' {
+  const query = '(prefers-color-scheme: dark)'
+  const [scheme, setScheme] = useState<'light' | 'dark'>(() => (window.matchMedia?.(query).matches ? 'dark' : 'light'))
+  useEffect(() => {
+    const mq = window.matchMedia?.(query)
+    if (!mq) return
+    const on = () => setScheme(mq.matches ? 'dark' : 'light')
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return scheme
+}
