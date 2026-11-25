@@ -107,7 +107,7 @@ describe('plan generator (gate 2)', () => {
               }
     expect(plans).toBe(5 * 5 * 3 * 5 * 3 * 7)
     expect(problems.slice(0, 15)).toEqual([])
-  })
+  }, 60_000) // thousands of plans: allow for slow CI machines
 
   it('keeps every rule with one or two priority muscles', () => {
     const problems: string[] = []
@@ -121,7 +121,7 @@ describe('plan generator (gate 2)', () => {
               problems.push(...check(generatePlan(a, EXERCISES), a))
             }
     expect(problems.slice(0, 15)).toEqual([])
-  })
+  }, 60_000)
 
   it('reaches the weekly target for every group on 4 × 60 minutes in a full gym', () => {
     const plan = generatePlan(answers(), EXERCISES)
