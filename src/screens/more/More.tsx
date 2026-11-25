@@ -7,7 +7,8 @@ import { fmt1, fmtInt } from '../../lib/format'
 import { GOALS } from '../../lib/nutrition'
 import { latestMetric } from '../../store/metrics'
 import { getActiveGoal } from '../../store/profile'
-import { IconCamera, IconChevronRight, IconFood, IconHeart, IconInfo, IconPhone, IconShield, IconTarget, IconTrain, IconUser } from '../../ui/icons'
+import { IconCamera, IconChevronRight, IconFood, IconHeart, IconImage, IconInfo, IconList, IconPhone, IconShield, IconTarget, IconTimer, IconTrain, IconUser } from '../../ui/icons'
+import { activePlan } from '../../store/plans'
 import { PROVIDERS } from '../../lib/ai'
 import { Card, Group, ListRow, Screen, SectionTitle } from '../../ui/kit'
 
@@ -21,6 +22,7 @@ export default function More() {
   const foodList = useSetting('foodList')
   const deviceCheck = useSetting('deviceCheck')
   const aiKey = useSetting('aiApiKey')
+  const plan = useLiveQuery(async () => (await activePlan()) ?? null, [])
   const aiProvider = useSetting('aiProvider')
   const lastImport = useLiveQuery(async () => (await listImports())[0] ?? null, [])
   const go = (to: string) => navigate(to)
@@ -65,6 +67,22 @@ export default function More() {
       <Group>
         <ListRow icon={<IconTarget size={18} />} iconTone="brand" title="Targets" subtitle="Calories, macros and why" onClick={() => go('/more/targets')} />
         <ListRow icon={<IconUser size={18} />} iconTone="pink" title="Profile and goal" subtitle="Body data, goal, activity" onClick={() => go('/more/profile')} />
+        <ListRow
+          icon={<IconTrain size={18} />}
+          iconTone="train"
+          title="Training plan"
+          subtitle={plan ? `${plan.plan.name} · ${plan.days.length} sessions` : 'Build one from seven questions'}
+          onClick={() => go(plan ? '/train/plan' : '/train/plan/new')}
+        />
+      </Group>
+
+      <SectionTitle>Logging</SectionTitle>
+      <Group>
+        <ListRow icon={<IconCamera size={18} />} iconTone="food" title="Photo logging" subtitle={aiKey ? `${PROVIDERS[aiProvider ?? 'gemini'].label} · key on this phone` : 'Meal photo to foods, with your own key'} onClick={() => go('/more/ai')} />
+        <ListRow icon={<IconHeart size={18} />} iconTone="pink" title="Apple Health" subtitle={lastImport ? `Last import ${formatDate(lastImport.createdAt.slice(0, 10))}` : 'Steps, weight, sleep and workouts'} onClick={() => go('/more/health')} />
+        <ListRow icon={<IconList size={18} />} iconTone="amber" title="Recipes and saved meals" subtitle="Dishes by serving, meals in one tap" onClick={() => go('/food/add?tab=recipes')} />
+        <ListRow icon={<IconTimer size={18} />} iconTone="train" title="Cardio" subtitle="Sessions and weekly minutes" onClick={() => go('/train/cardio')} />
+        <ListRow icon={<IconImage size={18} />} iconTone="indigo" title="Progress photos" subtitle="Front, side and back, week by week" onClick={() => go('/progress?tab=photos')} />
       </Group>
 
       <SectionTitle>Data</SectionTitle>
@@ -83,9 +101,7 @@ export default function More() {
           subtitle={foodList ? `${foodList.name} · ${fmtInt(foodList.count)} foods` : 'No food list imported'}
           onClick={() => go('/more/foods')}
         />
-        <ListRow icon={<IconCamera size={18} />} iconTone="food" title="Photo logging" subtitle={aiKey ? `${PROVIDERS[aiProvider ?? 'gemini'].label} · key on this phone` : 'Meal photo to foods, with your own key'} onClick={() => go('/more/ai')} />
-        <ListRow icon={<IconHeart size={18} />} iconTone="pink" title="Apple Health" subtitle={lastImport ? `Last import ${formatDate(lastImport.createdAt.slice(0, 10))}` : 'Steps, weight, sleep and workouts'} onClick={() => go('/more/health')} />
-        <ListRow icon={<IconTrain size={18} />} iconTone="train" title="Exercises" subtitle="Library, load steps, your own" onClick={() => go('/train/exercises')} />
+        <ListRow icon={<IconTrain size={18} />} iconTone="slate" title="Exercises" subtitle="Library, load steps, your own" onClick={() => go('/train/exercises')} />
       </Group>
 
       <SectionTitle>This phone</SectionTitle>

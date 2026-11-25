@@ -69,7 +69,7 @@ export default function AddFood() {
   const date = params.get('d') ?? today
   const meal = (params.get('meal') as Meal | null) ?? mealForNow()
   const [query, setQuery] = useState('')
-  const [tab, setTab] = useState<Tab>('recent')
+  const [tab, setTab] = useState<Tab>(() => (['recent', 'frequent', 'mine', 'recipes'].includes(params.get('tab') ?? '') ? (params.get('tab') as Tab) : 'recent'))
   const [picked, setPicked] = useState<Food | null>(null)
   const foodList = useSetting('foodList')
   const back = `/food${date !== today ? `?d=${date}` : ''}`

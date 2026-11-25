@@ -1,8 +1,14 @@
-// Onboarding: install and welcome, about you, goal and activity, targets.
+// Onboarding, seven short screens: install and welcome, about you, goal and activity,
+// targets, training questions (skippable), plan preview and optional extras.
 // One decision per screen, progress dots, Back everywhere, no account, no email,
-// no "calculating" interstitials. Training questions follow in phase 2.
+// no "calculating" interstitials.
 
 import { useState, type CSSProperties } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { adoptPlan } from '../../store/plans'
+import { PlanPreview } from '../train/plan/PlanPreview'
+import { PlanQuestions } from '../train/plan/PlanQuestions'
+import { usePlanDraft } from '../train/plan/usePlanDraft'
 import type { GoalType, Sex } from '../../db'
 import { isIos, isStandalone } from '../../hooks'
 import { DISCLAIMER } from '../../lib/copy'
@@ -10,8 +16,8 @@ import { ageOn, localDay } from '../../lib/dates'
 import { ACTIVITY_LEVELS, GOALS, type TargetInputs } from '../../lib/nutrition'
 import { validateAbout, type AboutDraft } from '../../lib/validate'
 import { buildInputs, completeOnboarding, saveProfileAndTargets, type AboutYou } from '../../store/profile'
-import { IconCheck, IconChevronDown, IconChevronLeft, IconLock, IconPhone, IconPlus, IconShare, IconTrendDown, IconTrendFlat, IconTrendUp, IconWifiOff, IconZap } from '../../ui/icons'
-import { Button, cx, Dots, Field, IconButton, IconTile, Notice, NumberInput, Segmented, TextInput } from '../../ui/kit'
+import { IconCamera, IconCheck, IconChevronDown, IconChevronLeft, IconHeart, IconLock, IconPhone, IconPlus, IconRepeat, IconShare, IconShield, IconTrendDown, IconTrendFlat, IconTrendUp, IconWifiOff, IconZap } from '../../ui/icons'
+import { Button, cx, Dots, Field, Group, IconButton, IconTile, ListRow, Notice, NumberInput, Segmented, Spinner, TextInput } from '../../ui/kit'
 import { haptic } from '../../ui/motion'
 import { TargetsEditor } from '../shared/TargetsEditor'
 
@@ -80,8 +86,13 @@ function Intensity({ level }: { level: number }) {
   )
 }
 
+const STEPS = 7
+
 export default function Onboarding() {
+  const navigate = useNavigate()
+  const draft = usePlanDraft()
   const [step, setStep] = useState(0)
+  const [planSaved, setPlanSaved] = useState(false)
   const [adult, setAdult] = useState(false)
   const [about, setAbout] = useState<AboutDraft>({ sex: null, birthDate: '', heightCm: null, weightKg: null, bodyFatPct: null })
   const [goal, setGoal] = useState<GoalType>('bulk')
@@ -109,13 +120,37 @@ export default function Onboarding() {
     window.scrollTo(0, 0)
   }
 
-  const finish = async () => {
+  const go = (n: number) => {
+    haptic()
+    setStep(n)
+    window.scrollTo(0, 0)
+  }
+
+  /** Saves the targets, then moves on to the training questions with the goal carried over. */
+  const saveTargets = async () => {
     if (!aboutYou || !inputs) return
     setSaving(true)
-    haptic('success')
     await saveProfileAndTargets(aboutYou, inputs)
-    // the app shell moves on to Today once it reads the saved flag back
+    setSaving(false)
+    if (draft.answers && !planSaved) draft.setAnswers({ ...draft.answers, goal: goal === 'cut' ? 'cut' : draft.answers.goal === 'cut' ? 'muscle' : draft.answers.goal })
+    go(4)
+  }
+
+  const adoptDraft = async () => {
+    if (!draft.plan) return
+    setSaving(true)
+    await adoptPlan(draft.plan)
+    setSaving(false)
+    setPlanSaved(true)
+    go(6)
+  }
+
+  /** Finishes onboarding; the app shell then leaves the welcome flow (or `to` takes over). */
+  const finish = async (to?: string) => {
+    setSaving(true)
+    haptic('success')
     await completeOnboarding(new Date().toISOString())
+    if (to) navigate(to)
   }
 
   const footer = (
@@ -132,8 +167,41 @@ export default function Onboarding() {
           </Button>
         )}
         {step === 3 && (
-          <Button block size="lg" disabled={saving} onClick={finish}>
-            Save targets and start
+          <Button block size="lg" disabled={saving} onClick={() => void saveTargets()}>
+            Save targets
+          </Button>
+        )}
+        {step === 4 && (
+          <div className="flex gap-2">
+            <Button size="lg" variant="secondary" onClick={() => go(6)}>
+              Skip for now
+            </Button>
+            <Button
+              size="lg"
+              className="flex-1"
+              disabled={!draft.plan}
+              onClick={() => {
+                draft.resetVariant()
+                go(5)
+              }}
+            >
+              Build my plan
+            </Button>
+          </div>
+        )}
+        {step === 5 && (
+          <div className="flex gap-2">
+            <Button size="lg" variant="secondary" aria-label="Regenerate with other exercises" onClick={() => draft.regenerate()}>
+              <IconRepeat size={19} /> Regenerate
+            </Button>
+            <Button size="lg" className="flex-1" disabled={saving || !draft.plan} onClick={() => void adoptDraft()}>
+              Use this plan
+            </Button>
+          </div>
+        )}
+        {step === 6 && (
+          <Button block size="lg" disabled={saving} onClick={() => void finish()}>
+            Done
           </Button>
         )}
       </div>
@@ -152,7 +220,7 @@ export default function Onboarding() {
           <span className="size-11" />
         )}
         <div className="flex-1">
-          <Dots count={4} active={step} />
+          <Dots count={STEPS} active={step} />
         </div>
         <span className="size-11" />
       </div>
@@ -325,6 +393,53 @@ export default function Onboarding() {
               setOverrides({ goalAdjustPct: i.goalAdjustPct, proteinPerKg: i.proteinPerKg, fatPerKg: i.fatPerKg, kcalOverride: i.kcalOverride, useLeanMass: i.useLeanMass })
             }}
           />
+        </section>
+      )}
+
+      {step === 4 && (
+        <section className="space-y-4 pt-2">
+          <div>
+            <h1 className="text-title">Your training</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">Seven questions give you a week of training. You can skip this and do it later on Train.</p>
+          </div>
+          {draft.answers ? (
+            <PlanQuestions value={draft.answers} onChange={draft.setAnswers} />
+          ) : (
+            <div className="flex justify-center py-10 text-ink-2">
+              <Spinner />
+            </div>
+          )}
+        </section>
+      )}
+
+      {step === 5 && (
+        <section className="space-y-4 pt-2">
+          <div>
+            <h1 className="text-title">Your first week</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">Use it as it is, regenerate for other exercises, or edit it later on Train.</p>
+          </div>
+          {draft.plan ? <PlanPreview plan={draft.plan} exercises={draft.exercises} /> : <Spinner />}
+        </section>
+      )}
+
+      {step === 6 && (
+        <section className="space-y-4 pt-2">
+          <div>
+            <h1 className="text-title">Optional extras</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">Each can wait. Tap one to set it up now, or Done to open Today.</p>
+          </div>
+          {planSaved && <Notice tone="ok">Your plan is saved. Today shows the next workout.</Notice>}
+          <Group>
+            <ListRow icon={<IconHeart size={18} />} iconTone="pink" title="Apple Health import" subtitle="Steps, weight, sleep and workouts from a Shortcut" onClick={() => void finish('/more/health')} />
+            <ListRow icon={<IconCamera size={18} />} iconTone="food" title="Photo logging" subtitle="Your own key for a vision model" onClick={() => void finish('/more/ai')} />
+            <ListRow
+              icon={<IconShield size={18} />}
+              iconTone="amber"
+              title="Backups"
+              subtitle="Today reminds you after 7 days without one. Save the first now"
+              onClick={() => void finish('/more/backup')}
+            />
+          </Group>
         </section>
       )}
 
