@@ -429,3 +429,17 @@ export async function adoptPlan(gen: GeneratedPlan): Promise<string> {
   if (profile && profile.experience !== gen.answers.experience) await db.profile.update('me', { experience: gen.answers.experience, updatedAt: now() })
   return id
 }
+
+/** Makes an earlier plan the active one again (undo after adopting a new plan). */
+export async function reactivatePlan(planId: string): Promise<void> {
+  await db.transaction('rw', db.plans, async () => {
+    const t = now()
+    const active = await db.plans
+      .where('active')
+      .equals(1)
+      .filter((p) => p.kind === 'generated')
+      .toArray()
+    for (const p of active) if (p.id !== planId) await db.plans.update(p.id, { active: 0, updatedAt: t })
+    await db.plans.update(planId, { active: 1, updatedAt: t })
+  })
+}

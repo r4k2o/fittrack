@@ -7,7 +7,8 @@ import { fmt1, fmtInt } from '../../lib/format'
 import { GOALS } from '../../lib/nutrition'
 import { latestMetric } from '../../store/metrics'
 import { getActiveGoal } from '../../store/profile'
-import { IconChevronRight, IconFood, IconHeart, IconInfo, IconPhone, IconScale, IconShield, IconTarget, IconTrain, IconUser } from '../../ui/icons'
+import { IconCamera, IconChevronRight, IconFood, IconHeart, IconInfo, IconPhone, IconShield, IconTarget, IconTrain, IconUser } from '../../ui/icons'
+import { PROVIDERS } from '../../lib/ai'
 import { Card, Group, ListRow, Screen, SectionTitle } from '../../ui/kit'
 
 export default function More() {
@@ -19,6 +20,8 @@ export default function More() {
   const lastBackupAt = useSetting('lastBackupAt')
   const foodList = useSetting('foodList')
   const deviceCheck = useSetting('deviceCheck')
+  const aiKey = useSetting('aiApiKey')
+  const aiProvider = useSetting('aiProvider')
   const lastImport = useLiveQuery(async () => (await listImports())[0] ?? null, [])
   const go = (to: string) => navigate(to)
 
@@ -80,6 +83,7 @@ export default function More() {
           subtitle={foodList ? `${foodList.name} · ${fmtInt(foodList.count)} foods` : 'No food list imported'}
           onClick={() => go('/more/foods')}
         />
+        <ListRow icon={<IconCamera size={18} />} iconTone="food" title="Photo logging" subtitle={aiKey ? `${PROVIDERS[aiProvider ?? 'gemini'].label} · key on this phone` : 'Meal photo to foods, with your own key'} onClick={() => go('/more/ai')} />
         <ListRow icon={<IconHeart size={18} />} iconTone="pink" title="Apple Health" subtitle={lastImport ? `Last import ${formatDate(lastImport.createdAt.slice(0, 10))}` : 'Steps, weight, sleep and workouts'} onClick={() => go('/more/health')} />
         <ListRow icon={<IconTrain size={18} />} iconTone="train" title="Exercises" subtitle="Library, load steps, your own" onClick={() => go('/train/exercises')} />
       </Group>
@@ -94,11 +98,6 @@ export default function More() {
           onClick={() => go('/more/device-check')}
         />
         <ListRow icon={<IconInfo size={18} />} iconTone="indigo" title="About and disclaimer" subtitle={`Version ${__APP_VERSION__}`} onClick={() => go('/more/about')} />
-      </Group>
-
-      <SectionTitle>Coming in later phases</SectionTitle>
-      <Group className="opacity-60">
-        <ListRow icon={<IconScale size={18} />} iconTone="indigo" title="Photo logging" subtitle="Meal photo to foods, with your own key" chevron={false} />
       </Group>
     </Screen>
   )

@@ -22,9 +22,9 @@ function dayInSentence(day: string, today: string): string {
 }
 
 function entryAmount(e: DiaryEntry): string {
-  if (e.servingName && e.servingCount) return `${fmt1(e.servingCount)} × ${e.servingName}`
-  if (e.grams) return `${fmt1(e.grams)} g`
-  return e.source === 'quick' ? 'Quick add' : ''
+  const amount = e.servingName && e.servingCount ? `${fmt1(e.servingCount)} × ${e.servingName}` : e.grams ? `${fmt1(e.grams)} g` : e.source === 'quick' ? 'Quick add' : ''
+  // Entries from a meal photo stay marked, since their grams started as a model's guess.
+  return e.source === 'photo' ? `${amount} · from photo` : amount
 }
 
 export default function Diary() {

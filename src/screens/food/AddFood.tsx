@@ -14,7 +14,7 @@ import { copyEntries, deleteEntries, logFood, MEAL_LABEL, MEALS, mealForNow, rec
 import { frequentFoods, myFoods, recentFoods } from '../../store/foods'
 import { deleteMealTemplate, listMealTemplates, logMealTemplate, recipeFoods, restoreMealTemplate } from '../../store/recipes'
 import { recipeIdOf } from '../../lib/recipes'
-import { IconBarcode, IconDots, IconEdit, IconFood, IconList, IconPlus, IconRepeat, IconSearch, IconStar, IconX } from '../../ui/icons'
+import { IconBarcode, IconCamera, IconDots, IconEdit, IconFood, IconList, IconPlus, IconRepeat, IconSearch, IconStar, IconX } from '../../ui/icons'
 import { Button, EmptyState, Group, IconButton, IconTile, ListRow, Screen, Segmented, Sheet, Spinner } from '../../ui/kit'
 import { haptic } from '../../ui/motion'
 import { useToast } from '../../ui/toast'
@@ -209,17 +209,18 @@ export default function AddFood() {
         </div>
       ) : (
         <>
-          <div className="mt-4 grid grid-cols-3 gap-2.5">
+          <div className="mt-4 grid grid-cols-4 gap-2">
             {[
               { label: 'Scan', icon: <IconBarcode size={19} />, tone: 'brand' as const, to: `/food/scan?${qs}` },
+              { label: 'Photo', icon: <IconCamera size={19} />, tone: 'pink' as const, to: `/food/photo?${qs}` },
               { label: 'Quick add', icon: <IconFood size={19} />, tone: 'amber' as const, to: `/food/quick?${qs}` },
               { label: 'New food', icon: <IconEdit size={19} />, tone: 'indigo' as const, to: `/food/new?${qs}` },
             ].map((a, i) => (
-              <button key={a.label} type="button" onClick={() => go(a.to)} style={{ '--i': i } as CSSProperties} className="card press animate-rise flex flex-col items-start gap-2.5 !rounded-[22px] p-3.5 text-left">
+              <button key={a.label} type="button" onClick={() => go(a.to)} style={{ '--i': i } as CSSProperties} className="card press animate-rise flex flex-col items-start gap-2.5 !rounded-[22px] p-3 text-left">
                 <IconTile tone={a.tone} size={34}>
                   {a.icon}
                 </IconTile>
-                <span className="text-[14px] font-semibold">{a.label}</span>
+                <span className="text-[13px] font-semibold leading-tight">{a.label}</span>
               </button>
             ))}
           </div>

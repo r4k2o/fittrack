@@ -38,6 +38,8 @@ import { ExercisePicker } from '../ExercisePicker'
 import { ExerciseLine, SupersetFrame, WeekRhythm } from './PlanPreview'
 import { fmtRest, groupPairs } from './planFormat'
 import { VolumeBars } from './VolumeBars'
+import { PlanAssistant } from './PlanAssistant'
+import { useSetting } from '../../../hooks'
 
 function dayMinutes(day: PlanDayFull, exercises: ReadonlyMap<string, Exercise>): number {
   return sessionMinutes(
@@ -58,6 +60,8 @@ export default function PlanEditor() {
   const [exSheet, setExSheet] = useState<string | null>(null)
   const [picker, setPicker] = useState<{ mode: 'add'; dayId: string } | { mode: 'swap'; rowId: string } | null>(null)
   const [renaming, setRenaming] = useState<string | null>(null)
+  const [assistant, setAssistant] = useState(false)
+  const aiKey = useSetting('aiApiKey')
 
   if (bundle === undefined || !all)
     return (
@@ -129,9 +133,16 @@ export default function PlanEditor() {
       title={plan.name}
       tone="train"
       actions={
-        <Button size="sm" variant="glass" onClick={() => navigate('/train/plan/new')}>
-          New plan
-        </Button>
+        <>
+          {aiKey && (
+            <Button size="sm" variant="glass" onClick={() => setAssistant(true)}>
+              Ask AI
+            </Button>
+          )}
+          <Button size="sm" variant="glass" onClick={() => navigate('/train/plan/new')}>
+            New plan
+          </Button>
+        </>
       }
     >
       <Card tone="train" className="!p-5">
@@ -336,6 +347,8 @@ export default function PlanEditor() {
           suggest={swapEx ? alternativesFor(swapEx, all, answers ?? undefined) : undefined}
         />
       </Sheet>
+
+      <PlanAssistant open={assistant} onClose={() => setAssistant(false)} bundle={bundle} answers={answers} exercises={exercises} library={all.filter((e) => !e.custom)} />
 
       <Sheet
         open={renaming != null}

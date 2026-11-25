@@ -23,6 +23,7 @@ import { activeSession, listRoutines, startSession } from '../store/training'
 import {
   IconAlert,
   IconBarcode,
+  IconCamera,
   IconCheckCircle,
   IconChevronRight,
   IconFood,
@@ -316,6 +317,7 @@ export default function Today() {
   const actions = [
     { label: 'Food', hint: 'Search and recent', icon: <IconSearch size={20} />, tone: 'food' as const, run: () => go(`/food/add?meal=${meal}`) },
     { label: 'Scan', hint: 'Barcode', icon: <IconBarcode size={20} />, tone: 'brand' as const, run: () => go(`/food/scan?meal=${meal}`) },
+    { label: 'Photo', hint: 'Meal to foods', icon: <IconCamera size={20} />, tone: 'pink' as const, run: () => go(`/food/photo?meal=${meal}`) },
     { label: 'Quick add', hint: 'Just calories', icon: <IconFood size={20} />, tone: 'amber' as const, run: () => go(`/food/quick?meal=${meal}`) },
     { label: 'Cardio', hint: 'Run, ride, swim', icon: <IconTimer size={20} />, tone: 'train' as const, run: () => go('/train/cardio/new') },
     {

@@ -34,6 +34,14 @@ export interface SettingsMap {
   adaptiveSnoozedUntil: string | null
   /** The capture guide for progress photos has been shown. */
   photoGuideSeen: boolean
+  /** Optional vision/language model. The key stays on this phone and never goes into a backup. */
+  aiProvider: 'gemini' | 'openrouter' | 'mistral'
+  aiModel: string | null
+  aiApiKey: string | null
+  aiDailyLimit: number | null
+  aiUsage: { date: string; count: number } | null
+  /** How far confirmed grams were from the model's guesses, to learn its error. */
+  aiStats: { meals: number; items: number; aiGrams: number; finalGrams: number; absDiffGrams: number } | null
 }
 
 export const SETTING_DEFAULTS: SettingsMap = {
@@ -53,10 +61,16 @@ export const SETTING_DEFAULTS: SettingsMap = {
   reviewDismissedWeek: null,
   adaptiveSnoozedUntil: null,
   photoGuideSeen: false,
+  aiProvider: 'gemini',
+  aiModel: null,
+  aiApiKey: null,
+  aiDailyLimit: null,
+  aiUsage: null,
+  aiStats: null,
 }
 
 /** Keys that never go into a backup file (secrets and per-device state). */
-export const LOCAL_ONLY_SETTINGS: ReadonlySet<string> = new Set(['deviceCheck', 'aiApiKey'])
+export const LOCAL_ONLY_SETTINGS: ReadonlySet<string> = new Set(['deviceCheck', 'aiApiKey', 'aiUsage'])
 
 export async function getSetting<K extends keyof SettingsMap>(key: K): Promise<SettingsMap[K]> {
   const row = await db.settings.get(key)
