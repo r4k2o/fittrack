@@ -20,7 +20,7 @@ export function WeekRhythm({ weekdays, done = [], today }: { weekdays: readonly 
           <span
             className={cx(
               'flex size-9 items-center justify-center rounded-full text-[13px] font-bold',
-              on.has(d) ? (done.includes(d) ? 'btn-primary' : 'bg-train text-white') : 'bg-fill text-ink-3',
+              on.has(d) ? (done.includes(d) ? 'btn-accent' : 'bg-train text-white') : 'bg-fill text-ink-3',
               today === d && 'ring-2 ring-ink ring-offset-2 ring-offset-[var(--surface)]',
             )}
           >

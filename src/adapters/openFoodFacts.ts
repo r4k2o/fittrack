@@ -120,21 +120,21 @@ export async function fetchProduct(barcode: string, fetchImpl: typeof fetch = fe
   try {
     res = await fetchImpl(productUrl(barcode), { headers: { Accept: 'application/json' }, signal })
   } catch (e) {
-    if ((e as Error).name === 'AbortError') return { status: 'error', message: 'Lookup cancelled.' }
-    return { status: 'error', message: 'No connection to Open Food Facts. Check the network, or add the product from its label.' }
+    if ((e as Error).name === 'AbortError') return { status: 'error', message: 'Abfrage abgebrochen.' }
+    return { status: 'error', message: 'Keine Verbindung zu Open Food Facts. Netz prüfen oder das Produkt vom Etikett eintragen.' }
   }
   if (res.status === 404) return { status: 'notFound' }
-  if (res.status === 429) return { status: 'error', message: 'Open Food Facts is rate-limiting requests. Try again in a minute.' }
-  if (!res.ok) return { status: 'error', message: `Open Food Facts answered with HTTP ${res.status}.` }
+  if (res.status === 429) return { status: 'error', message: 'Open Food Facts bremst gerade Anfragen. In einer Minute nochmal versuchen.' }
+  if (!res.ok) return { status: 'error', message: `Open Food Facts antwortet mit HTTP ${res.status}.` }
 
   let body: unknown
   try {
     body = await res.json()
   } catch {
-    return { status: 'error', message: 'Open Food Facts sent an unreadable answer.' }
+    return { status: 'error', message: 'Open Food Facts hat unlesbar geantwortet.' }
   }
   const parsed = responseSchema.safeParse(body)
-  if (!parsed.success) return { status: 'error', message: 'Open Food Facts sent an unexpected answer.' }
+  if (!parsed.success) return { status: 'error', message: 'Open Food Facts hat unerwartet geantwortet.' }
   const { product, result, status } = parsed.data
   if (!product || result?.id === 'product_not_found' || status === 'failure') return { status: 'notFound' }
   const mapped = mapProduct(product, barcode)

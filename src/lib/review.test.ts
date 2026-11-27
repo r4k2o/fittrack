@@ -41,7 +41,7 @@ describe('weekly review', () => {
     expect(r.weightChangeKg).toBeCloseTo(0.56, 2)
     expect(r.avgSleepMin).toBe(435)
     expect(r.suggestion?.kcalDelta).toBe(-150)
-    expect(r.suggestion?.text).toMatch(/^Trend gain is 0\.7% a week, above the 0\.25% to 0\.5% band; reduce by 150 kcal a day\.$/)
+    expect(r.suggestion?.text).toBe('Zunahme im Trend: 0,7 % pro Woche, über dem Ziel von 0,25 % bis 0,5 %. 150 kcal am Tag weniger?')
   })
 
   it('falls back to the least-trained group when the weight is on track', () => {
@@ -56,7 +56,7 @@ describe('weekly review', () => {
       cardioMin: 0,
     })
     expect(r.status).toBe('on')
-    expect(r.suggestion?.text).toMatch(/^Chest got 6 hard sets, below 10/)
+    expect(r.suggestion?.text).toMatch(/^Brust: nur 6 harte Sätze, unter 10/)
   })
 
   it('flags a rate faster than the guardrails', () => {

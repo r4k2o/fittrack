@@ -119,7 +119,7 @@ describe('backup', () => {
     })
     const r = decodeBackup(bad, 1)
     expect(r.ok).toBe(false)
-    if (!r.ok) expect(r.errors[0]).toContain('diaryEntries row 1: date')
+    if (!r.ok) expect(r.errors[0]).toContain('diaryEntries Zeile 1: date')
     const newer = zipSync({ 'manifest.json': strToU8(JSON.stringify({ ...manifest, schemaVersion: 99 })) })
     const n = decodeBackup(newer, 1)
     expect(n.ok).toBe(false)

@@ -49,7 +49,12 @@ export async function activeSession(): Promise<Session | undefined> {
   return open.sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0]
 }
 
-export async function startSession(name: string, exerciseIds: string[] = [], planDayId: string | null = null): Promise<Session> {
+export async function startSession(
+  name: string,
+  exerciseIds: string[] = [],
+  planDayId: string | null = null,
+  extra: Pick<Session, 'swaps' | 'home'> = {},
+): Promise<Session> {
   const now = new Date()
   const session = newRow<Session>({
     date: localDay(now),
@@ -58,6 +63,8 @@ export async function startSession(name: string, exerciseIds: string[] = [], pla
     planDayId,
     name,
     exerciseIds,
+    ...(extra.swaps && Object.keys(extra.swaps).length ? { swaps: extra.swaps } : {}),
+    ...(extra.home ? { home: true } : {}),
   })
   await db.sessions.add(session)
   return session
@@ -65,6 +72,18 @@ export async function startSession(name: string, exerciseIds: string[] = [], pla
 
 export async function setSessionExercises(sessionId: string, exerciseIds: string[]): Promise<void> {
   await db.sessions.update(sessionId, { exerciseIds, updatedAt: new Date().toISOString() })
+}
+
+/** Swaps one exercise in a running workout; the new one keeps the planned prescription. */
+export async function swapSessionExercise(session: Session, index: number, newId: string): Promise<void> {
+  const oldId = session.exerciseIds[index]
+  const exerciseIds = [...session.exerciseIds]
+  exerciseIds[index] = newId
+  const swaps = { ...(session.swaps ?? {}) }
+  const planned = swaps[oldId] ?? oldId
+  delete swaps[oldId]
+  if (planned !== newId) swaps[newId] = planned
+  await db.sessions.update(session.id, { exerciseIds, swaps, updatedAt: new Date().toISOString() })
 }
 
 export async function renameSession(sessionId: string, name: string): Promise<void> {
@@ -149,7 +168,7 @@ export async function listRoutines(): Promise<Routine[]> {
 export async function saveRoutineFromSession(sessionId: string, name: string, restCompoundSec = 150, restIsolationSec = 90): Promise<PlanDay> {
   return db.transaction('rw', [db.plans, db.planDays, db.planExercises, db.sessions, db.setLogs, db.exercises], async () => {
     const session = await db.sessions.get(sessionId)
-    if (!session) throw new Error('Workout not found')
+    if (!session) throw new Error('Training nicht gefunden')
     const plan = await routinesPlan()
     const count = await db.planDays.where('planId').equals(plan.id).count()
     const day = newRow<PlanDay>({ planId: plan.id, name, order: count, weekday: null })

@@ -125,8 +125,7 @@ export function IconTile({ tone = 'slate', size = 32, children, className }: { t
         width: size,
         height: size,
         borderRadius: size * 0.3,
-        background: `linear-gradient(160deg, color-mix(in oklab, ${bg} 78%, white), ${bg})`,
-        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.25)`,
+        background: bg,
       }}
     >
       {children}
@@ -184,7 +183,7 @@ export function Screen({
       >
         <div className="flex min-h-13 items-center gap-1">
           {back ? (
-            <IconButton label="Back" onClick={() => (typeof back === 'string' ? navigate(back) : navigate(-1))}>
+            <IconButton label="Zurück" onClick={() => (typeof back === 'string' ? navigate(back) : navigate(-1))}>
               <IconChevronLeft />
             </IconButton>
           ) : (
@@ -267,7 +266,7 @@ export function ListRow({
   )
   const cls = cx('relative flex min-h-[58px] w-full items-center gap-3 px-4 py-2 text-left', className)
   return onClick ? (
-    <button type="button" onClick={onClick} className={cx(cls, 'transition-colors active:bg-fill')}>
+    <button type="button" onClick={onClick} className={cx(cls, 'press-row')}>
       {inner}
     </button>
   ) : (
@@ -535,7 +534,7 @@ export function Sheet({ open, onClose, title, children, footer }: { open: boolea
   }
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true">
-      <button type="button" aria-label="Close" className="animate-fade absolute inset-0 bg-black/45 backdrop-blur-[2px]" onClick={onClose} />
+      <button type="button" aria-label="Schließen" className="animate-fade absolute inset-0 bg-black/45 backdrop-blur-[2px]" onClick={onClose} />
       <div
         className="animate-sheet relative flex max-h-[92dvh] w-full max-w-xl flex-col rounded-t-[32px] bg-surface pb-[env(safe-area-inset-bottom)] text-ink shadow-float"
         style={{ transform: drag ? `translateY(${drag}px)` : undefined, transition: drag ? 'none' : 'transform 260ms var(--ease-spring)' }}
@@ -544,7 +543,7 @@ export function Sheet({ open, onClose, title, children, footer }: { open: boolea
           <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-fill-strong" />
           <div className="flex items-center gap-2 px-5 pb-1 pt-2">
             <div className="min-w-0 flex-1 text-[19px] font-bold tracking-tight">{title}</div>
-            <IconButton label="Close" variant="fill" className="-mr-1 size-9" onClick={onClose} onPointerDown={(e) => e.stopPropagation()}>
+            <IconButton label="Schließen" variant="fill" className="-mr-1 size-9" onClick={onClose} onPointerDown={(e) => e.stopPropagation()}>
               <IconX size={18} />
             </IconButton>
           </div>
@@ -571,7 +570,7 @@ export function MacroBar({ label, value, target, color, track, unit = 'g', compa
       <div className="h-full rounded-full transition-[width] duration-700 ease-[var(--ease-out)]" style={{ width: `${pct * 100}%`, background: over ? 'var(--warn)' : color }} />
     </div>
   )
-  const overTag = over && <span className="ml-1 rounded-full bg-warn-soft px-1.5 py-px text-[10px] font-bold uppercase text-warn-ink">over</span>
+  const overTag = over && <span className="ml-1 rounded-full bg-warn-soft px-1.5 py-px text-[10px] font-bold uppercase text-warn-ink">drüber</span>
   if (compact)
     // stacked for narrow columns: name, then amount, then the meter
     return (
@@ -611,7 +610,7 @@ export function Ring({
   stroke = 16,
   children,
   over,
-  from = 'var(--btn-from)',
+  from = 'var(--brand)',
   to = 'var(--brand)',
   track = 'var(--brand-track)',
 }: {
@@ -689,11 +688,11 @@ export function Sparkline({ values, color = 'var(--body)', width = 120, height =
 export function Stepper({ value, onChange, step = 1, min = 0, format = (n: number) => String(n) }: { value: number; onChange: (n: number) => void; step?: number; min?: number; format?: (n: number) => string }) {
   return (
     <div className="flex items-center gap-1 rounded-full bg-fill p-1">
-      <button type="button" aria-label="Less" className="press size-10 rounded-full text-xl font-semibold active:bg-surface" onClick={() => onChange(Math.max(min, Math.round((value - step) * 100) / 100))}>
+      <button type="button" aria-label="Weniger" className="press size-10 rounded-full text-xl font-semibold active:bg-surface" onClick={() => onChange(Math.max(min, Math.round((value - step) * 100) / 100))}>
         −
       </button>
       <span className="min-w-12 text-center font-semibold tabular-nums">{format(value)}</span>
-      <button type="button" aria-label="More" className="press size-10 rounded-full text-xl font-semibold active:bg-surface" onClick={() => onChange(Math.round((value + step) * 100) / 100)}>
+      <button type="button" aria-label="Mehr" className="press size-10 rounded-full text-xl font-semibold active:bg-surface" onClick={() => onChange(Math.round((value + step) * 100) / 100)}>
         +
       </button>
     </div>
@@ -702,7 +701,7 @@ export function Stepper({ value, onChange, step = 1, min = 0, format = (n: numbe
 
 export function Dots({ count, active }: { count: number; active: number }) {
   return (
-    <div className="flex justify-center gap-1.5" aria-label={`Step ${active + 1} of ${count}`}>
+    <div className="flex justify-center gap-1.5" aria-label={`Schritt ${active + 1} von ${count}`}>
       {Array.from({ length: count }, (_, i) => (
         <span key={i} className={cx('h-1.5 rounded-full transition-all duration-300', i === active ? 'w-7 bg-brand' : i < active ? 'w-1.5 bg-brand/50' : 'w-1.5 bg-fill-strong')} />
       ))}
@@ -711,7 +710,7 @@ export function Dots({ count, active }: { count: number; active: number }) {
 }
 
 export function Spinner({ className }: { className?: string }) {
-  return <span className={cx('inline-block size-5 animate-spin rounded-full border-2 border-current border-r-transparent', className)} aria-label="Loading" />
+  return <span className={cx('inline-block size-5 animate-spin rounded-full border-2 border-current border-r-transparent', className)} aria-label="Lädt" />
 }
 
 // ---- swipe actions ------------------------------------------------------------------

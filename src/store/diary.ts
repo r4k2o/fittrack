@@ -6,9 +6,9 @@ import { recipeIdOf } from '../lib/recipes'
 export const MEALS: readonly Meal[] = ['breakfast', 'lunch', 'dinner', 'snacks']
 
 export const MEAL_LABEL: Record<Meal, string> = {
-  breakfast: 'Breakfast',
-  lunch: 'Lunch',
-  dinner: 'Dinner',
+  breakfast: 'Frühstück',
+  lunch: 'Mittagessen',
+  dinner: 'Abendessen',
   snacks: 'Snacks',
 }
 
@@ -69,7 +69,7 @@ export async function logQuickAdd(q: QuickAdd, meal: Meal, date: string): Promis
     date,
     meal,
     foodId: null,
-    name: q.name?.trim() || 'Quick add',
+    name: q.name?.trim() || 'Schnell erfasst',
     grams: null,
     macros: roundNutrients({ kcal: q.kcal, protein: q.protein ?? 0, carbs: q.carbs ?? 0, fat: q.fat ?? 0 }),
     source: 'quick',
@@ -100,7 +100,7 @@ export async function updateQuickAdd(entry: DiaryEntry, q: QuickAdd, meal: Meal 
   await db.diaryEntries.put({
     ...entry,
     meal,
-    name: q.name?.trim() || 'Quick add',
+    name: q.name?.trim() || 'Schnell erfasst',
     macros: roundNutrients({ kcal: q.kcal, protein: q.protein ?? 0, carbs: q.carbs ?? 0, fat: q.fat ?? 0 }),
     updatedAt: new Date().toISOString(),
   })

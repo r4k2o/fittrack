@@ -296,7 +296,7 @@ function PlanDayRow({ w, onStart, onOpen }: { w: WeekDay; onStart: () => void; o
       <span
         className={cx(
           'flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold',
-          w.status === 'done' ? 'btn-primary' : w.status === 'today' || w.status === 'next' ? 'bg-train text-white' : 'bg-fill text-ink-3',
+          w.status === 'done' ? 'btn-accent' : w.status === 'today' || w.status === 'next' ? 'bg-train text-white' : 'bg-fill text-ink-3',
         )}
         aria-hidden
       >

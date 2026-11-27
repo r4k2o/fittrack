@@ -1,7 +1,7 @@
-// Numbers follow the phone's locale so they match its decimal keypad
-// (a German-language iPhone shows "72,5"); the interface text is English.
+// Numbers in German style ("1.234", "72,5"), matching the interface language and the
+// decimal keypad of a German iPhone. Input accepts a comma or a point.
 
-const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-GB'
+const locale = 'de-DE'
 
 const intFmt = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 })
 const oneFmt = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 })

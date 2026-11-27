@@ -14,16 +14,16 @@ export type Group = 'chest' | 'back' | 'shoulders' | 'biceps' | 'triceps' | 'qua
 export const GROUPS: readonly Group[] = ['chest', 'back', 'shoulders', 'quads', 'hamstrings', 'glutes', 'biceps', 'triceps', 'calves', 'abs']
 
 export const GROUP_LABEL: Record<Group, string> = {
-  chest: 'Chest',
-  back: 'Back',
-  shoulders: 'Shoulders',
-  biceps: 'Biceps',
-  triceps: 'Triceps',
-  quads: 'Quads',
-  hamstrings: 'Hamstrings',
-  glutes: 'Glutes',
-  calves: 'Calves',
-  abs: 'Abs',
+  chest: 'Brust',
+  back: 'Rücken',
+  shoulders: 'Schultern',
+  biceps: 'Bizeps',
+  triceps: 'Trizeps',
+  quads: 'Quadrizeps',
+  hamstrings: 'Beinbeuger',
+  glutes: 'Gesäß',
+  calves: 'Waden',
+  abs: 'Bauch',
 }
 
 /** The weekly band: 10 hard sets is where the benefit is clear (ACSM 2026), 20 the ceiling. */
@@ -120,8 +120,8 @@ export function weekdayGap(a: number, b: number): number {
   return Math.min(d, 7 - d)
 }
 
-export const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-export const WEEKDAY_LONG = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+export const WEEKDAY_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+export const WEEKDAY_LONG = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
 
 export interface SpacingIssue {
   group: Group

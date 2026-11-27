@@ -12,11 +12,11 @@ export interface ActivityLevel {
 }
 
 export const ACTIVITY_LEVELS: readonly ActivityLevel[] = [
-  { factor: 1.2, label: 'Seated', detail: 'Desk job, little walking, no regular training' },
-  { factor: 1.375, label: 'Light', detail: 'Desk job and training 1–3 times a week, or on your feet part of the day' },
-  { factor: 1.55, label: 'Moderate', detail: 'Training 3–5 times a week, or a job with a lot of walking' },
-  { factor: 1.725, label: 'Very active', detail: 'Hard training 6–7 times a week, or a physical job plus training' },
-  { factor: 1.9, label: 'Extreme', detail: 'Heavy physical work plus hard training, or training twice a day' },
+  { factor: 1.2, label: 'Sitzend', detail: 'Bürojob, wenig Gehen, kein regelmäßiges Training' },
+  { factor: 1.375, label: 'Leicht', detail: 'Bürojob und 1–3 × Training pro Woche oder viel auf den Beinen' },
+  { factor: 1.55, label: 'Mittel', detail: '3–5 × Training pro Woche oder ein Job mit viel Gehen' },
+  { factor: 1.725, label: 'Sehr aktiv', detail: '6–7 × hartes Training oder körperliche Arbeit plus Training' },
+  { factor: 1.9, label: 'Extrem', detail: 'Schwere körperliche Arbeit plus Training oder 2 × täglich' },
 ]
 
 export interface GoalInfo {
@@ -34,8 +34,8 @@ export interface GoalInfo {
 
 export const GOALS: Record<GoalType, GoalInfo> = {
   bulk: {
-    label: 'Lean bulk',
-    blurb: 'Gain about 0.25–0.5% of body weight a week',
+    label: 'Lean Bulk',
+    blurb: 'Etwa 0,25–0,5 % des Körpergewichts pro Woche zunehmen',
     adjustPct: 10,
     adjustRange: [5, 20],
     rateBand: [0.25, 0.5],
@@ -43,8 +43,8 @@ export const GOALS: Record<GoalType, GoalInfo> = {
     fatPerKg: 0.9,
   },
   maintain: {
-    label: 'Maintain',
-    blurb: 'Hold your weight while you train',
+    label: 'Halten',
+    blurb: 'Gewicht halten und trainieren',
     adjustPct: 0,
     adjustRange: [0, 0],
     rateBand: [-0.25, 0.25],
@@ -52,8 +52,8 @@ export const GOALS: Record<GoalType, GoalInfo> = {
     fatPerKg: 0.9,
   },
   cut: {
-    label: 'Cut',
-    blurb: 'Lose about 0.5–1% of body weight a week and keep muscle',
+    label: 'Diät',
+    blurb: 'Etwa 0,5–1 % pro Woche abnehmen und Muskeln halten',
     adjustPct: -20,
     adjustRange: [-25, -10],
     rateBand: [-1, -0.5],
@@ -136,7 +136,7 @@ export function calculateTargets(i: TargetInputs): TargetResult {
     adjust = 0
     warnings.push({
       code: 'minorNoDeficit',
-      message: 'Under 18 there is no deficit target. Please talk to a doctor or dietitian before cutting.',
+      message: 'Unter 18 gibt es kein Defizit-Ziel. Sprich vor einer Diät bitte mit Ärztin oder Ernährungsberatung.',
     })
   }
 
@@ -150,20 +150,20 @@ export function calculateTargets(i: TargetInputs): TargetResult {
     carbsG = 0
     warnings.push({
       code: 'macrosExceedKcal',
-      message: 'Protein and fat already use up the calories. Raise the calorie target or lower protein or fat.',
+      message: 'Eiweiß und Fett verbrauchen schon alle Kalorien. Erhöhe das Kalorienziel oder senke Eiweiß oder Fett.',
     })
   }
   const carbsPerKg = carbsG / i.weightKg
   if (kcal < resting) {
     warnings.push({
       code: 'belowResting',
-      message: `The target is below your estimated resting energy of ${Math.round(resting)} kcal.`,
+      message: `Das Ziel liegt unter deinem geschätzten Grundumsatz von ${Math.round(resting)} kcal.`,
     })
   }
   if (carbsPerKg < CARB_WARN_PER_KG && carbsG > 0) {
     warnings.push({
       code: 'lowCarbs',
-      message: 'Carbohydrate is below 3 g per kg, the low end of what supports hard training.',
+      message: 'Kohlenhydrate unter 3 g pro kg: das untere Ende für hartes Training.',
     })
   }
 

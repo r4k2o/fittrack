@@ -67,7 +67,7 @@ describe('Open Food Facts mapping', () => {
     const offline = (async () => {
       throw new TypeError('Failed to fetch')
     }) as unknown as typeof fetch
-    expect(await fetchProduct('1', offline)).toMatchObject({ status: 'error', message: expect.stringContaining('No connection') })
+    expect(await fetchProduct('1', offline)).toMatchObject({ status: 'error', message: expect.stringContaining('Keine Verbindung') })
     expect(await fetchProduct('1', fakeFetch(200, { status: 'success', product: { product_name: 'Bare' } }))).toMatchObject({ status: 'incomplete' })
   })
 })

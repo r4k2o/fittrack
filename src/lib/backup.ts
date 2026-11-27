@@ -56,18 +56,18 @@ export function decodeBackup(bytes: Uint8Array, currentSchema: number): DecodeRe
   try {
     entries = unzipSync(bytes)
   } catch {
-    return { ok: false, errors: ['This file is not a zip archive. Pick a fittrack-backup-….zip file.'] }
+    return { ok: false, errors: ['Das ist keine Zip-Datei. Wähle eine fittrack-backup-….zip.'] }
   }
   const rawManifest = entries['manifest.json']
-  if (!rawManifest) return { ok: false, errors: ['The archive has no manifest.json, so it is not a Fittrack backup.'] }
+  if (!rawManifest) return { ok: false, errors: ['Kein manifest.json im Archiv, also kein Fittrack-Backup.'] }
 
   let manifest: BackupManifest
   try {
     const parsed = manifestSchema.safeParse(JSON.parse(strFromU8(rawManifest)))
-    if (!parsed.success) return { ok: false, errors: ['The manifest is not a Fittrack backup manifest.'] }
+    if (!parsed.success) return { ok: false, errors: ['Das Manifest gehört zu keinem Fittrack-Backup.'] }
     manifest = parsed.data
   } catch {
-    return { ok: false, errors: ['The manifest is not valid JSON.'] }
+    return { ok: false, errors: ['Das Manifest ist kein gültiges JSON.'] }
   }
   if (manifest.schemaVersion > currentSchema) {
     return {
@@ -83,10 +83,10 @@ export function decodeBackup(bytes: Uint8Array, currentSchema: number): DecodeRe
     if (!raw) continue
     try {
       const rows: unknown = JSON.parse(strFromU8(raw))
-      if (!Array.isArray(rows)) return { ok: false, errors: [`data/${store}.json is not a list of rows.`] }
+      if (!Array.isArray(rows)) return { ok: false, errors: [`data/${store}.json ist keine Liste von Zeilen.`] }
       data[store] = rows as BackupRow[]
     } catch {
-      return { ok: false, errors: [`data/${store}.json is not valid JSON.`] }
+      return { ok: false, errors: [`data/${store}.json ist kein gültiges JSON.`] }
     }
   }
   for (const name of Object.keys(entries)) {
@@ -97,7 +97,7 @@ export function decodeBackup(bytes: Uint8Array, currentSchema: number): DecodeRe
 
   for (let v = manifest.schemaVersion; v < currentSchema; v++) {
     const step = MIGRATIONS[v]
-    if (!step) return { ok: false, errors: [`No migration from schema ${v} to ${v + 1}.`] }
+    if (!step) return { ok: false, errors: [`Keine Migration von Schema ${v} auf ${v + 1}.`] }
     data = step(data)
   }
 
@@ -108,7 +108,7 @@ export function decodeBackup(bytes: Uint8Array, currentSchema: number): DecodeRe
       const r = rowSchemas[store].safeParse(row)
       if (!r.success && errors.length < 20) {
         const issue = r.error.issues[0]
-        errors.push(`${store} row ${i + 1}: ${issue.path.join('.') || 'row'} ${issue.message}`)
+        errors.push(`${store} Zeile ${i + 1}: ${issue.path.join('.') || 'Zeile'} ${issue.message}`)
       }
     })
     const expected = manifest.counts[store]

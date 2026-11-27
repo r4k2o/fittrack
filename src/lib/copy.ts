@@ -1,7 +1,7 @@
 // Text shown in more than one place.
 
 export const DISCLAIMER =
-  'Fittrack is a personal logbook, not a medical device. Its calorie, macro and training figures are estimates from published formulas and do not replace advice from a doctor, dietitian or physiotherapist. Do not rely on them if you are under 18, pregnant or breastfeeding, or have a medical condition or a history of disordered eating. Stop any exercise that causes pain. Food values from photos, barcodes and food tables can be wrong, so check them before logging.'
+  'Fittrack ist ein persönliches Tagebuch, kein Medizinprodukt. Kalorien-, Makro- und Trainingswerte sind Schätzungen nach veröffentlichten Formeln und ersetzen keinen Rat von Ärztin, Ernährungsberatung oder Physiotherapie. Verlass dich nicht darauf, wenn du unter 18, schwanger oder stillend bist, eine Erkrankung oder eine Essstörung in der Vorgeschichte hast. Hör bei Schmerzen mit der Übung auf. Werte aus Fotos, Barcodes und Lebensmitteltabellen können falsch sein; prüf sie vor dem Eintragen.'
 
 export const BACKUP_ADVICE =
-  'Export a backup before deleting the icon, renaming the repository, changing host, switching phones or deploying a schema change. Keep at least the last four files.'
+  'Sichere ein Backup, bevor du das App-Symbol löschst oder das Handy wechselst. Bewahre mindestens die letzten vier Dateien auf.'

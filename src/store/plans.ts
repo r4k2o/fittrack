@@ -5,6 +5,7 @@
 import Dexie from 'dexie'
 import { db, newId, newRow, type Exercise, type Plan, type PlanDay, type PlanExercise, type Session, type SetLog } from '../db'
 import { addDays, localDay, weekStart } from '../lib/dates'
+import { homeVersion } from '../lib/home'
 import { prescriptionFor, type GeneratedPlan, type PlanAnswers } from '../lib/planner'
 import { performanceScore } from '../lib/training'
 import { getSetting, setSetting } from './settings'
@@ -324,8 +325,23 @@ export function planWeek(bundle: PlanBundle, sessionsThisWeek: readonly Session[
   return out
 }
 
-export async function startPlanDay(day: PlanDayFull): Promise<Session> {
-  return startSession(day.name, day.exercises.map((e) => e.exerciseId), day.id)
+/**
+ * Starts a plan day. At home every exercise is swapped for a bodyweight or band one;
+ * the session remembers which planned exercise each stands for, to keep its prescription.
+ */
+export async function startPlanDay(day: PlanDayFull, opts: { home?: boolean } = {}): Promise<Session> {
+  if (!opts.home) return startSession(day.name, day.exercises.map((e) => e.exerciseId), day.id)
+  const plan = await db.plans.get(day.planId)
+  const answers = plan ? planAnswers(plan) : null
+  const library = await db.exercises.toArray()
+  const { rows } = homeVersion(day.exercises, library, answers ?? undefined)
+  const swaps = Object.fromEntries(rows.filter((r) => r.exerciseId !== r.from).map((r) => [r.exerciseId, r.from]))
+  return startSession(`${day.name} · Zuhause`, rows.map((r) => r.exerciseId), day.id, { swaps, home: true })
+}
+
+/** Home mode on: starting any plan day gives its home version. */
+export async function homeModeOn(): Promise<boolean> {
+  return getSetting('homeMode')
 }
 
 // ---- lighter week --------------------------------------------------------------------------

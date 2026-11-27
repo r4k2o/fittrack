@@ -42,11 +42,11 @@ const CardioForm = lazy(() => import('./screens/train/CardioForm'))
 const PlanEditor = lazy(() => import('./screens/train/plan/PlanEditor'))
 
 const TABS = [
-  { to: '/today', label: 'Today', Icon: IconToday },
-  { to: '/food', label: 'Food', Icon: IconFood },
-  { to: '/train', label: 'Train', Icon: IconTrain },
-  { to: '/progress', label: 'Progress', Icon: IconProgress },
-  { to: '/more', label: 'More', Icon: IconMore },
+  { to: '/today', label: 'Heute', Icon: IconToday },
+  { to: '/food', label: 'Essen', Icon: IconFood },
+  { to: '/train', label: 'Training', Icon: IconTrain },
+  { to: '/progress', label: 'Fortschritt', Icon: IconProgress },
+  { to: '/more', label: 'Mehr', Icon: IconMore },
 ] as const
 
 /** Full-screen flows hide the tab bar. */
@@ -54,7 +54,7 @@ const NO_TABS = [/^\/welcome/, /^\/food\/scan/, /^\/train\/session\//, /^\/train
 
 function TabBar() {
   return (
-    <nav aria-label="Main" className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
+    <nav aria-label="Hauptmenü" className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
       <div className="glass shadow-float pointer-events-auto mx-auto flex max-w-md items-stretch gap-1 rounded-[30px] p-1.5">
         {TABS.map(({ to, label, Icon }) => (
           <NavLink
@@ -70,7 +70,7 @@ function TabBar() {
           >
             {({ isActive }) => (
               <>
-                <Icon size={23} strokeWidth={isActive ? 2.4 : 2} className={isActive ? 'text-brand-ink' : undefined} />
+                <Icon size={23} strokeWidth={isActive ? 2.4 : 2} className={isActive ? 'animate-tab text-ink' : undefined} />
                 {label}
               </>
             )}

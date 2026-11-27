@@ -57,27 +57,36 @@ export function nowIso(): string {
   return new Date().toISOString()
 }
 
-const longFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
-const shortFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
-const dateFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+const longFmt = new Intl.DateTimeFormat('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })
+const shortFmt = new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'short' })
+const dayMonthFmt = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short' })
+const dateFmt = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short', year: 'numeric' })
 
+/** "Freitag, 27. November" */
 export function formatDayLong(day: string): string {
   return longFmt.format(parseDay(day))
 }
 
+/** "Fr., 27. Nov." */
 export function formatDayShort(day: string): string {
   return shortFmt.format(parseDay(day))
 }
 
+/** "27. Nov." */
+export function formatDayMonth(day: string): string {
+  return dayMonthFmt.format(parseDay(day))
+}
+
+/** "27. Nov. 2026" */
 export function formatDate(day: string): string {
   return dateFmt.format(parseDay(day))
 }
 
-/** "Today", "Yesterday", "Tomorrow" or a short date. */
+/** "Heute", "Gestern", "Morgen" or a short date. */
 export function relativeDay(day: string, today: string = localDay()): string {
   const diff = daysBetween(today, day)
-  if (diff === 0) return 'Today'
-  if (diff === -1) return 'Yesterday'
-  if (diff === 1) return 'Tomorrow'
+  if (diff === 0) return 'Heute'
+  if (diff === -1) return 'Gestern'
+  if (diff === 1) return 'Morgen'
   return formatDayShort(day)
 }

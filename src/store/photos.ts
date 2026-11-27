@@ -8,7 +8,7 @@ import { metricSeries } from './metrics'
 
 export type Pose = Photo['pose']
 export const POSES: readonly Pose[] = ['front', 'side', 'back']
-export const POSE_LABEL: Record<Pose, string> = { front: 'Front', side: 'Side', back: 'Back' }
+export const POSE_LABEL: Record<Pose, string> = { front: 'Vorne', side: 'Seite', back: 'Hinten' }
 
 export type PhotoMeta = Omit<Photo, 'image'>
 

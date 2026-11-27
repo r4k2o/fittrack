@@ -152,7 +152,7 @@ export default function DeviceCheck() {
                 <span
                   className={cx(
                     'flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold',
-                    !r ? 'bg-fill text-ink-2' : r.ok ? 'btn-primary' : 'bg-warn-soft text-warn',
+                    !r ? 'bg-fill text-ink-2' : r.ok ? 'btn-accent' : 'bg-warn-soft text-warn',
                   )}
                 >
                   {!r ? i + 1 : r.ok ? <IconCheck size={18} strokeWidth={3} /> : <IconWarn size={18} />}

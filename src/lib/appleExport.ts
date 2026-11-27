@@ -193,7 +193,7 @@ export async function reduceAppleExport(file: Blob & { name?: string }, opts: { 
     }
     unzip.push(new Uint8Array(0), true)
     if (failed) throw failed
-    if (!found) throw new Error('No export.xml in this zip. Use the export.zip from Health → profile picture → Export All Health Data.')
+    if (!found) throw new Error('Keine export.xml in dieser Zip-Datei. Nimm die export.zip aus Health → Profilbild → Alle Gesundheitsdaten exportieren.')
   } else {
     for (;;) {
       const { done, value } = await reader.read()

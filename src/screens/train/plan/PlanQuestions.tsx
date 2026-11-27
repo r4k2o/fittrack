@@ -54,7 +54,7 @@ function Choices<T extends string>({ value, options, onChange }: { value: T; opt
               <span className="block text-[16px] font-semibold">{o.label}</span>
               <span className="block text-[13px] text-ink-2">{o.hint}</span>
             </span>
-            <span className={cx('flex size-6 shrink-0 items-center justify-center rounded-full border-2', on ? 'border-transparent btn-primary' : 'border-line')}>
+            <span className={cx('flex size-6 shrink-0 items-center justify-center rounded-full border-2', on ? 'border-transparent btn-accent' : 'border-line')}>
               {on && <IconCheck size={14} strokeWidth={3.2} />}
             </span>
           </button>

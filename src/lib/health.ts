@@ -200,23 +200,23 @@ export function parseHealthLines(text: string): ParsedHealth {
     const skip = (reason: string) => skipped.push({ line: i + 1, text: line.slice(0, 80), reason })
     if (!kind) {
       if (i === 0 && /type|metric|typ/i.test(parts[0])) return // a header row
-      return skip('unknown metric')
+      return skip('unbekannter Wert')
     }
     order++
     if (kind === 'sleep') {
       const start = parseHealthDate(parts[1] ?? '')
       const end = parseHealthDate(parts[2] ?? '')
       const stage = sleepStage(parts[3] ?? 'asleep')
-      if (!start || !end) return skip('date not readable')
-      if (!stage) return skip('sleep stage not recognised')
-      if (end <= start || end.getTime() - start.getTime() > 24 * 3600e3) return skip('sleep segment end before start or over 24 hours')
+      if (!start || !end) return skip('Datum nicht lesbar')
+      if (!stage) return skip('Schlafphase unbekannt')
+      if (end <= start || end.getTime() - start.getTime() > 24 * 3600e3) return skip('Schlafabschnitt endet vor dem Start oder dauert über 24 h')
       segments.push({ start, end, stage })
       return
     }
     if (kind === 'workout') {
       const start = parseHealthDate(parts[1] ?? '')
       const end = parseHealthDate(parts[2] ?? '')
-      if (!start || !end || end <= start) return skip('workout times not readable')
+      if (!start || !end || end <= start) return skip('Trainingszeiten nicht lesbar')
       const t = workoutType(parts[3] ?? '')
       if (t === 'strength') {
         strength++
@@ -237,28 +237,28 @@ export function parseHealthLines(text: string): ParsedHealth {
       return
     }
     const at = parseHealthDate(parts[1] ?? '')
-    if (!at) return skip('date not readable')
+    if (!at) return skip('Datum nicht lesbar')
     const date = localDay(at)
     const value = parseValue(parts[2] ?? '', { lbToKg: kind === 'weight', count: kind === 'steps' })
-    if (value == null) return skip('value not readable')
+    if (value == null) return skip('Wert nicht lesbar')
     if (kind === 'steps') {
-      if (value < 0 || value > 200000) return skip('steps out of range')
+      if (value < 0 || value > 200000) return skip('Schritte außerhalb des Bereichs')
       const source = parts[3] ?? ''
       const bySource = steps.get(date) ?? new Map<string, number>()
       bySource.set(source, (bySource.get(source) ?? 0) + value)
       steps.set(date, bySource)
     } else if (kind === 'weight') {
-      if (value < 20 || value > 400) return skip('weight out of range')
+      if (value < 20 || value > 400) return skip('Gewicht außerhalb des Bereichs')
       const prev = weights.get(date)
       // first reading of the day: earliest time, or the first line when times tie
       if (!prev || at.getTime() < prev.at) weights.set(date, { at: at.getTime(), order, value })
     } else if (kind === 'bodyFat') {
       const pct = value <= 1 ? value * 100 : value
-      if (pct < 2 || pct > 70) return skip('body fat out of range')
+      if (pct < 2 || pct > 70) return skip('Körperfett außerhalb des Bereichs')
       const prev = fats.get(date)
       if (!prev || at.getTime() >= prev.at) fats.set(date, { at: at.getTime(), order, value: pct })
     } else if (kind === 'sleepScore') {
-      if (value < 0 || value > 100) return skip('score out of range')
+      if (value < 0 || value > 100) return skip('Wert außerhalb des Bereichs')
       scores.set(date, value)
     }
   })

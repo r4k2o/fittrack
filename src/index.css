@@ -89,6 +89,11 @@
   --btn-from: #5ce38a;
   --btn-to: #22c55e;
   --btn-ink: #052e16;
+  /* primary buttons: ink in light, volt in dark; green fills mean "done" */
+  --btn-bg: #111114;
+  --btn-fg: #ffffff;
+  --accent-fill: #16a34a;
+  --accent-fg: #ffffff;
 
   --food: #f97316;
   --train: #7c3aed;
@@ -141,6 +146,10 @@
     --btn-from: #d8fb82;
     --btn-to: #a8eb3a;
     --btn-ink: #132400;
+    --btn-bg: #b2f04c;
+    --btn-fg: #132400;
+    --accent-fill: #b2f04c;
+    --accent-fg: #132400;
 
     --food: #fb923c;
     --train: #a78bfa;
@@ -263,35 +272,51 @@ input[type='range'] {
   box-shadow: var(--shadow-float);
 }
 
+/* Touch feedback, iOS style: a quick press-in, then a soft spring back on release.
+   Only transform and opacity animate, so it stays smooth on a phone. */
 @utility press {
   transition:
-    transform 180ms var(--ease-out),
-    opacity 180ms var(--ease-out),
-    background-color 180ms var(--ease-out);
+    transform 420ms cubic-bezier(0.34, 1.4, 0.64, 1),
+    opacity 200ms var(--ease-out),
+    background-color 220ms var(--ease-out);
   &:active:not(:disabled) {
-    transform: scale(0.97);
+    transform: scale(0.965);
+    opacity: 0.92;
+    transition:
+      transform 90ms var(--ease-out),
+      opacity 90ms var(--ease-out),
+      background-color 60ms linear;
+  }
+}
+
+/* Rows in lists light up under the finger instead of shrinking. */
+@utility press-row {
+  transition: background-color 260ms var(--ease-out);
+  &:active:not(:disabled) {
+    background-color: var(--fill);
+    transition: background-color 40ms linear;
   }
 }
 
 @utility btn-primary {
-  background: linear-gradient(180deg, var(--btn-from), var(--btn-to));
-  color: var(--btn-ink);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    0 8px 20px -10px color-mix(in oklab, var(--btn-to) 80%, transparent);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
 }
 
+/* A solid green fill for "done" (a ticked set, a finished day). */
+@utility btn-accent {
+  background: var(--accent-fill);
+  color: var(--accent-fg);
+}
+
+/* Kept as names for the screens that use them; deliberately plain. Colour comes
+   from the data and one accent, not from washes behind the surfaces. */
 @utility tinted {
-  background:
-    radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--tone) 26%, transparent), transparent 62%),
-    radial-gradient(100% 90% at 100% 100%, color-mix(in oklab, var(--tone-2) 16%, transparent), transparent 60%),
-    var(--surface);
+  background: var(--surface);
 }
 
 @utility ambient {
-  background:
-    radial-gradient(110% 55% at 0% 0%, color-mix(in oklab, var(--tone) var(--glow-strength), transparent), transparent 62%),
-    radial-gradient(80% 45% at 100% 0%, color-mix(in oklab, var(--tone-2) calc(var(--glow-strength) * 0.6), transparent), transparent 58%);
+  background: none;
 }
 
 @keyframes sheet-in {
@@ -346,6 +371,32 @@ input[type='range'] {
   }
 }
 
+@keyframes tab-bounce {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.82);
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;
@@ -380,6 +431,14 @@ input[type='range'] {
 
 .animate-toast {
   animation: toast-in 260ms var(--ease-out);
+}
+
+.animate-tab {
+  animation: tab-bounce 420ms var(--ease-out);
+}
+
+.animate-in {
+  animation: slide-in-up 240ms var(--ease-out) both;
 }
 
 /* No fill mode: once finished the animation leaves no stacking context behind, so

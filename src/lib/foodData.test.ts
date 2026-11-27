@@ -41,7 +41,7 @@ describe('food list import', () => {
       per100: { kcal: 372, protein: 13.5, carbs: 58.7, fat: 7, fibre: 10, sugar: 0.7, satFat: 1.3, salt: 0.01 },
     })
     expect(foods[1].per100.salt).toBe(0.1) // 40 mg sodium → 0.1 g salt
-    expect(skipped).toEqual([{ row: 5, reason: 'energy, protein, carbohydrate or fat missing' }])
+    expect(skipped).toEqual([{ row: 5, reason: 'Energie, Eiweiß, Kohlenhydrate oder Fett fehlt' }])
   })
 
   it('converts kJ when there is no kcal column and makes keys unique', () => {

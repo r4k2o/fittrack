@@ -4,7 +4,7 @@
 export type Facing = 'user' | 'environment'
 
 export async function openCamera(facing: Facing): Promise<MediaStream> {
-  if (!navigator.mediaDevices?.getUserMedia) throw new Error('This browser has no camera access.')
+  if (!navigator.mediaDevices?.getUserMedia) throw new Error('Dieser Browser hat keinen Kamerazugriff.')
   return navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1920 } }, audio: false })
 }
 
@@ -27,7 +27,7 @@ export async function toJpeg(source: CanvasImageSource, width: number, height: n
     ctx.scale(-1, 1)
   }
   ctx.drawImage(source, 0, 0, w, h)
-  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not encode the photo'))), 'image/jpeg', quality))
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Foto konnte nicht gespeichert werden'))), 'image/jpeg', quality))
 }
 
 /** The photo itself (1,600 px) and a small thumbnail (320 px), as the plan sizes them. */

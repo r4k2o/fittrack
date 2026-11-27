@@ -67,7 +67,7 @@ export function kcalCorrection(rate: number, band: readonly [number, number], we
   return Math.sign(perDay) * Math.floor(Math.abs(perDay) / 50) * 50
 }
 
-const pct = (n: number) => `${Math.abs(n).toFixed(2).replace(/0$/, '')}%`
+const pct = (n: number) => `${Math.abs(n).toFixed(2).replace(/0$/, '').replace('.', ',')} %`
 
 export function weeklyReview(input: ReviewInput): WeeklyReview {
   const end = addDays(input.week, 6)
@@ -83,18 +83,18 @@ export function weeklyReview(input: ReviewInput): WeeklyReview {
   let suggestion: Suggestion | null = null
   if (rate != null && band && tEnd != null && status && status !== 'on') {
     const delta = kcalCorrection(rate, band, tEnd)
-    const dir = rate >= 0 ? 'gain' : 'loss'
-    const bandText = `${band[0] > 0 ? '' : '−'}${pct(band[0])} to ${band[1] > 0 ? '' : '−'}${pct(band[1])}`
-    const where = rate > band[1] ? 'above' : 'below'
+    const dir = rate >= 0 ? 'Zunahme' : 'Abnahme'
+    const bandText = `${band[0] > 0 ? '' : '−'}${pct(band[0])} bis ${band[1] > 0 ? '' : '−'}${pct(band[1])}`
+    const where = rate > band[1] ? 'über' : 'unter'
     if (delta !== 0)
       suggestion = {
-        text: `Trend ${dir} is ${pct(rate)} a week, ${where} the ${bandText} band; ${delta < 0 ? 'reduce' : 'raise'} by ${Math.abs(delta)} kcal a day.`,
+        text: `${dir} im Trend: ${pct(rate)} pro Woche, ${where} dem Ziel von ${bandText}. ${Math.abs(delta)} kcal am Tag ${delta < 0 ? 'weniger' : 'mehr'}?`,
         kcalDelta: delta,
       }
   }
   if (!suggestion && input.sets && lowGroups.length && lowGroups.length < GROUPS.length) {
     const worst = [...lowGroups].sort((a, b) => a.sets - b.sets)[0]
-    suggestion = { text: `${GROUP_LABEL[worst.group]} got ${worst.sets.toFixed(1).replace(/\.0$/, '')} hard sets, below 10. The plan editor shows where one or two more fit.` }
+    suggestion = { text: `${GROUP_LABEL[worst.group]}: nur ${worst.sets.toFixed(1).replace('.', ',').replace(/,0$/, '')} harte Sätze, unter 10. Im Plan-Editor siehst du, wo ein, zwei mehr passen.` }
   }
 
   return {

@@ -11,14 +11,14 @@ export interface AboutDraft {
 
 export function validateAbout(a: AboutDraft, today = localDay()): { ok: boolean; errors: Partial<Record<keyof AboutDraft, string>> } {
   const errors: Partial<Record<keyof AboutDraft, string>> = {}
-  if (!a.sex) errors.sex = 'Choose one; the equation differs.'
-  if (!a.birthDate) errors.birthDate = 'Enter your birth date.'
+  if (!a.sex) errors.sex = 'Bitte wählen, die Formel unterscheidet sich.'
+  if (!a.birthDate) errors.birthDate = 'Bitte Geburtsdatum eingeben.'
   else {
     const age = ageOn(a.birthDate, today)
-    if (age < 13 || age > 100) errors.birthDate = 'Check the date.'
+    if (age < 13 || age > 100) errors.birthDate = 'Bitte Datum prüfen.'
   }
-  if (a.heightCm == null || a.heightCm < 100 || a.heightCm > 250) errors.heightCm = 'Between 100 and 250 cm.'
-  if (a.weightKg == null || a.weightKg < 30 || a.weightKg > 300) errors.weightKg = 'Between 30 and 300 kg.'
-  if (a.bodyFatPct != null && (a.bodyFatPct < 3 || a.bodyFatPct > 70)) errors.bodyFatPct = 'Between 3 and 70%, or leave it empty.'
+  if (a.heightCm == null || a.heightCm < 100 || a.heightCm > 250) errors.heightCm = 'Zwischen 100 und 250 cm.'
+  if (a.weightKg == null || a.weightKg < 30 || a.weightKg > 300) errors.weightKg = 'Zwischen 30 und 300 kg.'
+  if (a.bodyFatPct != null && (a.bodyFatPct < 3 || a.bodyFatPct > 70)) errors.bodyFatPct = 'Zwischen 3 und 70 % oder leer lassen.'
   return { ok: Object.keys(errors).length === 0, errors }
 }

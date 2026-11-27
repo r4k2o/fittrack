@@ -16,16 +16,16 @@ export const FIELDS: readonly FieldKey[] = ['name', 'kcal', 'kj', 'protein', 'ca
 export const FIELD_LABEL: Record<FieldKey, string> = {
   key: 'Code (optional)',
   name: 'Name',
-  kcal: 'Energy, kcal',
-  kj: 'Energy, kJ (if no kcal)',
-  protein: 'Protein, g',
-  carbs: 'Carbohydrate, g',
-  fat: 'Fat, g',
-  fibre: 'Fibre, g',
-  sugar: 'Sugar, g',
-  satFat: 'Saturated fat, g',
-  salt: 'Salt, g',
-  sodium: 'Sodium (if no salt)',
+  kcal: 'Energie, kcal',
+  kj: 'Energie, kJ (ohne kcal)',
+  protein: 'Eiweiß, g',
+  carbs: 'Kohlenhydrate, g',
+  fat: 'Fett, g',
+  fibre: 'Ballaststoffe, g',
+  sugar: 'Zucker, g',
+  satFat: 'Gesättigte Fette, g',
+  salt: 'Salz, g',
+  sodium: 'Natrium (ohne Salz)',
 }
 
 const ALIASES: Record<FieldKey, string[]> = {
@@ -103,7 +103,7 @@ export function readFoodTable(text: string): FoodTable {
   if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
     const parsed: unknown = JSON.parse(trimmed)
     const list = Array.isArray(parsed) ? parsed : (parsed as { foods?: unknown[] }).foods
-    if (!Array.isArray(list)) throw new Error('The JSON file must hold a list of foods.')
+    if (!Array.isArray(list)) throw new Error('Die JSON-Datei muss eine Liste von Lebensmitteln enthalten.')
     const flat = list.map((item) => flatten(item as Record<string, unknown>))
     const header = [...new Set(flat.flatMap((o) => Object.keys(o)))]
     return {
@@ -114,7 +114,7 @@ export function readFoodTable(text: string): FoodTable {
     }
   }
   const { rows, lines } = parseDelimited(trimmed)
-  if (rows.length < 2) throw new Error('The file needs a header row and at least one food.')
+  if (rows.length < 2) throw new Error('Die Datei braucht eine Kopfzeile und mindestens ein Lebensmittel.')
   return { kind: 'csv', header: rows[0].map((h) => h.trim()), rows: rows.slice(1), lines: lines.slice(1) }
 }
 
@@ -158,7 +158,7 @@ export function mapFoodRows(table: FoodTable, map: ColumnMap): MappedTable {
     const line = table.lines[i] ?? i + 2
     const name = map.name != null ? (row[map.name] ?? '').trim() : ''
     if (!name) {
-      skipped.push({ row: line, reason: 'no name' })
+      skipped.push({ row: line, reason: 'kein Name' })
       return
     }
     let kcal = val(row, 'kcal')
@@ -170,7 +170,7 @@ export function mapFoodRows(table: FoodTable, map: ColumnMap): MappedTable {
     const carbs = val(row, 'carbs')
     const fat = val(row, 'fat')
     if (kcal == null || protein == null || carbs == null || fat == null) {
-      skipped.push({ row: line, reason: 'energy, protein, carbohydrate or fat missing' })
+      skipped.push({ row: line, reason: 'Energie, Eiweiß, Kohlenhydrate oder Fett fehlt' })
       return
     }
     const r1 = (n: number) => Math.round(n * 10) / 10

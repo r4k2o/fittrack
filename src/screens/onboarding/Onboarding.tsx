@@ -263,7 +263,7 @@ export default function Onboarding() {
               aria-hidden
               className={cx(
                 'flex size-7 shrink-0 items-center justify-center rounded-full border-2 transition-colors peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-brand',
-                adult ? 'border-transparent btn-primary' : 'border-fill-strong',
+                adult ? 'border-transparent btn-accent' : 'border-fill-strong',
               )}
             >
               {adult && <IconCheck size={16} strokeWidth={3.2} />}
@@ -341,7 +341,7 @@ export default function Onboarding() {
                     <span className="block text-[18px] font-bold">{GOALS[g].label}</span>
                     <span className="block text-[14px] text-ink-2">{GOALS[g].blurb}</span>
                   </span>
-                  <span className={cx('flex size-7 shrink-0 items-center justify-center rounded-full border-2', sel ? 'border-transparent btn-primary' : 'border-fill-strong')}>
+                  <span className={cx('flex size-7 shrink-0 items-center justify-center rounded-full border-2', sel ? 'border-transparent btn-accent' : 'border-fill-strong')}>
                     {sel && <IconCheck size={16} strokeWidth={3.2} />}
                   </span>
                 </button>

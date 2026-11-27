@@ -5,7 +5,7 @@
 import { z } from 'zod'
 import type { StoreName } from '../db'
 
-const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected a YYYY-MM-DD day')
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'erwartet ein Datum JJJJ-MM-TT')
 const flag = z.union([z.literal(0), z.literal(1)])
 const num = z.number() // Zod 4 rejects NaN and ±Infinity by default
 const base = { id: z.string().min(1), createdAt: z.string().min(1), updatedAt: z.string().min(1) }

@@ -7,7 +7,7 @@ import { CategoryScale, Chart, Filler, LinearScale, LineController, LineElement,
 import { useMemo, type ReactNode } from 'react'
 import { Line } from 'react-chartjs-2'
 import { useColorScheme } from '../../hooks'
-import { addDays, daysBetween, formatDayShort, parseDay } from '../../lib/dates'
+import { addDays, daysBetween, formatDayMonth, formatDayShort, parseDay } from '../../lib/dates'
 import type { DayValue } from '../../lib/trends'
 import { cx, Segmented } from '../../ui/kit'
 import { css, withAlpha } from './chartUtils'
@@ -140,7 +140,7 @@ export function TimeChart({ series, from, to, format, height = 220, hover, onHov
           max: span,
           grid: { display: false },
           border: { color: css('--line') },
-          ticks: { color: css('--ink-3'), maxTicksLimit: 5, font: { size: 11 }, callback: (v: number | string) => formatDayShort(addDays(from, Number(v))).replace(/^\w+ /, '') },
+          ticks: { color: css('--ink-3'), maxTicksLimit: 5, font: { size: 11 }, callback: (v: number | string) => formatDayMonth(addDays(from, Number(v))) },
         },
         y: {
           grid: { color: css('--grid'), lineWidth: 1 },

@@ -35,7 +35,7 @@ async function countRequest(): Promise<void> {
 export class AiError extends Error {}
 
 async function call(cfg: AiConfig, prompt: string, json: boolean, image?: { data: string; mime: string }): Promise<string> {
-  if ((await usedToday()) >= cfg.limit) throw new AiError(`Today's ${cfg.limit} requests are used up. Log by search instead; the count resets at midnight.`)
+  if ((await usedToday()) >= cfg.limit) throw new AiError(`Die ${cfg.limit} Anfragen für heute sind verbraucht. Trag über die Suche ein; um Mitternacht geht es weiter.`)
   const { url, init } = buildRequest({ provider: cfg.provider, model: cfg.model, key: cfg.key, prompt, json, image })
   const ctrl = new AbortController()
   const timer = window.setTimeout(() => ctrl.abort(), 45_000)
@@ -46,8 +46,8 @@ async function call(cfg: AiConfig, prompt: string, json: boolean, image?: { data
   } catch (e) {
     throw new AiError(
       e instanceof DOMException && e.name === 'AbortError'
-        ? 'The provider took too long to answer.'
-        : 'No connection to the provider, or it does not accept calls from a browser. Check the network, or try another provider.',
+        ? 'Der Anbieter hat zu lange gebraucht.'
+        : 'Keine Verbindung zum Anbieter, oder er nimmt keine Aufrufe aus dem Browser an. Netz prüfen oder anderen Anbieter wählen.',
     )
   } finally {
     window.clearTimeout(timer)
@@ -56,7 +56,7 @@ async function call(cfg: AiConfig, prompt: string, json: boolean, image?: { data
   try {
     return replyText(cfg.provider, await res.json())
   } catch (e) {
-    throw new AiError(e instanceof Error ? e.message : 'The reply could not be read.')
+    throw new AiError(e instanceof Error ? e.message : 'Die Antwort war nicht lesbar.')
   }
 }
 
@@ -78,14 +78,14 @@ export async function analyzeMealPhoto(cfg: AiConfig, photo: Blob): Promise<{ it
   try {
     return { items: parseItems(text), preview }
   } catch {
-    throw new AiError('The model’s answer was not in the expected form. Try again, or log by search.')
+    throw new AiError('Die Antwort hatte nicht die erwartete Form. Nochmal versuchen oder über die Suche eintragen.')
   }
 }
 
 /** A short text call that shows whether the key, the model and browser access work. */
 export async function testConnection(cfg: AiConfig): Promise<string> {
   const text = await call(cfg, 'Reply with the JSON {"ok":true} and nothing else.', true)
-  return /ok/i.test(text) ? 'Connected: the provider answered from this browser.' : `The provider answered: ${text.slice(0, 80)}`
+  return /ok/i.test(text) ? 'Verbunden: Der Anbieter antwortet aus diesem Browser.' : `Der Anbieter antwortet: ${text.slice(0, 80)}`
 }
 
 export async function askText(cfg: AiConfig, prompt: string, json = false): Promise<string> {

@@ -17,24 +17,24 @@ export const PROVIDERS: Record<AiProvider, { label: string; model: string; limit
     model: 'gemini-flash-lite-latest',
     limit: 500,
     keyUrl: 'aistudio.google.com',
-    allowance: 'About 15 requests a minute and 500 a day on the free tier (October 2026 readings); no card needed.',
-    catch: 'Google publishes no fixed numbers and can change them. Its terms ask for the paid tier for apps used in the EEA; about US$0.001 a photo, prepaid from US$5.',
+    allowance: 'Kostenlos etwa 15 Anfragen pro Minute und 500 am Tag (Stand Oktober 2026), ohne Kreditkarte.',
+    catch: 'Google nennt keine festen Zahlen und kann sie ändern. In der EU verlangen die Bedingungen den Bezahl-Tarif: etwa 0,001 US$ pro Foto, Guthaben ab 5 US$.',
   },
   openrouter: {
     label: 'OpenRouter',
     model: 'google/gemma-3-27b-it:free',
     limit: 50,
     keyUrl: 'openrouter.ai',
-    allowance: '20 requests a minute and 50 a day on free models, or 1,000 a day after buying US$10 of credit once.',
-    catch: 'The line-up of free vision models keeps changing; pick one marked for image input.',
+    allowance: 'Kostenlose Modelle: 20 pro Minute und 50 am Tag, nach einmalig 10 US$ Guthaben 1.000 am Tag.',
+    catch: 'Die kostenlosen Bildmodelle wechseln oft; wähle eins mit Bild-Eingabe.',
   },
   mistral: {
     label: 'Mistral',
     model: 'mistral-small-latest',
     limit: 100,
     keyUrl: 'console.mistral.ai',
-    allowance: 'Free Experiment plan with phone verification; no card.',
-    catch: 'Requests may be used to train Mistral’s models; limits are not published officially.',
+    allowance: 'Kostenloser Experiment-Tarif mit Telefonbestätigung, ohne Karte.',
+    catch: 'Anfragen dürfen zum Training von Mistrals Modellen dienen; Limits sind nicht offiziell.',
   },
 }
 
@@ -73,7 +73,7 @@ export function extractJson(text: string): unknown {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/)
   const body = (fenced ? fenced[1] : text).trim()
   const start = body.search(/[[{]/)
-  if (start < 0) throw new Error('The model did not reply with JSON.')
+  if (start < 0) throw new Error('Das Modell hat nicht mit JSON geantwortet.')
   const open = body[start]
   const end = body.lastIndexOf(open === '{' ? '}' : ']')
   return JSON.parse(body.slice(start, end + 1))
@@ -153,23 +153,23 @@ export function replyText(provider: AiProvider, body: unknown): string {
   }
   if (provider === 'gemini') {
     const text = b.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? ''
-    if (!text) throw new Error('The model sent an empty reply.')
+    if (!text) throw new Error('Das Modell hat leer geantwortet.')
     return text
   }
   const c = b.choices?.[0]?.message?.content
   const text = typeof c === 'string' ? c : Array.isArray(c) ? c.map((p) => p.text ?? '').join('') : ''
-  if (!text) throw new Error('The model sent an empty reply.')
+  if (!text) throw new Error('Das Modell hat leer geantwortet.')
   return text
 }
 
 /** Plain words for failed calls. */
 export function describeHttpError(status: number, body: string): string {
-  if (status === 400 && /api key|API_KEY/i.test(body)) return 'The key was not accepted. Check it under More → Photo logging.'
-  if (status === 401 || status === 403) return 'The key was not accepted. Check it under More → Photo logging.'
-  if (status === 404) return 'The model was not found. Check the model name in settings.'
-  if (status === 429) return 'The provider’s limit is reached for now. Log this meal by search instead.'
-  if (status >= 500) return 'The provider is having trouble. Try again later or log by search.'
-  return `The provider refused the request (${status}).`
+  if (status === 400 && /api key|API_KEY/i.test(body)) return 'Der Schlüssel wurde abgelehnt. Prüf ihn unter Mehr → Foto-Erfassung.'
+  if (status === 401 || status === 403) return 'Der Schlüssel wurde abgelehnt. Prüf ihn unter Mehr → Foto-Erfassung.'
+  if (status === 404) return 'Modell nicht gefunden. Prüf den Modellnamen in den Einstellungen.'
+  if (status === 429) return 'Das Limit des Anbieters ist gerade erreicht. Trag die Mahlzeit über die Suche ein.'
+  if (status >= 500) return 'Der Anbieter hat gerade Probleme. Später erneut versuchen oder über die Suche eintragen.'
+  return `Der Anbieter hat die Anfrage abgelehnt (${status}).`
 }
 
 // ---- matching ---------------------------------------------------------------------------
@@ -197,7 +197,7 @@ export function matchItems(items: readonly SeenItem[], foods: readonly Food[]): 
 
 // ---- plan assistant ------------------------------------------------------------------------
 
-export const EXPLAIN_PROMPT = (planJson: string) => `You are a strength coach. Explain this training plan to its user in plain English, under 180 words:
+export const EXPLAIN_PROMPT = (planJson: string) => `You are a strength coach. Explain this training plan to its user in plain German (Du-Form), under 180 words:
 what the split is, why the exercises and weekly sets are where they are, and one thing to watch.
 Do not invent numbers; use only what is in the JSON.
 ${planJson}`
@@ -207,7 +207,7 @@ ${answersJson}
 Allowed values: daysPerWeek ${DAYS_OPTIONS.join('|')}; minutes ${MINUTES_OPTIONS.join('|')}; equipment ${Object.keys(EQUIPMENT_CHOICES).join('|')};
 injuries any of ${JOINTS.join('|')}; goal ${Object.keys(PLAN_GOALS).join('|')}; priority up to two of ${GROUPS.join('|')}.
 The user asks: "${request.replace(/"/g, "'").slice(0, 300)}"
-Change only the answers the request needs. Reply with JSON only: {"answers":{...only changed fields...},"note":"one sentence on what changed and why"}`
+Change only the answers the request needs. Reply with JSON only: {"answers":{...only changed fields...},"note":"one sentence in German (Du-Form) on what changed and why"}`
 
 const answersPatch = z
   .object({

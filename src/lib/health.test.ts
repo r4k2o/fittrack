@@ -64,9 +64,9 @@ describe('health lines', () => {
     const p = parseHealthLines('steps\t2026-11-16\t9000\nweight,2026-11-16,80.2\nmood;2026-11-16;5\nweight;16/13/2026;80\nsteps;2026-11-18;lots')
     expect(p.metrics.map((m) => `${m.type}:${m.value}`)).toEqual(['steps:9000', 'weight:80.2'])
     expect(p.skipped.map((s) => [s.line, s.reason])).toEqual([
-      [3, 'unknown metric'],
-      [4, 'date not readable'],
-      [5, 'value not readable'],
+      [3, 'unbekannter Wert'],
+      [4, 'Datum nicht lesbar'],
+      [5, 'Wert nicht lesbar'],
     ])
   })
 

@@ -8,6 +8,9 @@ import {
   generatePlan,
   JOINTS,
   MINUTES_OPTIONS,
+  normalizeAnswers,
+  splitFor,
+  type Region,
   weeklyTargets,
   type EquipmentChoice,
   type GeneratedPlan,
@@ -41,7 +44,9 @@ function check(plan: GeneratedPlan, a: PlanAnswers): string[] {
   const problems: string[] = []
   const allowed = new Set(EQUIPMENT_CHOICES[a.equipment].allowed)
   const label = `${a.daysPerWeek}d ${a.minutes}m ${a.experience} ${a.equipment} ${a.goal} [${a.injuries.join(',')}] [${a.priority.join(',')}]`
-  if (plan.days.length !== a.daysPerWeek) problems.push(`${label}: ${plan.days.length} days`)
+  const expectedDays = splitFor(normalizeAnswers(a)).days.length
+  if (plan.days.length !== expectedDays) problems.push(`${label}: ${plan.days.length} days`)
+  const out = new Set((a.exclude ?? []).flatMap((r) => ({ legs: ['quads', 'hamstrings', 'glutes', 'calves'], chest: ['chest'], back: ['back'], shoulders: ['shoulders'], arms: ['biceps', 'triceps'], abs: ['abs'] })[r]))
   for (const day of plan.days) {
     const timed = day.exercises.map((x) => ({ id: x.key, compound: countsAsCompound(BY_ID.get(x.exerciseId)!), sets: x.sets, pairWith: x.pairWith }))
     const minutes = sessionMinutes(timed)
@@ -56,6 +61,7 @@ function check(plan: GeneratedPlan, a: PlanAnswers): string[] {
         continue
       }
       if (seen.has(e.id)) problems.push(`${label}: ${e.name} twice on ${day.name}`)
+      for (const g of primaryGroups(e)) if (out.has(g)) problems.push(`${label}: ${e.name} trains ${g}, which is left out`)
       seen.add(e.id)
       if (!allowed.has(e.equipment)) problems.push(`${label}: ${e.name} needs ${e.equipment}`)
       for (const j of e.jointStress) if (a.injuries.includes(j)) problems.push(`${label}: ${e.name} loads the ${j}`)
@@ -130,7 +136,7 @@ describe('plan generator (gate 2)', () => {
       expect(plan.volume[g], g).toBeLessThanOrEqual(20)
     }
     expect(plan.notes.filter((n) => n.kind === 'shortfall')).toEqual([])
-    expect(plan.days.map((d) => d.name)).toEqual(['Upper A', 'Lower A', 'Upper B', 'Lower B'])
+    expect(plan.days.map((d) => d.name)).toEqual(['Oberkörper A', 'Unterkörper A', 'Oberkörper B', 'Unterkörper B'])
     expect(plan.days.map((d) => d.weekday)).toEqual([0, 1, 3, 4])
   })
 
@@ -141,10 +147,10 @@ describe('plan generator (gate 2)', () => {
 
   it('maps days to splits and default weekdays', () => {
     const names = (d: number) => generatePlan(answers({ daysPerWeek: d }), EXERCISES).days.map((x) => x.name)
-    expect(names(2)).toEqual(['Full body A', 'Full body B'])
-    expect(names(3)).toEqual(['Full body A', 'Full body B', 'Full body C'])
-    expect(names(5)).toEqual(['Upper', 'Lower', 'Push', 'Pull', 'Legs'])
-    expect(names(6)).toEqual(['Push A', 'Pull A', 'Legs A', 'Push B', 'Pull B', 'Legs B'])
+    expect(names(2)).toEqual(['Ganzkörper A', 'Ganzkörper B'])
+    expect(names(3)).toEqual(['Ganzkörper A', 'Ganzkörper B', 'Ganzkörper C'])
+    expect(names(5)).toEqual(['Oberkörper', 'Unterkörper', 'Push', 'Pull', 'Beine'])
+    expect(names(6)).toEqual(['Push A', 'Pull A', 'Beine A', 'Push B', 'Pull B', 'Beine B'])
     for (const d of DAYS_OPTIONS) expect(generatePlan(answers({ daysPerWeek: d }), EXERCISES).days.map((x) => x.weekday)).toEqual(DEFAULT_WEEKDAYS[d])
   })
 
@@ -197,8 +203,8 @@ describe('plan generator (gate 2)', () => {
     const plan = generatePlan(answers({ injuries: ['knee'] }), EXERCISES)
     const all = plan.days.flatMap((d) => d.exercises.map((x) => BY_ID.get(x.exerciseId)!))
     expect(all.some((e) => e.jointStress.includes('knee'))).toBe(false)
-    expect(plan.notes.find((n) => n.group === 'quads')?.text).toMatch(/joint you flagged/)
-    expect(plan.notes.some((n) => n.kind === 'injury' && /knee/.test(n.text))).toBe(true)
+    expect(plan.notes.find((n) => n.group === 'quads')?.text).toMatch(/markiertes Gelenk/)
+    expect(plan.notes.some((n) => n.kind === 'injury' && /Knie/.test(n.text))).toBe(true)
   })
 
   it('builds complete plans from bodyweight and bands', () => {
@@ -234,5 +240,37 @@ describe('plan generator (gate 2)', () => {
     expect(aBeg).toBe(cBeg)
     const [aInt, cInt] = lifts('intermediate')
     expect(aInt).not.toBe(cInt)
+  })
+
+  it('keeps every rule when body regions are left out', () => {
+    const problems: string[] = []
+    const excludes: Region[][] = [['legs'], ['arms'], ['abs'], ['chest'], ['legs', 'abs'], ['chest', 'back', 'shoulders', 'arms']]
+    for (const daysPerWeek of DAYS_OPTIONS)
+      for (const minutes of [30, 60, 90])
+        for (const equipment of EQUIPMENT)
+          for (const exclude of excludes) {
+            const a = answers({ daysPerWeek, minutes, equipment, exclude })
+            problems.push(...check(generatePlan(a, EXERCISES), a))
+          }
+    expect(problems.slice(0, 15)).toEqual([])
+  }, 60_000)
+
+  it('builds an upper-body plan when the legs are left out', () => {
+    for (const daysPerWeek of DAYS_OPTIONS) {
+      const plan = generatePlan(answers({ daysPerWeek, exclude: ['legs'] }), EXERCISES)
+      expect(plan.days.every((d) => d.kind === 'upper' || d.kind === 'push' || d.kind === 'pull')).toBe(true)
+      for (const g of ['quads', 'hamstrings', 'glutes', 'calves'] as Group[]) expect(plan.targets[g]).toBe(0)
+      expect(plan.notes.some((n) => n.kind === 'shortfall' && ['quads', 'hamstrings', 'glutes', 'calves'].includes(n.group ?? ''))).toBe(false)
+    }
+    const four = generatePlan(answers({ daysPerWeek: 4, exclude: ['legs'] }), EXERCISES)
+    expect(four.days.map((d) => d.name)).toEqual(['Push A', 'Pull A', 'Push B', 'Pull B'])
+    for (const g of ['chest', 'back', 'shoulders', 'biceps', 'triceps'] as Group[]) expect(four.volume[g], g).toBeGreaterThanOrEqual(12)
+  })
+
+  it('caps a legs-only plan at three days and says why', () => {
+    const plan = generatePlan(answers({ daysPerWeek: 5, exclude: ['chest', 'back', 'shoulders', 'arms'] }), EXERCISES)
+    expect(plan.days).toHaveLength(3)
+    expect(plan.daysPerWeek).toBe(3)
+    expect(plan.notes.some((n) => /48 Stunden/.test(n.text))).toBe(true)
   })
 })

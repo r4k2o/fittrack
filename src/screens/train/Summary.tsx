@@ -73,7 +73,7 @@ export default function Summary() {
   return (
     <Screen tone="train" back="/train" title={session.name} subtitle={formatDayLong(session.date)}>
       <Card tone="train" className="animate-rise mt-1 !p-6 text-center">
-        <span className="animate-pop mx-auto flex size-16 items-center justify-center rounded-full btn-primary">
+        <span className="animate-pop mx-auto flex size-16 items-center justify-center rounded-full btn-accent">
           <IconCheck size={34} strokeWidth={3} />
         </span>
         <p className="mt-4 text-title2">Workout complete</p>

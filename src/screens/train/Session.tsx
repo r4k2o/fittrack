@@ -12,6 +12,7 @@ import { formatDayShort } from '../../lib/dates'
 import { fmt2, fmtDuration } from '../../lib/format'
 import { defaultRepRange, defaultRestSec, loadStep, nextTarget, roundToStep } from '../../lib/training'
 import { deloadActive, detectStall } from '../../store/plans'
+import { homeReps } from '../../lib/home'
 import {
   deleteSession,
   deleteSet,
@@ -20,6 +21,7 @@ import {
   logSet,
   renameSession,
   setSessionExercises,
+  swapSessionExercise,
   updateSet,
   type LastTime,
 } from '../../store/training'
@@ -108,7 +110,7 @@ function RestBar({ rest, onChange }: { rest: Rest | null; onChange: (r: Rest | n
   const small = 'press flex size-11 items-center justify-center rounded-full text-[14px] font-bold'
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
-      <div className={cx('animate-toast pointer-events-auto mx-auto flex max-w-md items-center gap-3 rounded-[32px] p-2 pl-2.5 shadow-float', done ? 'btn-primary' : 'bg-ink text-page')}>
+      <div className={cx('animate-toast pointer-events-auto mx-auto flex max-w-md items-center gap-3 rounded-[32px] p-2 pl-2.5 shadow-float', done ? 'btn-accent' : 'bg-ink text-page')}>
         <svg width={48} height={48} className="-rotate-90 shrink-0" aria-hidden>
           <circle cx={24} cy={24} r={r} fill="none" stroke="currentColor" strokeOpacity={0.18} strokeWidth={5} />
           <circle
@@ -362,7 +364,7 @@ function ExerciseCard({
                 aria-label={done ? `Undo set ${i + 1}` : `Done with set ${i + 1}`}
                 aria-pressed={done}
                 onClick={() => void tick(i)}
-                className={cx('press flex size-12 items-center justify-center rounded-[16px] transition-colors duration-200', done ? 'btn-primary animate-pop' : 'bg-fill text-ink-3')}
+                className={cx('press flex size-12 items-center justify-center rounded-[16px] transition-colors duration-200', done ? 'btn-accent animate-pop' : 'bg-fill text-ink-3')}
               >
                 <IconCheck size={26} strokeWidth={3} />
               </button>
@@ -440,20 +442,25 @@ export default function Session() {
   const ids = session.exerciseIds
   const byExercise = new Map((prescriptions ?? []).map((p) => [p.exerciseId, p]))
   const byRow = new Map((prescriptions ?? []).map((p) => [p.id, p]))
+  /** The planned row an exercise stands for: itself, or the one it replaced (at home or by a swap). */
+  const plannedOf = (exId: string) => byExercise.get(exId) ?? (session.swaps?.[exId] ? byExercise.get(session.swaps[exId]) : undefined)
+  const prescriptionOf = (ex: Exercise): PlanExercise | undefined => {
+    const p = plannedOf(ex.id)
+    if (!p || p.exerciseId === ex.id || !session.home) return p
+    return { ...p, ...homeReps(p, ex) }
+  }
+  const currentIdOf = (plannedId: string) => ids.find((id) => id === plannedId || session.swaps?.[id] === plannedId)
   const partnerOf = (exId: string) => {
-    const p = byExercise.get(exId)
+    const p = plannedOf(exId)
     const other = p?.supersetWith ? byRow.get(p.supersetWith) : undefined
-    return other && ids.includes(other.exerciseId) ? exercises.find((e) => e.id === other.exerciseId)?.name : undefined
+    const otherId = other ? currentIdOf(other.exerciseId) : undefined
+    return otherId ? exercises.find((e) => e.id === otherId)?.name : undefined
   }
 
   const pick = async (ex: Exercise) => {
     if (!picker) return
     if (picker.mode === 'add') await setSessionExercises(session.id, [...ids, ex.id])
-    else {
-      const next = [...ids]
-      next[picker.index] = ex.id
-      await setSessionExercises(session.id, next)
-    }
+    else await swapSessionExercise(session, picker.index, ex.id)
     haptic()
     setPicker(null)
   }
@@ -530,7 +537,7 @@ export default function Session() {
             index={index}
             session={session}
             logged={sets.filter((s) => s.exerciseId === ex.id && s.kind === 'work')}
-            prescription={byExercise.get(ex.id)}
+            prescription={prescriptionOf(ex)}
             partner={partnerOf(ex.id)}
             deload={!!deload}
             onRest={(sec) => setRest({ endsAt: Date.now() + sec * 1000, total: sec })}

@@ -40,9 +40,9 @@ describe('AI replies', () => {
   it('reads the reply text and explains HTTP errors', () => {
     expect(replyText('gemini', { candidates: [{ content: { parts: [{ text: '{"items":[]}' }] } }] })).toBe('{"items":[]}')
     expect(replyText('openrouter', { choices: [{ message: { content: 'hi' } }] })).toBe('hi')
-    expect(() => replyText('mistral', { choices: [] })).toThrow(/empty/)
-    expect(describeHttpError(429, '')).toMatch(/limit/)
-    expect(describeHttpError(400, 'API key not valid')).toMatch(/key/)
+    expect(() => replyText('mistral', { choices: [] })).toThrow(/leer/)
+    expect(describeHttpError(429, '')).toMatch(/Limit/)
+    expect(describeHttpError(400, 'API key not valid')).toMatch(/Schlüssel/)
   })
 })
 

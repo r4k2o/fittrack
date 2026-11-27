@@ -39,7 +39,9 @@ export type EquipmentChoice = 'full' | 'barbell' | 'dumbbell' | 'machines' | 'bo
 export type PlanGoal = 'muscle' | 'strength' | 'cut'
 export type DayKind = 'full' | 'upper' | 'lower' | 'push' | 'pull' | 'legs'
 export type Slot = 'squat' | 'lunge' | 'hinge' | 'hip' | 'hpush' | 'incline' | 'vpush' | 'hpull' | 'vpull'
-export type SplitKey = 'full-body' | 'upper-lower' | 'upper-lower-ppl' | 'ppl'
+export type SplitKey = 'full-body' | 'upper-lower' | 'upper-lower-ppl' | 'ppl' | 'upper' | 'push-pull' | 'lower'
+/** Body regions a plan can leave out entirely, e.g. no legs gives an upper-body plan. */
+export type Region = 'legs' | 'chest' | 'back' | 'shoulders' | 'arms' | 'abs'
 export type Role = 'main' | 'compound' | 'accessory'
 
 export interface PlanAnswers {
@@ -51,6 +53,8 @@ export interface PlanAnswers {
   goal: PlanGoal
   /** Up to two groups that get 3 extra weekly sets. */
   priority: Group[]
+  /** Regions to leave out: no target, no direct work, and a split without them. */
+  exclude?: Region[]
   /** One weekday per training day, 0 = Monday. The default spreads the days 48 hours apart. */
   weekdays?: number[]
 }
@@ -107,38 +111,62 @@ export const DAYS_OPTIONS = [2, 3, 4, 5, 6] as const
 export const MINUTES_OPTIONS = [30, 45, 60, 75, 90] as const
 
 export const EXPERIENCE_OPTIONS: readonly { value: Experience; label: string }[] = [
-  { value: 'beginner', label: 'Under 1 year' },
-  { value: 'intermediate', label: '1–3 years' },
-  { value: 'advanced', label: 'Over 3 years' },
+  { value: 'beginner', label: 'Unter 1 Jahr' },
+  { value: 'intermediate', label: '1–3 Jahre' },
+  { value: 'advanced', label: 'Über 3 Jahre' },
 ]
 
 export const EQUIPMENT_CHOICES: Record<EquipmentChoice, { label: string; hint: string; allowed: readonly Equipment[] }> = {
   full: {
-    label: 'Full gym',
-    hint: 'Barbells, dumbbells, cables and machines',
+    label: 'Fitnessstudio',
+    hint: 'Langhanteln, Kurzhanteln, Kabelzug, Maschinen',
     allowed: ['barbell', 'ezbar', 'trapbar', 'dumbbell', 'kettlebell', 'cable', 'machine', 'smith', 'bodyweight', 'band', 'other'],
   },
-  barbell: { label: 'Barbell and rack', hint: 'Plus a bench, a pull-up bar and bands', allowed: ['barbell', 'ezbar', 'bodyweight', 'band'] },
-  dumbbell: { label: 'Dumbbells and bench', hint: 'Plus kettlebells, bodyweight and bands', allowed: ['dumbbell', 'kettlebell', 'bodyweight', 'band'] },
-  machines: { label: 'Machines only', hint: 'Machines, cables and a Smith machine', allowed: ['machine', 'cable', 'smith'] },
-  bodyweight: { label: 'Bodyweight and bands', hint: 'At home or travelling', allowed: ['bodyweight', 'band'] },
+  barbell: { label: 'Langhantel und Rack', hint: 'Dazu Bank, Klimmzugstange, Bänder', allowed: ['barbell', 'ezbar', 'bodyweight', 'band'] },
+  dumbbell: { label: 'Kurzhanteln und Bank', hint: 'Dazu Kettlebells, Körpergewicht, Bänder', allowed: ['dumbbell', 'kettlebell', 'bodyweight', 'band'] },
+  machines: { label: 'Nur Maschinen', hint: 'Maschinen, Kabelzug, Multipresse', allowed: ['machine', 'cable', 'smith'] },
+  bodyweight: { label: 'Körpergewicht und Bänder', hint: 'Zuhause oder unterwegs', allowed: ['bodyweight', 'band'] },
 }
 
 export const PLAN_GOALS: Record<PlanGoal, { label: string; hint: string }> = {
-  muscle: { label: 'Build muscle', hint: 'Weekly sets by experience, 6–15 reps' },
-  strength: { label: 'Strength focus', hint: 'One heavy lift of 3–6 reps first each session' },
-  cut: { label: 'Keep muscle on a cut', hint: 'Volume at the low end: 10 sets a week' },
+  muscle: { label: 'Muskelaufbau', hint: 'Sätze nach Erfahrung, 6–15 Wiederholungen' },
+  strength: { label: 'Kraft', hint: 'Zuerst eine schwere Übung mit 3–6 Wiederholungen' },
+  cut: { label: 'Muskeln halten in der Diät', hint: 'Weniger Volumen: 10 Sätze pro Woche' },
 }
 
 export const JOINTS: readonly Joint[] = ['shoulder', 'elbow', 'wrist', 'lowerBack', 'hip', 'knee']
 
 export const JOINT_LABEL: Record<Joint, string> = {
-  shoulder: 'Shoulder',
-  elbow: 'Elbow',
-  wrist: 'Wrist',
-  lowerBack: 'Lower back',
-  hip: 'Hip',
-  knee: 'Knee',
+  shoulder: 'Schulter',
+  elbow: 'Ellbogen',
+  wrist: 'Handgelenk',
+  lowerBack: 'Unterer Rücken',
+  hip: 'Hüfte',
+  knee: 'Knie',
+}
+
+export const REGIONS: readonly Region[] = ['legs', 'chest', 'back', 'shoulders', 'arms', 'abs']
+
+export const REGION_LABEL: Record<Region, string> = {
+  legs: 'Beine',
+  chest: 'Brust',
+  back: 'Rücken',
+  shoulders: 'Schultern',
+  arms: 'Arme',
+  abs: 'Bauch',
+}
+
+export const REGION_GROUPS: Record<Region, readonly Group[]> = {
+  legs: ['quads', 'hamstrings', 'glutes', 'calves'],
+  chest: ['chest'],
+  back: ['back'],
+  shoulders: ['shoulders'],
+  arms: ['biceps', 'triceps'],
+  abs: ['abs'],
+}
+
+export function excludedGroups(exclude: readonly Region[] | undefined): Set<Group> {
+  return new Set((exclude ?? []).flatMap((r) => REGION_GROUPS[r]))
 }
 
 /** Default weekdays (0 = Monday): every pair of sessions for the same muscle 48 hours apart. */
@@ -162,36 +190,81 @@ interface DayTemplate {
   slots: readonly Slot[]
 }
 
-const FULL_A: DayTemplate = { name: 'Full body A', kind: 'full', slots: ['squat', 'hpush', 'hpull', 'vpush', 'hinge'] }
-const FULL_B: DayTemplate = { name: 'Full body B', kind: 'full', slots: ['hinge', 'vpull', 'incline', 'lunge', 'hpull'] }
-const FULL_C: DayTemplate = { name: 'Full body C', kind: 'full', slots: ['hpush', 'squat', 'vpull', 'vpush', 'hip'] }
-const UPPER_A: DayTemplate = { name: 'Upper A', kind: 'upper', slots: ['hpush', 'hpull', 'vpush', 'vpull'] }
-const LOWER_A: DayTemplate = { name: 'Lower A', kind: 'lower', slots: ['squat', 'hinge', 'lunge'] }
-const UPPER_B: DayTemplate = { name: 'Upper B', kind: 'upper', slots: ['vpush', 'vpull', 'incline', 'hpull'] }
-const LOWER_B: DayTemplate = { name: 'Lower B', kind: 'lower', slots: ['hinge', 'squat', 'hip'] }
+const FULL_A: DayTemplate = { name: 'Ganzkörper A', kind: 'full', slots: ['squat', 'hpush', 'hpull', 'vpush', 'hinge'] }
+const FULL_B: DayTemplate = { name: 'Ganzkörper B', kind: 'full', slots: ['hinge', 'vpull', 'incline', 'lunge', 'hpull'] }
+const FULL_C: DayTemplate = { name: 'Ganzkörper C', kind: 'full', slots: ['hpush', 'squat', 'vpull', 'vpush', 'hip'] }
+const UPPER_A: DayTemplate = { name: 'Oberkörper A', kind: 'upper', slots: ['hpush', 'hpull', 'vpush', 'vpull'] }
+const LOWER_A: DayTemplate = { name: 'Unterkörper A', kind: 'lower', slots: ['squat', 'hinge', 'lunge'] }
+const UPPER_B: DayTemplate = { name: 'Oberkörper B', kind: 'upper', slots: ['vpush', 'vpull', 'incline', 'hpull'] }
+const LOWER_B: DayTemplate = { name: 'Unterkörper B', kind: 'lower', slots: ['hinge', 'squat', 'hip'] }
 const PUSH_A: DayTemplate = { name: 'Push A', kind: 'push', slots: ['hpush', 'vpush', 'incline'] }
 const PULL_A: DayTemplate = { name: 'Pull A', kind: 'pull', slots: ['vpull', 'hpull'] }
-const LEGS_A: DayTemplate = { name: 'Legs A', kind: 'legs', slots: ['squat', 'hinge', 'lunge'] }
+const LEGS_A: DayTemplate = { name: 'Beine A', kind: 'legs', slots: ['squat', 'hinge', 'lunge'] }
 const PUSH_B: DayTemplate = { name: 'Push B', kind: 'push', slots: ['vpush', 'incline', 'hpush'] }
 const PULL_B: DayTemplate = { name: 'Pull B', kind: 'pull', slots: ['hpull', 'vpull'] }
-const LEGS_B: DayTemplate = { name: 'Legs B', kind: 'legs', slots: ['hinge', 'squat', 'hip'] }
+const LEGS_B: DayTemplate = { name: 'Beine B', kind: 'legs', slots: ['hinge', 'squat', 'hip'] }
+const UPPER_C: DayTemplate = { name: 'Oberkörper C', kind: 'upper', slots: ['incline', 'hpull', 'vpush', 'vpull'] }
+const LOWER_C: DayTemplate = { name: 'Unterkörper C', kind: 'lower', slots: ['squat', 'hip', 'lunge'] }
+const PUSH_C: DayTemplate = { name: 'Push C', kind: 'push', slots: ['incline', 'hpush', 'vpush'] }
 
 export const SPLITS: Record<number, { key: SplitKey; label: string; days: readonly DayTemplate[] }> = {
-  2: { key: 'full-body', label: 'Full body', days: [FULL_A, FULL_B] },
-  3: { key: 'full-body', label: 'Full body', days: [FULL_A, FULL_B, FULL_C] },
-  4: { key: 'upper-lower', label: 'Upper / lower', days: [UPPER_A, LOWER_A, UPPER_B, LOWER_B] },
+  2: { key: 'full-body', label: 'Ganzkörper', days: [FULL_A, FULL_B] },
+  3: { key: 'full-body', label: 'Ganzkörper', days: [FULL_A, FULL_B, FULL_C] },
+  4: { key: 'upper-lower', label: 'Ober- / Unterkörper', days: [UPPER_A, LOWER_A, UPPER_B, LOWER_B] },
   5: {
     key: 'upper-lower-ppl',
-    label: 'Upper, lower, push, pull, legs',
+    label: 'Ober-, Unterkörper, Push, Pull, Beine',
     days: [
-      { ...UPPER_A, name: 'Upper' },
-      { ...LOWER_A, name: 'Lower' },
+      { ...UPPER_A, name: 'Oberkörper' },
+      { ...LOWER_A, name: 'Unterkörper' },
       { ...PUSH_B, name: 'Push' },
       { ...PULL_A, name: 'Pull' },
-      { ...LEGS_B, name: 'Legs' },
+      { ...LEGS_B, name: 'Beine' },
     ],
   },
-  6: { key: 'ppl', label: 'Push, pull, legs', days: [PUSH_A, PULL_A, LEGS_A, PUSH_B, PULL_B, LEGS_B] },
+  6: { key: 'ppl', label: 'Push, Pull, Beine', days: [PUSH_A, PULL_A, LEGS_A, PUSH_B, PULL_B, LEGS_B] },
+}
+
+type Split = { key: SplitKey; label: string; days: readonly DayTemplate[]; weekdays: readonly number[]; note?: string }
+
+/** Upper body only (legs left out): full upper days up to three a week, then push and pull alternating. */
+const UPPER_SPLITS: Record<number, Split> = {
+  2: { key: 'upper', label: 'Oberkörper', days: [UPPER_A, UPPER_B], weekdays: [0, 3] },
+  3: { key: 'upper', label: 'Oberkörper', days: [UPPER_A, UPPER_B, UPPER_C], weekdays: [0, 2, 4] },
+  4: { key: 'push-pull', label: 'Push / Pull', days: [PUSH_A, PULL_A, PUSH_B, PULL_B], weekdays: [0, 1, 3, 4] },
+  5: { key: 'push-pull', label: 'Push / Pull', days: [PUSH_A, PULL_A, PUSH_B, PULL_B, PUSH_C], weekdays: [0, 1, 2, 3, 4] },
+  6: { key: 'push-pull', label: 'Push / Pull', days: [PUSH_A, PULL_A, PUSH_B, PULL_B, PUSH_C, { ...PULL_A, name: 'Pull C' }], weekdays: [0, 1, 2, 3, 4, 5] },
+}
+
+/** Legs only: more than three days a week leave no 48 hours between sessions. */
+const LOWER_SPLITS: Record<number, Split> = {
+  2: { key: 'lower', label: 'Unterkörper', days: [LOWER_A, LOWER_B], weekdays: [0, 3] },
+  3: { key: 'lower', label: 'Unterkörper', days: [LOWER_A, LOWER_B, LOWER_C], weekdays: [0, 2, 4] },
+}
+
+/** The split for the answers: full, upper-only when legs are left out, lower-only when the upper body is. */
+export function splitFor(a: Pick<PlanAnswers, 'daysPerWeek' | 'exclude'>): Split {
+  const out = new Set(a.exclude ?? [])
+  const upperOut = out.has('chest') && out.has('back') && out.has('shoulders') && out.has('arms')
+  if (out.has('legs') && !upperOut) return UPPER_SPLITS[a.daysPerWeek]
+  if (upperOut && !out.has('legs')) {
+    const s = LOWER_SPLITS[Math.min(3, a.daysPerWeek)]
+    return a.daysPerWeek > 3 ? { ...s, note: 'Nur Beine: Mehr als 3 Einheiten pro Woche ließen keine 48 Stunden Pause, daher 3.' } : s
+  }
+  return { ...SPLITS[a.daysPerWeek], weekdays: DEFAULT_WEEKDAYS[a.daysPerWeek] }
+}
+
+/** Which group a movement slot is for; a slot is skipped when its group is left out. */
+const SLOT_GROUP: Record<Slot, Group> = {
+  squat: 'quads',
+  lunge: 'quads',
+  hinge: 'hamstrings',
+  hip: 'glutes',
+  hpush: 'chest',
+  incline: 'chest',
+  vpush: 'shoulders',
+  hpull: 'back',
+  vpull: 'back',
 }
 
 const KIND_GROUPS: Record<DayKind, ReadonlySet<Group>> = {
@@ -447,15 +520,19 @@ const ACCESSORIES: Record<Group, readonly string[]> = {
   abs: ids(['Cable_Crunch', 'Hanging_Leg_Raise', 'Ab_Crunch_Machine', 'Reverse_Crunch', 'Crunches', 'Plank', 'Dead_Bug', 'Ab_Roller', 'Side_Bridge']),
 }
 
+/** Every ranked list, best first within each, for choosing replacements outside the generator. */
+export const RANKING: readonly string[] = [...new Set([...Object.values(SLOT_CANDIDATES).flat(), ...Object.values(ACCESSORIES).flat()])]
+
 const UPPER_GROUPS: ReadonlySet<Group> = new Set(['chest', 'back', 'shoulders', 'biceps', 'triceps'])
 const PUSH_GROUPS: ReadonlySet<Group> = new Set(['chest', 'shoulders', 'triceps'])
 
 // ---- Helpers ------------------------------------------------------------------------------
 
-export function weeklyTargets(a: Pick<PlanAnswers, 'experience' | 'goal' | 'priority'>): Volume {
+export function weeklyTargets(a: Pick<PlanAnswers, 'experience' | 'goal' | 'priority' | 'exclude'>): Volume {
   const base = a.goal === 'cut' ? 10 : a.experience === 'beginner' ? 10 : a.experience === 'intermediate' ? 12 : 14
+  const out = excludedGroups(a.exclude)
   const v = emptyVolume()
-  for (const g of GROUPS) v[g] = Math.min(VOLUME_CEILING, base + (a.priority.includes(g) ? PRIORITY_EXTRA_SETS : 0))
+  for (const g of GROUPS) v[g] = out.has(g) ? 0 : Math.min(VOLUME_CEILING, base + (a.priority.includes(g) ? PRIORITY_EXTRA_SETS : 0))
   return v
 }
 
@@ -471,8 +548,13 @@ export function normalizeAnswers(a: PlanAnswers): PlanAnswers {
   const daysPerWeek = Math.min(6, Math.max(2, Math.round(a.daysPerWeek || 3)))
   const minutes = MINUTES_OPTIONS.reduce((best, m) => (Math.abs(m - a.minutes) < Math.abs(best - a.minutes) ? m : best), 60 as number)
   const injuries = JOINTS.filter((j) => a.injuries.includes(j))
-  const priority = GROUPS.filter((g) => a.priority.includes(g)).slice(0, 2)
-  const weekdays = validWeekdays(a.weekdays, daysPerWeek)
+  let exclude = REGIONS.filter((r) => a.exclude?.includes(r))
+  // Leaving out both the legs and the whole upper body would leave nothing to train.
+  if (exclude.includes('legs') && ['chest', 'back', 'shoulders', 'arms'].every((r) => exclude.includes(r as Region))) exclude = []
+  const out = excludedGroups(exclude)
+  const priority = GROUPS.filter((g) => a.priority.includes(g) && !out.has(g)).slice(0, 2)
+  const split = splitFor({ daysPerWeek, exclude })
+  const weekdays = validWeekdays(a.weekdays, split.days.length)
   return {
     daysPerWeek,
     minutes,
@@ -481,6 +563,7 @@ export function normalizeAnswers(a: PlanAnswers): PlanAnswers {
     injuries,
     goal: a.goal in PLAN_GOALS ? a.goal : 'muscle',
     priority,
+    ...(exclude.length ? { exclude } : {}),
     ...(weekdays ? { weekdays } : {}),
   }
 }
@@ -521,7 +604,7 @@ const fmtSets = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
 
 function listText(items: readonly string[]): string {
   if (items.length <= 1) return items.join('')
-  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
+  return `${items.slice(0, -1).join(', ')} und ${items[items.length - 1]}`
 }
 
 // ---- The generator -------------------------------------------------------------------------
@@ -546,13 +629,15 @@ export interface GenerateOptions {
 
 export function generatePlan(input: PlanAnswers, library: readonly PlannerExercise[], options: GenerateOptions = {}): GeneratedPlan {
   const answers = normalizeAnswers(input)
-  const { daysPerWeek, minutes, experience, goal, priority } = answers
+  const { minutes, experience, goal, priority } = answers
   const variant = Math.max(0, Math.floor(options.variant ?? 0))
   const strength = goal === 'strength'
-  const pool = exercisePool(answers, library)
+  const out = excludedGroups(answers.exclude)
+  // Nothing whose main muscle is left out, so no slot or accessory can bring it back.
+  const pool = exercisePool(answers, library).filter((e) => !primaryGroups(e).some((g) => out.has(g)))
   const byId = new Map(pool.map((e) => [e.id, e]))
-  const split = SPLITS[daysPerWeek]
-  const weekdays = answers.weekdays ?? [...DEFAULT_WEEKDAYS[daysPerWeek]]
+  const split = splitFor(answers)
+  const weekdays = answers.weekdays ?? [...split.weekdays]
   const targets = weeklyTargets(answers)
   const usage = new Map<string, number>()
   const rotate = experience !== 'beginner'
@@ -664,10 +749,11 @@ export function generatePlan(input: PlanAnswers, library: readonly PlannerExerci
   for (const [i, t] of split.days.entries()) {
     const d = days[i]
     for (const slot of t.slots) {
+      if (out.has(SLOT_GROUP[slot])) continue
       const main = d.items.length === 0
       const heavy = main && strength
       let ex: PlannerExercise | undefined
-      for (const s of [slot, ...FALLBACK[slot]]) {
+      for (const s of [slot, ...FALLBACK[slot]].filter((x) => !out.has(SLOT_GROUP[x]))) {
         ex = pick(heavy ? [...(STRENGTH_MAIN[s] ?? []), ...SLOT_CANDIDATES[s]] : SLOT_CANDIDATES[s], d, heavy)
         if (ex) break
       }
@@ -706,7 +792,7 @@ export function generatePlan(input: PlanAnswers, library: readonly PlannerExerci
       dropped.push(`${it.ex.name} (${d.name})`)
     }
     if (!notes.some((n) => n.kind === 'ceiling' && n.group === over))
-      notes.push({ kind: 'ceiling', group: over, text: `${GROUP_LABEL[over]} capped at ${VOLUME_CEILING} sets a week, the most the evidence supports.` })
+      notes.push({ kind: 'ceiling', group: over, text: `${GROUP_LABEL[over]} auf ${VOLUME_CEILING} Sätze pro Woche begrenzt, mehr bringt laut Studienlage nichts.` })
   }
 
   // 3. Compounds must fit the session: supersets first, then fewer sets, then fewer lifts.
@@ -850,35 +936,33 @@ export function generatePlan(input: PlanAnswers, library: readonly PlannerExerci
   for (const g of GROUPS) {
     if (finalVolume[g] >= targets[g]) continue
     const reason = blocked.get(g) ?? 'time'
-    const head = `${GROUP_LABEL[g]}: ${fmtSets(finalVolume[g])} of ${targets[g]} weekly sets.`
+    const head = `${GROUP_LABEL[g]}: ${fmtSets(finalVolume[g])} von ${targets[g]} Sätzen pro Woche.`
     let tail: string
     if (reason === 'pool') {
-      tail = answers.injuries.length
-        ? ' Nothing in your equipment trains it directly without loading a joint you flagged.'
-        : ' Nothing in your equipment trains it directly.'
-    } else if (reason === 'spacing') tail = ' Another session for it would fall within 48 hours of the last one.'
-    else if (reason === 'ceiling') tail = ` More would push another muscle past ${VOLUME_CEILING} sets a week.`
-    else if (reason === 'session') tail = ` More would put over ${MAX_DIRECT_SETS_PER_SESSION} sets of it into one session.`
-    else tail = ` More does not fit in ${minutes} minutes; add time or a day, or make it a priority.`
+      tail = answers.injuries.length ? ' Mit deinen Geräten trainiert sie nichts direkt, ohne ein markiertes Gelenk zu belasten.' : ' Mit deinen Geräten trainiert sie nichts direkt.'
+    } else if (reason === 'spacing') tail = ' Eine weitere Einheit dafür läge keine 48 Stunden nach der letzten.'
+    else if (reason === 'ceiling') tail = ` Mehr würde einen anderen Muskel über ${VOLUME_CEILING} Sätze pro Woche bringen.`
+    else if (reason === 'session') tail = ` Mehr hieße über ${MAX_DIRECT_SETS_PER_SESSION} Sätze davon in einer Einheit.`
+    else tail = ` Mehr passt nicht in ${minutes} Minuten. Mehr Zeit, ein Tag mehr oder als Schwerpunkt wählen hilft.`
     notes.push({ kind: 'shortfall', group: g, text: head + tail })
   }
+  if (split.note) notes.push({ kind: 'cut', text: split.note })
   const supersetDays = days.filter((d) => d.items.some((it) => it.pairWith)).map((d) => d.name)
-  if (supersetDays.length)
-    notes.push({ kind: 'superset', text: `Supersets on ${listText(supersetDays)} keep ${supersetDays.length === 1 ? 'it' : 'each'} within ${minutes} minutes.` })
-  if (trimmed.size) notes.push({ kind: 'cut', text: `Some lifts trimmed to 2 sets on ${listText([...trimmed])} to fit ${minutes} minutes.` })
-  if (dropped.length) notes.push({ kind: 'cut', text: `Left out to fit the time or the weekly ceiling: ${listText(dropped)}.` })
+  if (supersetDays.length) notes.push({ kind: 'superset', text: `Supersätze an ${listText(supersetDays)} halten die Einheiten unter ${minutes} Minuten.` })
+  if (trimmed.size) notes.push({ kind: 'cut', text: `An ${listText([...trimmed])} auf 2 Sätze gekürzt, damit ${minutes} Minuten reichen.` })
+  if (dropped.length) notes.push({ kind: 'cut', text: `Weggelassen wegen der Zeit oder der Obergrenze: ${listText(dropped)}.` })
   if (nonLoadableMain.size)
-    notes.push({ kind: 'strength', text: 'A strength focus needs a lift you can load. With bodyweight and bands the first exercise stays at 6–10 reps.' })
+    notes.push({ kind: 'strength', text: 'Für Kraft braucht es eine Übung mit Zusatzgewicht. Mit Körpergewicht und Bändern bleibt die erste Übung bei 6–10 Wiederholungen.' })
   if (answers.injuries.length)
     notes.push({
       kind: 'injury',
-      text: `Exercises that load your ${listText(answers.injuries.map((j) => JOINT_LABEL[j].toLowerCase()))} are left out. That does not assess an injury: stop any exercise that hurts and see a professional.`,
+      text: `Übungen, die ${listText(answers.injuries.map((j) => (j === 'lowerBack' ? 'den unteren Rücken' : j === 'hip' ? 'die Hüfte' : j === 'wrist' ? 'das Handgelenk' : j === 'knee' ? 'das Knie' : j === 'elbow' ? 'den Ellbogen' : 'die Schulter')))} belasten, sind weggelassen. Das ersetzt keine Diagnose: Hör bei Schmerzen auf und lass dich untersuchen.`,
     })
 
   return {
-    name: `${split.label}, ${daysPerWeek} days`,
+    name: `${split.label}, ${days.length} Tage`,
     split: split.key,
-    daysPerWeek,
+    daysPerWeek: days.length,
     answers,
     generatorVersion: GENERATOR_VERSION,
     days: days.map((d) => ({

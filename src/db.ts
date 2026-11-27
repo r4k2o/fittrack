@@ -209,6 +209,10 @@ export interface Session extends Row {
   notes?: string
   /** Exercise order on screen while the workout runs and in history. */
   exerciseIds: string[]
+  /** Exercises swapped in (for example at home), mapped to the planned ones whose prescription they keep. */
+  swaps?: Record<string, string> | null
+  /** Started as a home workout: bodyweight and bands only. */
+  home?: boolean
 }
 
 export interface SetLog extends Row {

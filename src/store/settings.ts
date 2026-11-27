@@ -34,6 +34,8 @@ export interface SettingsMap {
   adaptiveSnoozedUntil: string | null
   /** The capture guide for progress photos has been shown. */
   photoGuideSeen: boolean
+  /** Train at home: every plan day starts with bodyweight and band exercises. */
+  homeMode: boolean
   /** Optional vision/language model. The key stays on this phone and never goes into a backup. */
   aiProvider: 'gemini' | 'openrouter' | 'mistral'
   aiModel: string | null
@@ -61,6 +63,7 @@ export const SETTING_DEFAULTS: SettingsMap = {
   reviewDismissedWeek: null,
   adaptiveSnoozedUntil: null,
   photoGuideSeen: false,
+  homeMode: false,
   aiProvider: 'gemini',
   aiModel: null,
   aiApiKey: null,

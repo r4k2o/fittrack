@@ -7,15 +7,15 @@ import type { CardioType } from '../db'
 export type Intensity = 'light' | 'moderate' | 'vigorous'
 
 export const CARDIO_TYPES: readonly { value: CardioType; label: string; met: [number, number, number] }[] = [
-  { value: 'run', label: 'Run', met: [7.0, 9.8, 11.8] },
-  { value: 'cycle', label: 'Cycle', met: [4.0, 6.8, 10.0] },
-  { value: 'row', label: 'Row', met: [4.8, 7.0, 8.5] },
-  { value: 'swim', label: 'Swim', met: [5.8, 7.0, 9.8] },
-  { value: 'walk', label: 'Walk or hike', met: [3.0, 4.3, 6.0] },
-  { value: 'elliptical', label: 'Elliptical', met: [4.0, 5.0, 6.5] },
-  { value: 'stairs', label: 'Stairs', met: [6.8, 9.0, 11.0] },
-  { value: 'sport', label: 'Team sport', met: [5.0, 7.0, 10.0] },
-  { value: 'other', label: 'Other', met: [3.5, 5.0, 8.0] },
+  { value: 'run', label: 'Laufen', met: [7.0, 9.8, 11.8] },
+  { value: 'cycle', label: 'Radfahren', met: [4.0, 6.8, 10.0] },
+  { value: 'row', label: 'Rudern', met: [4.8, 7.0, 8.5] },
+  { value: 'swim', label: 'Schwimmen', met: [5.8, 7.0, 9.8] },
+  { value: 'walk', label: 'Gehen, Wandern', met: [3.0, 4.3, 6.0] },
+  { value: 'elliptical', label: 'Crosstrainer', met: [4.0, 5.0, 6.5] },
+  { value: 'stairs', label: 'Treppen', met: [6.8, 9.0, 11.0] },
+  { value: 'sport', label: 'Mannschaftssport', met: [5.0, 7.0, 10.0] },
+  { value: 'other', label: 'Sonstiges', met: [3.5, 5.0, 8.0] },
 ]
 
 export const CARDIO_LABEL = Object.fromEntries(CARDIO_TYPES.map((t) => [t.value, t.label])) as Record<CardioType, string>
