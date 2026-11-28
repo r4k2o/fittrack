@@ -66,7 +66,7 @@ export default function TrainingTab() {
       ) : (
         <>
           <ChartCard
-            title="Harte Sätze pro Muskel"
+            title="Sätze pro Muskel"
             action={
               <Segmented
                 size="sm"

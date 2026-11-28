@@ -9,7 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { db, type Exercise, type PlanExercise, type Session as SessionRow, type SetLog } from '../../db'
 import { useNow, useSetting, useWakeLock } from '../../hooks'
 import { formatDayShort } from '../../lib/dates'
-import { fmt2, fmtDuration } from '../../lib/format'
+import { count, fmt2, fmtDuration } from '../../lib/format'
 import { defaultRepRange, defaultRestSec, loadStep, nextTarget, roundToStep } from '../../lib/training'
 import { deloadActive, detectStall } from '../../store/plans'
 import { homeReps } from '../../lib/home'
@@ -155,9 +155,10 @@ interface Planned {
   reps: number | null
 }
 
-function lastTimeText(last: LastTime | null | undefined): string {
+function lastTimeText(last: LastTime | null | undefined, bodyweight: boolean): string {
   if (last === undefined) return ''
-  if (!last || !last.sets.length) return 'Erstes Mal: Wähle ein Gewicht, mit dem du im Bereich bleibst und 1–3 Wdh. übrig hast'
+  if (!last || !last.sets.length)
+    return bodyweight ? 'Erstes Mal: saubere Wiederholungen, bis noch 1–3 gingen' : 'Erstes Mal: Wähle ein Gewicht, mit dem du im Bereich bleibst und 1–3 Wdh. übrig hast'
   const w = new Set(last.sets.map((s) => s.weightKg))
   const sets =
     w.size === 1
@@ -283,7 +284,7 @@ function ExerciseCard({
         <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-fill text-[14px] font-bold text-ink-2">{index + 1}</span>
         <div className="min-w-0 flex-1">
           <h2 className="text-[18px] font-bold leading-snug tracking-tight">{ex.name}</h2>
-          <p className="mt-0.5 text-[13px] text-ink-2">{lastTimeText(last)}</p>
+          <p className="mt-0.5 text-[13px] text-ink-2">{lastTimeText(last, bodyweight)}</p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <span className="rounded-full bg-fill px-2.5 py-1 text-[12px] font-semibold text-ink-2">
               {range[0]}–{range[1]} {seconds ? 's' : 'Wdh.'} · {prescription ? `${prescription.targetRir}` : '1–3'} in Reserve
@@ -596,7 +597,7 @@ export default function Session() {
       >
         <p className="pb-2 text-[15px] text-ink-2">
           {workSets
-            ? `${workSets} ${workSets === 1 ? 'Satz' : 'Sätze'} in ${new Set(sets.map((s) => s.exerciseId)).size} Übungen. Nicht abgehakte Sätze werden nicht gespeichert.`
+            ? `${count(workSets, 'Satz', 'Sätze')} in ${count(new Set(sets.map((s) => s.exerciseId)).size, 'Übung', 'Übungen')}. Nicht abgehakte Sätze werden nicht gespeichert.`
             : 'Kein Satz ist abgehakt, es gibt also nichts zu speichern.'}
         </p>
       </Sheet>

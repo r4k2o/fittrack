@@ -33,6 +33,11 @@ export function fmtWeight(kg: number): string {
   return `${fmt2(kg)} kg`
 }
 
+/** "1 Satz", "3 Sätze": German count with the right noun form. */
+export function count(n: number, one: string, many: string): string {
+  return `${fmtInt(n)} ${n === 1 ? one : many}`
+}
+
 export function pluralize(n: number, one: string, many = `${one}s`): string {
   return `${fmtInt(n)} ${n === 1 ? one : many}`
 }

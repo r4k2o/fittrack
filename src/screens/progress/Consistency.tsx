@@ -7,7 +7,7 @@ import { useState, type CSSProperties, type ReactNode } from 'react'
 import { useToday } from '../../hooks'
 import { consistency, heatGrid, type DayLoad, type HeatLevel } from '../../lib/consistency'
 import { addDays, formatDayLong, weekStart } from '../../lib/dates'
-import { fmt1 } from '../../lib/format'
+import { count, fmt1 } from '../../lib/format'
 import { activePlan } from '../../store/plans'
 import { dayLoads } from '../../store/progress'
 import { cx } from '../../ui/kit'
@@ -22,7 +22,7 @@ function describe(date: string, d: DayLoad | undefined, today: string): string {
   if (!d || (!d.sessions && !d.cardioMin)) return `${day}: kein Training`
   const parts: string[] = []
   if (d.names.length) parts.push(d.names.join(', '))
-  if (d.sets) parts.push(`${d.sets} Sätze`)
+  if (d.sets) parts.push(count(d.sets, 'Satz', 'Sätze'))
   if (d.cardioMin) parts.push(`${Math.round(d.cardioMin)} Min Cardio`)
   return `${day}: ${parts.join(' · ')}`
 }

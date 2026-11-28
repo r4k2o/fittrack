@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../db'
 import { useNow, useSetting, useTarget, useToday } from '../hooks'
 import { addDays, daysBetween, formatDayLong, formatDayShort, localDay, relativeDay, weekStart } from '../lib/dates'
-import { fmt1, fmtDuration, fmtInt, fmtSleep } from '../lib/format'
+import { count, fmt1, fmtDuration, fmtInt, fmtSleep } from '../lib/format'
 import { sumNutrients } from '../lib/macros'
 import { sessionStats } from '../lib/training'
 import { ema, ratePctPerWeek } from '../lib/trends'
@@ -137,7 +137,7 @@ function TrainingCard({ today }: { today: string }) {
         </CardLabel>
         <h2 className="mt-1.5 text-[24px] font-bold leading-tight tracking-tight">{day.name}</h2>
         <p className="mt-0.5 text-[15px] text-ink-2">
-          {rows.length} Übungen · {sets} Sätze · ca. {minutes} Min{data.deload ? ' · leichtere Woche' : ''}
+          {count(rows.length, 'Übung', 'Übungen')} · {count(sets, 'Satz', 'Sätze')} · ca. {minutes} Min{data.deload ? ' · leichtere Woche' : ''}
         </p>
         <Segmented
           size="sm"
@@ -189,7 +189,7 @@ function TrainingCard({ today }: { today: string }) {
         </CardLabel>
         <h2 className="mt-1.5 truncate text-[24px] font-bold tracking-tight">{data.doneToday.map((s) => s.name).join(', ')}</h2>
         <p className="mt-0.5 text-[15px] text-ink-2">
-          {fmtDuration(secs)} · {data.doneStats?.workSets ?? 0} Sätze{data.doneStats?.volumeKg ? ` · ${fmtInt(data.doneStats.volumeKg)} kg` : ''}
+          {fmtDuration(secs)} · {count(data.doneStats?.workSets ?? 0, 'Satz', 'Sätze')}{data.doneStats?.volumeKg ? ` · ${fmtInt(data.doneStats.volumeKg)} kg` : ''}
         </p>
         {dots}
       </Card>

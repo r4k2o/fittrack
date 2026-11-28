@@ -8,7 +8,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { db, type Food, type Meal, type MealTemplate } from '../../db'
 import { useSetting, useToday } from '../../hooks'
 import { addDays, daysBetween, relativeDay } from '../../lib/dates'
-import { fmt1, fmtInt } from '../../lib/format'
+import { count, fmt1, fmtInt } from '../../lib/format'
 import { buildFoodIndex, searchFoods, type Usage } from '../../lib/foodSearch'
 import { copyEntries, deleteEntries, logFood, MEAL_LABEL, MEALS, mealForNow, recentMeals, type PortionChoice } from '../../store/diary'
 import { frequentFoods, myFoods, recentFoods } from '../../store/foods'
@@ -136,7 +136,7 @@ export default function AddFood() {
   const addMeal = async (r: NonNullable<typeof repeat>[number]) => {
     const copies = await copyEntries(r.entries, date, meal)
     haptic('success')
-    toast({ message: `${r.entries.length} Einträge · ${fmtInt(r.kcal)} kcal eingetragen`, action: { label: 'Rückgängig', onClick: () => void deleteEntries(copies.map((c) => c.id)) } })
+    toast({ message: `${count(r.entries.length, 'Eintrag', 'Einträge')} · ${fmtInt(r.kcal)} kcal eingetragen`, action: { label: 'Rückgängig', onClick: () => void deleteEntries(copies.map((c) => c.id)) } })
     go(back)
   }
 

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { db, type PlanDay, type PlanExercise } from '../../db'
 import { useNow, useSetting, useToday } from '../../hooks'
 import { addDays, formatDayShort, weekStart } from '../../lib/dates'
-import { fmtDuration, fmtInt } from '../../lib/format'
+import { count, fmtDuration, fmtInt } from '../../lib/format'
 import { sessionStats } from '../../lib/training'
 import { WEEKDAY_LONG, WEEKDAY_SHORT } from '../../lib/volume'
 import { weekMinutes, WHO_WEEKLY_MIN } from '../../lib/cardio'
@@ -270,7 +270,7 @@ export default function Train() {
                 subtitle={`${formatDayShort(s.date)} · ${fmtDuration((new Date(s.endedAt ?? s.startedAt).getTime() - new Date(s.startedAt).getTime()) / 1000)}`}
                 detail={
                   <span className="block text-right">
-                    <span className="block font-semibold text-ink">{stats.workSets} Sätze</span>
+                    <span className="block font-semibold text-ink">{count(stats.workSets, 'Satz', 'Sätze')}</span>
                     {stats.volumeKg > 0 && <span className="block text-[12px]">{fmtInt(stats.volumeKg)} kg</span>}
                   </span>
                 }
@@ -324,7 +324,7 @@ function PlanDayRow({ w, due, home, onOpen, onStart }: { w: WeekDay; due: boolea
           <span className="block truncate text-[16px] font-semibold">{w.day.name}</span>
           <span className="block truncate text-[13px] text-ink-2">
             {when}
-            {status ? ` · ${status}` : ''} · {w.day.exercises.length} Übungen
+            {status ? ` · ${status}` : ''} · {count(w.day.exercises.length, 'Übung', 'Übungen')}
           </span>
         </span>
         {!due && <IconChevronRight size={17} className="shrink-0 text-ink-3" />}
@@ -387,7 +387,7 @@ function DaySheet({
         <div className="pb-1">
           <p className="text-[15px] text-ink-2">
             {w.day.weekday != null ? WEEKDAY_LONG[w.day.weekday] : 'Flexibel'}
-            {preview ? ` · ${preview.rows.length} Übungen · ca. ${preview.minutes} Min` : ''}
+            {preview ? ` · ${count(preview.rows.length, 'Übung', 'Übungen')} · ca. ${preview.minutes} Min` : ''}
           </p>
           <Segmented
             size="sm"

@@ -11,7 +11,7 @@ import { db, type DiaryEntry, type Food, type Meal } from '../../db'
 import { useObjectUrl, useToday } from '../../hooks'
 import { LOW_CONFIDENCE, matchItems, type MatchedItem } from '../../lib/ai'
 import { relativeDay } from '../../lib/dates'
-import { fmtInt } from '../../lib/format'
+import { count, fmtInt } from '../../lib/format'
 import { deleteEntries, logFood, MEAL_LABEL, MEALS, mealForNow } from '../../store/diary'
 import { recipeFoods } from '../../store/recipes'
 import { getSetting, setSetting } from '../../store/settings'
@@ -81,7 +81,7 @@ export default function PhotoLog() {
       absDiffGrams: prev.absDiffGrams + seen.reduce((n, r) => n + Math.abs(r.grams - r.seen.grams), 0),
     })
     haptic('success')
-    toast({ message: `${entries.length} Einträge · ${fmtInt(total)} kcal eingetragen`, action: { label: 'Rückgängig', onClick: () => void deleteEntries(entries.map((e) => e.id)) } })
+    toast({ message: `${count(entries.length, 'Eintrag', 'Einträge')} · ${fmtInt(total)} kcal eingetragen`, action: { label: 'Rückgängig', onClick: () => void deleteEntries(entries.map((e) => e.id)) } })
     navigate(back, { replace: true })
   }
 
