@@ -1,57 +1,31 @@
-// Today answers "what is left today": calories and macros remaining, each meal,
-// the next workout and the weight trend, plus a backup reminder after 7 days.
+// Today answers two questions: what training is due (or that it is a rest day), and how
+// much food is left. Weight, steps and sleep sit below in one row. Logging food lives
+// in the Food tab, so this screen stays short.
 
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { db, type DiaryEntry, type Meal } from '../db'
+import { db } from '../db'
 import { useNow, useSetting, useTarget, useToday } from '../hooks'
-import { addDays, daysBetween, formatDayLong, formatDayShort, localDay, weekStart } from '../lib/dates'
-import { fmt1, fmt2, fmtDuration, fmtInt, fmtSleep } from '../lib/format'
+import { addDays, daysBetween, formatDayLong, formatDayShort, localDay, relativeDay, weekStart } from '../lib/dates'
+import { fmt1, fmtDuration, fmtInt, fmtSleep } from '../lib/format'
 import { sumNutrients } from '../lib/macros'
-import { GOALS } from '../lib/nutrition'
+import { sessionStats } from '../lib/training'
 import { ema, ratePctPerWeek } from '../lib/trends'
-import { MEAL_LABEL, MEALS, mealForNow } from '../store/diary'
-import { metricSeries } from '../store/metrics'
-import { getActiveGoal } from '../store/profile'
-import { activePlan, planWeek, startPlanDay } from '../store/plans'
+import { WEEKDAY_LONG } from '../lib/volume'
 import { burnedKcal } from '../store/cardio'
+import { metricSeries } from '../store/metrics'
+import { activePlan, dayPreview, deloadActive, homeOn, planWeek, setHomeFor, startPlanDay, type PlanDayFull } from '../store/plans'
 import { dismissReview, mondayReview } from '../store/progress'
-import { AdaptiveCard } from './shared/AdaptiveCard'
-import { WeeklyReviewCard } from './shared/WeeklyReviewCard'
-import { activeSession, listRoutines, startSession } from '../store/training'
-import {
-  IconAlert,
-  IconBarcode,
-  IconCamera,
-  IconCheckCircle,
-  IconChevronRight,
-  IconFood,
-  IconPlay,
-  IconPlus,
-  IconScale,
-  IconSearch,
-  IconShield,
-  IconTrain,
-  IconTrendDown,
-  IconTrendFlat,
-  IconTrendUp,
-  IconTimer,
-  IconFootprints,
-  IconMoon,
-} from '../ui/icons'
-import { AnimatedNumber, Button, Card, cx, IconTile, MacroBar, Ring, Screen, Sheet, Sparkline } from '../ui/kit'
+import { activeSession, startSession } from '../store/training'
+import { IconCheck, IconChevronRight, IconFood, IconHome, IconMoon, IconPlay, IconShield, IconTrain } from '../ui/icons'
+import { AnimatedNumber, Button, Card, MacroBar, Ring, Screen, Segmented } from '../ui/kit'
 import { haptic } from '../ui/motion'
-import { MealIcon } from './shared/WeekStrip'
+import { useToast } from '../ui/toast'
+import { AdaptiveCard } from './shared/AdaptiveCard'
+import { WeekDots } from './shared/WeekDots'
+import { WeeklyReviewCard } from './shared/WeeklyReviewCard'
 import { WeightSheet } from './shared/WeightSheet'
-
-function greeting(d = new Date()): string {
-  const h = d.getHours()
-  if (h < 5) return 'Good night'
-  if (h < 12) return 'Good morning'
-  if (h < 18) return 'Good afternoon'
-  return 'Good evening'
-}
 
 function BackupReminder() {
   const navigate = useNavigate()
@@ -63,22 +37,208 @@ function BackupReminder() {
   const days = daysBetween(localDay(new Date(since)), localDay())
   if (days < 7) return null
   return (
-    <button
-      type="button"
-      onClick={() => navigate('/more/backup')}
-      className="press mb-3 flex w-full items-center gap-3 rounded-[22px] bg-warn-soft px-4 py-3 text-left text-warn-ink"
-    >
-      <IconShield size={22} className="shrink-0" />
+    <button type="button" onClick={() => navigate('/more/backup')} className="press mb-3 flex w-full items-center gap-3 rounded-[18px] bg-warn-soft px-4 py-3 text-left text-warn-ink">
+      <IconShield size={20} className="shrink-0" />
       <span className="min-w-0 flex-1 text-[14px]">
-        <span className="block font-semibold">{lastBackupAt ? `Last backup ${days} days ago` : 'No backup yet'}</span>
-        <span className="block opacity-80">Everything lives on this phone. Save a copy to Files.</span>
+        <span className="block font-semibold">{lastBackupAt ? `Letztes Backup vor ${days} Tagen` : 'Noch kein Backup'}</span>
+        <span className="block opacity-80">Deine Daten liegen nur auf diesem iPhone.</span>
       </span>
       <IconChevronRight size={18} className="shrink-0 opacity-70" />
     </button>
   )
 }
 
-function EnergyCard({ today }: { today: string }) {
+function CardLabel({ icon, children, right }: { icon: ReactNode; children: ReactNode; right?: ReactNode }) {
+  return (
+    <div className="flex min-h-7 items-center justify-between gap-2">
+      <p className="flex items-center gap-1.5 text-[15px] font-semibold text-ink-2">
+        {icon}
+        {children}
+      </p>
+      {right}
+    </div>
+  )
+}
+
+const repsText = (r: { repMin: number; repMax: number; unit?: string }) => (r.unit === 'seconds' ? `${r.repMin}–${r.repMax} s` : r.repMin === r.repMax ? `${r.repMin}` : `${r.repMin}–${r.repMax}`)
+
+/** The due workout, a workout in progress, today's finished one, or the rest day. */
+function TrainingCard({ today }: { today: string }) {
+  const navigate = useNavigate()
+  const toast = useToast()
+  const now = useNow(30_000)
+  const active = useLiveQuery(async () => (await activeSession()) ?? null)
+  const data = useLiveQuery(async () => {
+    const monday = weekStart(today)
+    const [plan, sessions, home, deload] = await Promise.all([activePlan(), db.sessions.where('date').between(monday, addDays(monday, 6), true, true).toArray(), homeOn(today), deloadActive(today)])
+    const finished = sessions.filter((s) => !!s.endedAt)
+    const week = plan ? planWeek(plan, finished, today) : null
+    // Plan days without weekdays have no rest days: the next one is always due.
+    const flexible = !!week && week.length > 0 && week.every((w) => w.day.weekday == null)
+    const due = week?.find((w) => w.status === 'today') ?? (flexible ? (week?.find((w) => w.status === 'next') ?? null) : null)
+    const preview = due ? await dayPreview(due.day, { home, deload }) : null
+    const doneToday = finished.filter((s) => s.date === today)
+    const doneStats = doneToday.length ? sessionStats(await db.setLogs.where('sessionId').anyOf(doneToday.map((s) => s.id)).toArray()) : null
+    const later = week?.find((w) => w.date && w.date > today && w.status !== 'done')?.day
+    const firstDay = plan?.days.filter((d) => d.weekday != null).sort((a, b) => (a.weekday ?? 0) - (b.weekday ?? 0))[0]
+    const missed = week?.find((w) => w.date && w.date < today && w.status !== 'done') ?? null
+    return { plan, week, finished, due, preview, home, deload, doneToday, doneStats, next: later ?? firstDay ?? null, missed }
+  }, [today])
+
+  if (!data || active === undefined) return <div className="card h-56" />
+
+  const start = async (day: PlanDayFull | null, home = data.home) => {
+    haptic()
+    if (active) {
+      navigate(`/train/session/${active.id}`)
+      return
+    }
+    const s = day ? await startPlanDay(day, { home }) : await startSession('Training')
+    navigate(`/train/session/${s.id}`)
+  }
+
+  const switchHome = async (home: boolean) => {
+    haptic()
+    const { planWasHome } = await setHomeFor(today, home)
+    if (!home && planWasHome)
+      toast({
+        message: 'Ganzer Plan wieder im Studio',
+        action: { label: 'Rückgängig', onClick: () => void db.settings.put({ key: 'homeMode', value: true, updatedAt: new Date().toISOString() }) },
+      })
+  }
+
+  const dots = <WeekDots today={today} week={data.week} sessions={data.finished} className="mt-4 border-t border-line px-1 pt-3.5" />
+
+  if (active)
+    return (
+      <Card onClick={() => navigate(`/train/session/${active.id}`)} className="animate-rise">
+        <CardLabel
+          icon={<span className="relative mx-1 flex size-2.5"><span className="absolute inset-0 animate-ping rounded-full bg-brand opacity-60" /><span className="relative size-2.5 rounded-full bg-brand" /></span>}
+          right={<span className="text-[15px] font-semibold tabular-nums text-ink-2">{fmtDuration((now - new Date(active.startedAt).getTime()) / 1000)}</span>}
+        >
+          Läuft
+        </CardLabel>
+        <h2 className="mt-1.5 truncate text-[24px] font-bold tracking-tight">{active.name}</h2>
+        <span className="btn-primary mt-4 flex min-h-12 items-center justify-center gap-2 rounded-full text-[16px] font-semibold">
+          <IconPlay size={16} /> Weiter trainieren
+        </span>
+      </Card>
+    )
+
+  if (data.due && data.preview) {
+    const { day } = data.due
+    const { rows, minutes, dropped } = data.preview
+    const shown = rows.slice(0, 6)
+    const sets = rows.reduce((n, r) => n + r.sets, 0)
+    return (
+      <Card className="animate-rise">
+        <CardLabel icon={<IconTrain size={18} />} right={<span className="text-[13px] font-semibold text-ink-3">{data.due.status === 'today' ? 'Heute' : 'Als Nächstes'}</span>}>
+          Training
+        </CardLabel>
+        <h2 className="mt-1.5 text-[24px] font-bold leading-tight tracking-tight">{day.name}</h2>
+        <p className="mt-0.5 text-[15px] text-ink-2">
+          {rows.length} Übungen · {sets} Sätze · ca. {minutes} Min{data.deload ? ' · leichtere Woche' : ''}
+        </p>
+        <Segmented
+          size="sm"
+          className="mt-4"
+          value={data.home ? 'home' : 'gym'}
+          onChange={(v) => void switchHome(v === 'home')}
+          options={[
+            { value: 'gym', label: 'Studio' },
+            {
+              value: 'home',
+              label: (
+                <>
+                  <IconHome size={15} /> Zuhause
+                </>
+              ),
+            },
+          ]}
+        />
+        <ul key={data.home ? 'home' : 'gym'} className="mt-3 divide-y divide-line">
+          {shown.map((r, i) => (
+            <li key={r.id} className="animate-in flex items-baseline justify-between gap-3 py-2" style={{ animationDelay: `${i * 30}ms` }}>
+              <span className="min-w-0">
+                <span className="block truncate text-[15px] font-medium">{r.name}</span>
+                {r.replaces && <span className="block truncate text-[12px] text-ink-3">statt {r.replaces}</span>}
+              </span>
+              <span className="shrink-0 text-[14px] tabular-nums text-ink-2">
+                {r.sets} × {repsText(r)}
+              </span>
+            </li>
+          ))}
+          {rows.length > shown.length && <li className="py-2 text-[14px] text-ink-3">+ {rows.length - shown.length} weitere</li>}
+        </ul>
+        {dropped.length > 0 && <p className="mt-1 text-[13px] text-ink-3">Zuhause ohne Ersatz: {dropped.join(', ')}</p>}
+        <Button block size="lg" className="mt-3" disabled={rows.length === 0} onClick={() => void start(day)}>
+          <IconPlay size={16} /> Training starten
+        </Button>
+        {dots}
+      </Card>
+    )
+  }
+
+  if (data.doneToday.length) {
+    const last = data.doneToday[data.doneToday.length - 1]
+    const secs = data.doneToday.reduce((n, s) => n + (new Date(s.endedAt ?? s.startedAt).getTime() - new Date(s.startedAt).getTime()) / 1000, 0)
+    return (
+      <Card onClick={() => navigate(`/train/summary/${last.id}`)} className="animate-rise">
+        <CardLabel icon={<IconCheck size={18} strokeWidth={2.6} />} right={<IconChevronRight size={17} className="text-ink-3" />}>
+          Erledigt
+        </CardLabel>
+        <h2 className="mt-1.5 truncate text-[24px] font-bold tracking-tight">{data.doneToday.map((s) => s.name).join(', ')}</h2>
+        <p className="mt-0.5 text-[15px] text-ink-2">
+          {fmtDuration(secs)} · {data.doneStats?.workSets ?? 0} Sätze{data.doneStats?.volumeKg ? ` · ${fmtInt(data.doneStats.volumeKg)} kg` : ''}
+        </p>
+        {dots}
+      </Card>
+    )
+  }
+
+  if (!data.plan)
+    return (
+      <Card className="animate-rise">
+        <CardLabel icon={<IconTrain size={18} />}>Training</CardLabel>
+        <h2 className="mt-1.5 text-[24px] font-bold tracking-tight">Noch kein Plan</h2>
+        <p className="mt-0.5 text-[15px] text-ink-2">Sieben Fragen, dann steht deine Trainingswoche.</p>
+        <div className="mt-4 flex gap-2">
+          <Button size="lg" className="flex-1" onClick={() => navigate('/train/plan/new')}>
+            Plan erstellen
+          </Button>
+          <Button size="lg" variant="secondary" onClick={() => void start(null)}>
+            Freies Training
+          </Button>
+        </div>
+      </Card>
+    )
+
+  const next = data.next
+  const missed = data.missed
+  const allDone = !!data.week?.length && data.week.every((w) => w.status === 'done')
+  return (
+    <Card className="animate-rise">
+      <CardLabel icon={<IconMoon size={18} />}>Training</CardLabel>
+      <h2 className="mt-1.5 text-[24px] font-bold tracking-tight">Ruhetag</h2>
+      <p className="mt-0.5 text-[15px] text-ink-2">
+        {allDone ? 'Alle Einheiten dieser Woche erledigt. ' : ''}
+        {next ? `Nächstes Training: ${next.weekday != null ? WEEKDAY_LONG[next.weekday] : ''}, ${next.name}` : ''}
+      </p>
+      {missed && (
+        <button type="button" onClick={() => void start(missed.day)} className="press-row -mx-2 mt-3 flex w-[calc(100%+1rem)] items-center gap-3 rounded-2xl px-2 py-2 text-left">
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] text-ink-3">{missed.day.weekday != null ? WEEKDAY_LONG[missed.day.weekday] : ''} verpasst</span>
+            <span className="block truncate text-[15px] font-semibold">{missed.day.name}</span>
+          </span>
+          <span className="rounded-full bg-fill px-3.5 py-2 text-[14px] font-semibold">Nachholen</span>
+        </button>
+      )}
+      {dots}
+    </Card>
+  )
+}
+
+function NutritionCard({ today }: { today: string }) {
   const navigate = useNavigate()
   const target = useTarget(today)
   const entries = useLiveQuery(() => db.diaryEntries.where('date').equals(today).toArray(), [today])
@@ -89,208 +249,82 @@ function EnergyCard({ today }: { today: string }) {
   const left = kcalTarget - totals.kcal
   const over = left < 0
   return (
-    <Card onClick={() => navigate('/food')} className="animate-rise !p-5">
-      <div className="flex flex-col items-center">
-        <Ring fraction={kcalTarget ? totals.kcal / kcalTarget : 0} over={over} size={188} stroke={16}>
-          {over && <IconAlert size={18} className="mb-0.5 text-warn-ink" />}
-          <AnimatedNumber value={Math.abs(left)} className="text-[48px] font-bold leading-none tracking-[-0.045em]" />
-          <span className="mt-1.5 text-[13px] font-semibold text-ink-2">{over ? 'kcal over target' : 'kcal left'}</span>
+    <Card onClick={() => navigate('/food')} className="animate-rise mt-3" style={{ '--i': 1 } as CSSProperties}>
+      <CardLabel
+        icon={<IconFood size={18} />}
+        right={
+          <span className="flex items-center gap-1 text-[13px] tabular-nums text-ink-3">
+            {fmtInt(totals.kcal)} / {fmtInt(kcalTarget)} kcal
+            <IconChevronRight size={16} />
+          </span>
+        }
+      >
+        Ernährung
+      </CardLabel>
+      <div className="mt-3 flex items-center gap-5">
+        <Ring fraction={kcalTarget ? totals.kcal / kcalTarget : 0} over={over} size={108} stroke={11}>
+          <AnimatedNumber value={Math.abs(left)} className="text-[25px] font-bold leading-none tracking-[-0.03em]" />
+          <span className="mt-1 text-[11px] font-semibold text-ink-2">{over ? 'kcal drüber' : 'kcal übrig'}</span>
         </Ring>
-        <p className="mt-3 text-[14px] text-ink-2">
-          <span className="font-semibold text-ink">{fmtInt(totals.kcal)}</span> eaten of {fmtInt(kcalTarget)} kcal
-          {burned ? ` · incl. ${fmtInt(burned)} burned` : ''}
-        </p>
+        <div className="min-w-0 flex-1 space-y-2.5">
+          <MacroBar label="Eiweiß" value={totals.protein} target={target?.proteinG ?? 0} color="var(--protein)" track="var(--protein-track)" />
+          <MacroBar label="Kohlenhydrate" value={totals.carbs} target={target?.carbsG ?? 0} color="var(--carbs)" track="var(--carbs-track)" />
+          <MacroBar label="Fett" value={totals.fat} target={target?.fatG ?? 0} color="var(--fat)" track="var(--fat-track)" />
+        </div>
       </div>
-      <div className="mt-5 grid grid-cols-3 gap-3">
-        <MacroBar compact label="Protein" value={totals.protein} target={target?.proteinG ?? 0} color="var(--protein)" track="var(--protein-track)" />
-        <MacroBar compact label="Carbs" value={totals.carbs} target={target?.carbsG ?? 0} color="var(--carbs)" track="var(--carbs-track)" />
-        <MacroBar compact label="Fat" value={totals.fat} target={target?.fatG ?? 0} color="var(--fat)" track="var(--fat-track)" />
-      </div>
+      {burned ? <p className="mt-3 text-[13px] text-ink-3">inkl. {fmtInt(burned)} kcal aus Cardio</p> : null}
     </Card>
   )
 }
 
-function MealTiles({ today }: { today: string }) {
-  const navigate = useNavigate()
-  const entries = useLiveQuery(() => db.diaryEntries.where('date').equals(today).toArray(), [today])
-  const kcal = (m: Meal) => (entries ?? []).filter((e: DiaryEntry) => e.meal === m).reduce((s, e) => s + e.macros.kcal, 0)
+function Stat({ label, value, sub, onClick }: { label: string; value: string; sub: string; onClick: () => void }) {
   return (
-    <div className="mt-3 grid grid-cols-2 gap-3">
-      {MEALS.map((m, i) => {
-        const k = kcal(m)
-        return (
-          <button
-            key={m}
-            type="button"
-            style={{ '--i': i + 1 } as CSSProperties}
-            onClick={() => {
-              haptic()
-              navigate(`/food/add?meal=${m}`)
-            }}
-            className="card press animate-rise flex flex-col !rounded-[22px] p-3.5 text-left"
-          >
-            <span className="flex items-start justify-between">
-              <MealIcon meal={m} size={36} />
-              <span className="flex size-7 items-center justify-center rounded-full bg-fill text-ink-2">
-                <IconPlus size={16} strokeWidth={2.6} />
-              </span>
-            </span>
-            <span className="mt-2.5 block truncate text-[15px] font-semibold">{MEAL_LABEL[m]}</span>
-            <span className="block text-[13px] text-ink-2">{k > 0 ? `${fmtInt(k)} kcal` : 'Nothing yet'}</span>
-          </button>
-        )
-      })}
-    </div>
+    <button type="button" onClick={onClick} className="press-row flex min-w-0 flex-col items-start px-4 py-3.5 text-left">
+      <span className="text-[13px] font-semibold text-ink-2">{label}</span>
+      <span className="mt-0.5 truncate text-[19px] font-bold tabular-nums tracking-tight">{value}</span>
+      <span className="truncate text-[12px] text-ink-3">{sub}</span>
+    </button>
   )
 }
 
-function WorkoutTile({ today }: { today: string }) {
+function BodyStats({ today, onWeight }: { today: string; onWeight: () => void }) {
   const navigate = useNavigate()
-  const now = useNow(30_000)
-  const session = useLiveQuery(() => activeSession())
-  const done = useLiveQuery(() => db.sessions.where('date').equals(today).filter((s) => !!s.endedAt).toArray(), [today])
-  const doneSets = useLiveQuery(async () => {
-    if (!done?.length) return 0
-    return db.setLogs.where('sessionId').anyOf(done.map((s) => s.id)).filter((s) => s.kind === 'work').count()
-  }, [done])
-  const routines = useLiveQuery(() => listRoutines())
-  const planned = useLiveQuery(async () => {
-    const plan = await activePlan()
-    if (!plan) return null
-    const monday = weekStart(today)
-    const sessions = await db.sessions.where('date').between(monday, addDays(monday, 6), true, true).toArray()
-    const week = planWeek(plan, sessions, today)
-    return week.find((d) => d.status === 'today') ?? week.find((d) => d.status === 'next') ?? null
-  }, [today])
-  const routine = routines?.[0]
-  const next = planned ? { name: planned.day.name, count: planned.day.exercises.length, today: planned.status === 'today' } : routine ? { name: routine.day.name, count: routine.exercises.length, today: false } : null
-
-  const start = async () => {
-    haptic()
-    const s = planned
-      ? await startPlanDay(planned.day)
-      : routine
-        ? await startSession(routine.day.name, routine.exercises.map((e) => e.exerciseId), routine.day.id)
-        : await startSession('Workout')
-    navigate(`/train/session/${s.id}`)
-  }
-
-  if (session)
-    return (
-      <Card tone="train" onClick={() => navigate(`/train/session/${session.id}`)} className="animate-rise flex flex-col !p-4" style={{ '--i': 5 } as CSSProperties}>
-        <IconTile tone="train" size={34}>
-          <IconTrain size={20} />
-        </IconTile>
-        <p className="mt-3 text-[13px] font-semibold text-ink-2">In progress</p>
-        <p className="truncate text-[17px] font-bold">{session.name}</p>
-        <p className="text-[13px] text-ink-2">{fmtDuration((now - new Date(session.startedAt).getTime()) / 1000)}</p>
-        <span className="mt-3 inline-flex min-h-9 items-center justify-center rounded-full bg-ink text-[14px] font-semibold text-page">Resume</span>
-      </Card>
-    )
-
-  return (
-    <Card tone="train" className="animate-rise flex flex-col !p-4" style={{ '--i': 5 } as CSSProperties}>
-      <IconTile tone="train" size={34}>
-        <IconTrain size={20} />
-      </IconTile>
-      {done?.length ? (
-        <>
-          <p className="mt-3 flex items-center gap-1 text-[13px] font-semibold text-ink-2">
-            <IconCheckCircle size={15} /> Done today
-          </p>
-          <p className="truncate text-[17px] font-bold">{done.map((s) => s.name).join(', ')}</p>
-          <p className="text-[13px] text-ink-2">{doneSets ?? 0} sets logged</p>
-        </>
-      ) : (
-        <>
-          <p className="mt-3 text-[13px] font-semibold text-ink-2">{next ? (next.today ? "Today's workout" : 'Next workout') : 'Training'}</p>
-          <p className="truncate text-[17px] font-bold">{next ? next.name : 'Free workout'}</p>
-          <p className="text-[13px] text-ink-2">{next ? `${next.count} exercises` : 'Log sets as you go'}</p>
-        </>
-      )}
-      <Button size="sm" className="mt-3" onClick={() => void start()}>
-        <IconPlay size={14} /> {done?.length ? 'Again' : 'Start'}
-      </Button>
-    </Card>
-  )
-}
-
-function WeightTile({ today, onLog }: { today: string; onLog: () => void }) {
-  const series = useLiveQuery(() => metricSeries('weight', addDays(today, -120), today), [today])
-  const goal = useLiveQuery(() => getActiveGoal())
-  const trend = series ? ema(series) : []
-  const latest = trend.at(-1)
-  const rate = ratePctPerWeek(trend, today)
-  const band = goal ? GOALS[goal.type].rateBand : null
-  const tooFast = rate != null && (rate < -1 || rate > 0.5)
-  const inBand = rate != null && band ? rate >= band[0] - 0.05 && rate <= band[1] + 0.05 : null
-  const TrendIcon = rate == null || Math.abs(rate) < 0.05 ? IconTrendFlat : rate > 0 ? IconTrendUp : IconTrendDown
-  return (
-    <Card tone="body" onClick={onLog} className="animate-rise flex flex-col !p-4" style={{ '--i': 6 } as CSSProperties}>
-      <div className="flex items-start justify-between">
-        <IconTile tone="body" size={34}>
-          <IconScale size={20} />
-        </IconTile>
-        <Sparkline values={trend.slice(-30).map((p) => p.value)} width={78} height={34} />
-      </div>
-      <p className="mt-3 text-[13px] font-semibold text-ink-2">Weight trend</p>
-      <p className="text-[17px] font-bold">{latest ? `${fmt1(latest.value)} kg` : 'No readings'}</p>
-      <p className="flex items-center gap-1 text-[13px] text-ink-2">
-        {rate != null ? (
-          <>
-            {tooFast ? <IconAlert size={14} className="text-warn-ink" /> : <TrendIcon size={14} />}
-            {`${rate > 0 ? '+' : ''}${fmt2(Math.round(rate * 100) / 100)}% a week`}
-            {inBand && !tooFast && <span className="sr-only">, within the goal's range</span>}
-          </>
-        ) : (
-          'Rate after 14 days'
-        )}
-      </p>
-      <span className="mt-3 inline-flex min-h-9 items-center justify-center rounded-full bg-fill text-[14px] font-semibold">Log weight</span>
-    </Card>
-  )
-}
-
-/** Steps from the Health import: today's if imported, else the latest day. */
-function StepsTile({ today }: { today: string }) {
-  const navigate = useNavigate()
-  const series = useLiveQuery(() => metricSeries('steps', addDays(today, -13), today), [today])
-  const latest = series?.at(-1)
-  const week = (series ?? []).filter((p) => p.date > addDays(today, -7))
-  const avg = week.length ? week.reduce((n, p) => n + p.value, 0) / week.length : null
-  return (
-    <Card tone="body" onClick={() => navigate(latest ? '/progress?tab=sleep' : '/more/health')} className="animate-rise flex flex-col !p-4" style={{ '--i': 7 } as CSSProperties}>
-      <IconTile tone="indigo" size={34}>
-        <IconFootprints size={20} />
-      </IconTile>
-      <p className="mt-3 text-[13px] font-semibold text-ink-2">{latest ? (latest.date === today ? 'Steps today' : latest.date === addDays(today, -1) ? 'Steps yesterday' : `Steps ${formatDayShort(latest.date)}`) : 'Steps'}</p>
-      <p className="text-[17px] font-bold tabular-nums">{latest ? fmtInt(latest.value) : 'No data yet'}</p>
-      <p className="text-[13px] text-ink-2">{avg != null ? `${fmtInt(avg)} a day this week` : 'Import from Apple Health'}</p>
-    </Card>
-  )
-}
-
-/** Last night's sleep and score; the label says whether the score is typed in or the app's own. */
-function SleepTile({ today }: { today: string }) {
-  const navigate = useNavigate()
+  const weights = useLiveQuery(() => metricSeries('weight', addDays(today, -120), today), [today])
+  const steps = useLiveQuery(() => metricSeries('steps', addDays(today, -6), today), [today])
   const night = useLiveQuery(async () => {
     const mins = await metricSeries('sleepMin', addDays(today, -6), today)
     const last = mins.at(-1)
     if (!last) return null
     const scores = await db.metrics.where('[type+date]').equals(['sleepScore', last.date]).toArray()
-    const typed = scores.find((s) => s.source !== 'computed')
-    const score = typed ?? scores.find((s) => s.source === 'computed')
-    return { ...last, score: score?.value ?? null, computed: !!score && !typed }
+    const score = scores.find((s) => s.source !== 'computed') ?? scores.find((s) => s.source === 'computed')
+    return { ...last, score: score?.value ?? null }
   }, [today])
+  const trend = weights ? ema(weights) : []
+  const latest = trend.at(-1)
+  const rate = ratePctPerWeek(trend, today)
+  const lastSteps = steps?.at(-1)
+  const when = (d: string) => (d === today ? 'heute' : d === addDays(today, -1) ? 'gestern' : formatDayShort(d))
   return (
-    <Card tone="body" onClick={() => navigate(night ? '/progress?tab=sleep' : '/more/health')} className="animate-rise flex flex-col !p-4" style={{ '--i': 8 } as CSSProperties}>
-      <IconTile tone="indigo" size={34}>
-        <IconMoon size={20} />
-      </IconTile>
-      <p className="mt-3 text-[13px] font-semibold text-ink-2">{night ? (night.date === today ? 'Last night' : `Night to ${formatDayShort(night.date)}`) : 'Sleep'}</p>
-      <p className="text-[17px] font-bold tabular-nums">{night ? fmtSleep(night.value) : 'No data yet'}</p>
-      <p className="text-[13px] text-ink-2">{night ? (night.score != null ? `Score ${night.score}${night.computed ? ' (app)' : ''}` : 'Asleep, all stages') : 'Import from Apple Health'}</p>
-    </Card>
+    <div className="card animate-rise mt-3 grid grid-cols-3 divide-x divide-line overflow-hidden" style={{ '--i': 2 } as CSSProperties}>
+      <Stat
+        label="Gewicht"
+        value={latest ? `${fmt1(latest.value)} kg` : '–'}
+        sub={rate != null ? `${rate > 0 ? '+' : ''}${fmt1(Math.round(rate * 10) / 10)} % pro Wo.` : latest ? 'Trend folgt' : 'Eintragen'}
+        onClick={onWeight}
+      />
+      <Stat
+        label="Schritte"
+        value={lastSteps ? fmtInt(lastSteps.value) : '–'}
+        sub={lastSteps ? when(lastSteps.date) : 'Aus Health'}
+        onClick={() => navigate(lastSteps ? '/progress?tab=sleep' : '/more/health')}
+      />
+      <Stat
+        label="Schlaf"
+        value={night ? fmtSleep(night.value) : '–'}
+        sub={night ? (night.score != null ? `Score ${fmtInt(night.score)}` : relativeDay(night.date, today) === 'Heute' ? 'letzte Nacht' : when(night.date)) : 'Aus Health'}
+        onClick={() => navigate(night ? '/progress?tab=sleep' : '/more/health')}
+      />
+    </div>
   )
 }
 
@@ -305,76 +339,18 @@ function MondayReview({ today }: { today: string }) {
 }
 
 export default function Today() {
-  const navigate = useNavigate()
   const today = useToday()
-  const [menu, setMenu] = useState(false)
   const [weightOpen, setWeightOpen] = useState(false)
-  const meal = mealForNow()
-  const go = (to: string) => {
-    setMenu(false)
-    navigate(to)
-  }
-  const actions = [
-    { label: 'Food', hint: 'Search and recent', icon: <IconSearch size={20} />, tone: 'food' as const, run: () => go(`/food/add?meal=${meal}`) },
-    { label: 'Scan', hint: 'Barcode', icon: <IconBarcode size={20} />, tone: 'brand' as const, run: () => go(`/food/scan?meal=${meal}`) },
-    { label: 'Photo', hint: 'Meal to foods', icon: <IconCamera size={20} />, tone: 'pink' as const, run: () => go(`/food/photo?meal=${meal}`) },
-    { label: 'Quick add', hint: 'Just calories', icon: <IconFood size={20} />, tone: 'amber' as const, run: () => go(`/food/quick?meal=${meal}`) },
-    { label: 'Cardio', hint: 'Run, ride, swim', icon: <IconTimer size={20} />, tone: 'train' as const, run: () => go('/train/cardio/new') },
-    {
-      label: 'Weight',
-      hint: "Today's reading",
-      icon: <IconScale size={20} />,
-      tone: 'body' as const,
-      run: () => {
-        setMenu(false)
-        setWeightOpen(true)
-      },
-    },
-  ]
-
   return (
-    <Screen tone="brand" eyebrow={formatDayLong(today)} title={greeting()}>
+    <Screen eyebrow={formatDayLong(today)} title="Heute">
       <BackupReminder />
       <MondayReview today={today} />
-      <EnergyCard today={today} />
-      <MealTiles today={today} />
-      <div className="mt-3 grid grid-cols-2 gap-3">
-        <WorkoutTile today={today} />
-        <WeightTile today={today} onLog={() => setWeightOpen(true)} />
-        <StepsTile today={today} />
-        <SleepTile today={today} />
-      </div>
+      <TrainingCard today={today} />
+      <NutritionCard today={today} />
+      <BodyStats today={today} onWeight={() => setWeightOpen(true)} />
       <div className="mt-3">
         <AdaptiveCard />
       </div>
-
-      <button
-        type="button"
-        aria-label="Add"
-        onClick={() => {
-          haptic()
-          setMenu(true)
-        }}
-        className="btn-primary press fixed bottom-[calc(max(env(safe-area-inset-bottom),0.75rem)+5.25rem)] right-[max(1.25rem,calc(50vw-17rem))] z-30 flex size-15 items-center justify-center rounded-full shadow-float"
-      >
-        <IconPlus size={28} strokeWidth={2.6} />
-      </button>
-
-      <Sheet open={menu} onClose={() => setMenu(false)} title="Log">
-        <div className="grid grid-cols-2 gap-3 pb-1">
-          {actions.map((a) => (
-            <button key={a.label} type="button" onClick={a.run} className={cx('press flex flex-col items-start gap-3 rounded-[22px] bg-fill p-4 text-left')}>
-              <IconTile tone={a.tone} size={38}>
-                {a.icon}
-              </IconTile>
-              <span>
-                <span className="block text-[16px] font-semibold">{a.label}</span>
-                <span className="block text-[13px] text-ink-2">{a.hint}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      </Sheet>
       <WeightSheet open={weightOpen} onClose={() => setWeightOpen(false)} />
     </Screen>
   )

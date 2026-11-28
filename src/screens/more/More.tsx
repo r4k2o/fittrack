@@ -31,28 +31,27 @@ export default function More() {
   const checks = deviceCheck ? Object.values(deviceCheck.results) : []
 
   return (
-    <Screen tone="neutral" title="More">
-      <Card tone="brand" onClick={() => go('/more/profile')} className="animate-rise !p-5">
-        <div className="flex items-center gap-4">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-full btn-primary">
-            <IconUser size={28} />
+    <Screen title="Mehr">
+      <Card onClick={() => go('/more/profile')} className="animate-rise !p-4">
+        <div className="flex items-center gap-3.5">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-fill">
+            <IconUser size={24} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-semibold text-ink-2">Your plan</p>
-            <p className="truncate text-[20px] font-bold tracking-tight">{goal ? GOALS[goal.type].label : 'No goal yet'}</p>
-            <p className="truncate text-[14px] text-ink-2">{[weight ? `${fmt1(weight.value)} kg` : null, target ? `${fmtInt(target.kcal)} kcal a day` : null].filter(Boolean).join(' · ')}</p>
+            <p className="truncate text-[18px] font-semibold tracking-tight">{goal ? GOALS[goal.type].label : 'Noch kein Ziel'}</p>
+            <p className="truncate text-[14px] text-ink-2">{[weight ? `${fmt1(weight.value)} kg` : null, target ? `${fmtInt(target.kcal)} kcal am Tag` : null].filter(Boolean).join(' · ')}</p>
           </div>
           <IconChevronRight size={18} className="text-ink-3" />
         </div>
         {target && (
-          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+          <div className="mt-3.5 grid grid-cols-3 gap-2 text-center">
             {[
-              { label: 'Protein', g: target.proteinG, c: 'var(--protein)' },
-              { label: 'Carbs', g: target.carbsG, c: 'var(--carbs)' },
-              { label: 'Fat', g: target.fatG, c: 'var(--fat)' },
+              { label: 'Eiweiß', g: target.proteinG, c: 'var(--protein)' },
+              { label: 'Kohlenh.', g: target.carbsG, c: 'var(--carbs)' },
+              { label: 'Fett', g: target.fatG, c: 'var(--fat)' },
             ].map((m) => (
-              <div key={m.label} className="rounded-[18px] bg-surface/70 py-2">
-                <div className="text-[17px] font-bold">{m.g} g</div>
+              <div key={m.label} className="rounded-[14px] bg-fill py-2">
+                <div className="text-[16px] font-bold tabular-nums">{m.g} g</div>
                 <div className="flex items-center justify-center gap-1 text-[12px] font-semibold text-ink-2">
                   <span className="size-2 rounded-full" style={{ background: m.c }} />
                   {m.label}
@@ -63,57 +62,48 @@ export default function More() {
         )}
       </Card>
 
-      <SectionTitle>Plan</SectionTitle>
+      <SectionTitle>Ziele und Plan</SectionTitle>
       <Group>
-        <ListRow icon={<IconTarget size={18} />} iconTone="brand" title="Targets" subtitle="Calories, macros and why" onClick={() => go('/more/targets')} />
-        <ListRow icon={<IconUser size={18} />} iconTone="pink" title="Profile and goal" subtitle="Body data, goal, activity" onClick={() => go('/more/profile')} />
+        <ListRow icon={<IconTarget size={18} />} title="Kalorien und Makros" onClick={() => go('/more/targets')} />
+        <ListRow icon={<IconUser size={18} />} title="Profil und Ziel" onClick={() => go('/more/profile')} />
         <ListRow
           icon={<IconTrain size={18} />}
-          iconTone="train"
-          title="Training plan"
-          subtitle={plan ? `${plan.plan.name} · ${plan.days.length} sessions` : 'Build one from seven questions'}
+          title="Trainingsplan"
+          subtitle={plan ? plan.plan.name : 'Noch keiner'}
           onClick={() => go(plan ? '/train/plan' : '/train/plan/new')}
         />
       </Group>
 
-      <SectionTitle>Logging</SectionTitle>
+      <SectionTitle>Erfassen</SectionTitle>
       <Group>
-        <ListRow icon={<IconCamera size={18} />} iconTone="food" title="Photo logging" subtitle={aiKey ? `${PROVIDERS[aiProvider ?? 'gemini'].label} · key on this phone` : 'Meal photo to foods, with your own key'} onClick={() => go('/more/ai')} />
-        <ListRow icon={<IconHeart size={18} />} iconTone="pink" title="Apple Health" subtitle={lastImport ? `Last import ${formatDate(lastImport.createdAt.slice(0, 10))}` : 'Steps, weight, sleep and workouts'} onClick={() => go('/more/health')} />
-        <ListRow icon={<IconList size={18} />} iconTone="amber" title="Recipes and saved meals" subtitle="Dishes by serving, meals in one tap" onClick={() => go('/food/add?tab=recipes')} />
-        <ListRow icon={<IconTimer size={18} />} iconTone="train" title="Cardio" subtitle="Sessions and weekly minutes" onClick={() => go('/train/cardio')} />
-        <ListRow icon={<IconImage size={18} />} iconTone="indigo" title="Progress photos" subtitle="Front, side and back, week by week" onClick={() => go('/progress?tab=photos')} />
+        <ListRow icon={<IconHeart size={18} />} title="Apple Health" subtitle={lastImport ? `Letzter Import ${formatDate(lastImport.createdAt.slice(0, 10))}` : undefined} onClick={() => go('/more/health')} />
+        <ListRow icon={<IconCamera size={18} />} title="Foto-Erfassung" subtitle={aiKey ? PROVIDERS[aiProvider ?? 'gemini'].label : 'Aus'} onClick={() => go('/more/ai')} />
+        <ListRow icon={<IconList size={18} />} title="Rezepte und Mahlzeiten" onClick={() => go('/food/add?tab=recipes')} />
+        <ListRow icon={<IconTimer size={18} />} title="Cardio" onClick={() => go('/train/cardio')} />
+        <ListRow icon={<IconImage size={18} />} title="Fortschrittsfotos" onClick={() => go('/progress?tab=photos')} />
       </Group>
 
-      <SectionTitle>Data</SectionTitle>
+      <SectionTitle>Daten</SectionTitle>
       <Group>
         <ListRow
           icon={<IconShield size={18} />}
-          iconTone="amber"
-          title="Backup and restore"
-          subtitle={backupAge == null ? 'No backup yet' : backupAge === 0 ? 'Last backup today' : `Last backup ${backupAge} ${backupAge === 1 ? 'day' : 'days'} ago`}
+          title="Backup"
+          subtitle={backupAge == null ? 'Noch kein Backup' : backupAge === 0 ? 'Heute gesichert' : `Vor ${backupAge} ${backupAge === 1 ? 'Tag' : 'Tagen'} gesichert`}
           onClick={() => go('/more/backup')}
         />
-        <ListRow
-          icon={<IconFood size={18} />}
-          iconTone="food"
-          title="Food list and my foods"
-          subtitle={foodList ? `${foodList.name} · ${fmtInt(foodList.count)} foods` : 'No food list imported'}
-          onClick={() => go('/more/foods')}
-        />
-        <ListRow icon={<IconTrain size={18} />} iconTone="slate" title="Exercises" subtitle="Library, load steps, your own" onClick={() => go('/train/exercises')} />
+        <ListRow icon={<IconFood size={18} />} title="Lebensmittel" subtitle={foodList ? `${foodList.name} · ${fmtInt(foodList.count)}` : 'Keine Liste importiert'} onClick={() => go('/more/foods')} />
+        <ListRow icon={<IconTrain size={18} />} title="Übungen" onClick={() => go('/train/exercises')} />
       </Group>
 
-      <SectionTitle>This phone</SectionTitle>
+      <SectionTitle>Dieses iPhone</SectionTitle>
       <Group>
         <ListRow
           icon={<IconPhone size={18} />}
-          iconTone="slate"
-          title="Device check"
-          subtitle={deviceCheck ? `${checks.filter((c) => c.ok).length} of ${checks.length} checks passed` : 'Run it before entering real data'}
+          title="Gerätetest"
+          subtitle={deviceCheck ? `${checks.filter((c) => c.ok).length} von ${checks.length} bestanden` : 'Vor echten Daten einmal ausführen'}
           onClick={() => go('/more/device-check')}
         />
-        <ListRow icon={<IconInfo size={18} />} iconTone="indigo" title="About and disclaimer" subtitle={`Version ${__APP_VERSION__}`} onClick={() => go('/more/about')} />
+        <ListRow icon={<IconInfo size={18} />} title="Info und Hinweise" subtitle={`Version ${__APP_VERSION__}`} onClick={() => go('/more/about')} />
       </Group>
     </Screen>
   )

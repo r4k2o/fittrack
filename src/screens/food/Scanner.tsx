@@ -108,7 +108,7 @@ export default function Scanner() {
       if (!navigator.mediaDevices?.getUserMedia) {
         setPhase({
           kind: 'noCamera',
-          reason: window.isSecureContext ? 'This browser gives no camera access.' : 'The live camera only works on the app’s https:// address.',
+          reason: window.isSecureContext ? 'Dieser Browser gibt keinen Kamerazugriff.' : 'Die Live-Kamera geht nur über die https://-Adresse der App.',
         })
         return
       }
@@ -135,7 +135,7 @@ export default function Scanner() {
         const name = (e as Error).name
         setPhase({
           kind: 'noCamera',
-          reason: name === 'NotAllowedError' ? 'Camera access was declined. Allow it in the iPhone Settings, or take a photo instead.' : 'The camera could not start.',
+          reason: name === 'NotAllowedError' ? 'Kamerazugriff abgelehnt. Erlaube ihn in den iPhone-Einstellungen oder mach stattdessen ein Foto.' : 'Die Kamera ließ sich nicht starten.',
         })
       }
     },
@@ -172,8 +172,8 @@ export default function Scanner() {
     const found = await detectInFile(file).catch(() => null)
     if (found) void lookup(found.code)
     else {
-      toast({ message: 'No barcode found in that photo. Try closer, flat and in good light.' })
-      setPhase({ kind: 'noCamera', reason: 'Take another photo, or type the code.' })
+      toast({ message: 'Kein Barcode im Foto gefunden. Näher ran, gerade halten, gutes Licht.' })
+      setPhase({ kind: 'noCamera', reason: 'Neues Foto machen oder den Code eintippen.' })
     }
   }
 
@@ -214,11 +214,11 @@ export default function Scanner() {
       </div>
 
       <div className="absolute inset-x-0 top-0 flex items-center justify-between px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
-        <button type="button" aria-label="Close scanner" onClick={() => navigate(-1)} className="press flex size-12 items-center justify-center rounded-full bg-white/15 backdrop-blur-xl">
+        <button type="button" aria-label="Scanner schließen" onClick={() => navigate(-1)} className="press flex size-12 items-center justify-center rounded-full bg-white/15 backdrop-blur-xl">
           <IconX />
         </button>
         {torch.supported && (
-          <button type="button" aria-label="Torch" aria-pressed={torch.on} onClick={toggleTorch} className={cx('press flex size-12 items-center justify-center rounded-full backdrop-blur-xl', torch.on ? 'bg-white text-black' : 'bg-white/15')}>
+          <button type="button" aria-label="Taschenlampe" aria-pressed={torch.on} onClick={toggleTorch} className={cx('press flex size-12 items-center justify-center rounded-full backdrop-blur-xl', torch.on ? 'bg-white text-black' : 'bg-white/15')}>
             <IconBolt />
           </button>
         )}
@@ -226,39 +226,39 @@ export default function Scanner() {
 
       <div className="absolute inset-x-0 bottom-0 px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
         <p className="mb-4 min-h-6 text-center text-[15px] font-medium text-white/90">
-          {phase.kind === 'starting' && 'Starting the camera…'}
-          {phase.kind === 'scanning' && 'Hold the barcode inside the box'}
+          {phase.kind === 'starting' && 'Kamera startet …'}
+          {phase.kind === 'scanning' && 'Barcode in den Rahmen halten'}
           {phase.kind === 'lookup' && (
             <span className="inline-flex items-center gap-2">
-              <Spinner className="size-4" /> {phase.code ? `Looking up ${phase.code}…` : 'Reading the photo…'}
+              <Spinner className="size-4" /> {phase.code ? `Suche ${phase.code} …` : 'Lese das Foto …'}
             </span>
           )}
           {phase.kind === 'noCamera' && phase.reason}
         </p>
         <div className="mx-auto grid max-w-md grid-cols-2 gap-2">
           <button type="button" onClick={() => setManualOpen(true)} className="press flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-white/15 font-semibold backdrop-blur-xl active:bg-white/25">
-            <IconKeyboard size={20} /> Type the code
+            <IconKeyboard size={20} /> Code eintippen
           </button>
           <button type="button" onClick={() => fileRef.current?.click()} className="press flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-white/15 font-semibold backdrop-blur-xl active:bg-white/25">
-            <IconCamera size={20} /> Take a photo
+            <IconCamera size={20} /> Foto machen
           </button>
         </div>
         <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => void fromPhoto(e.target.files?.[0])} />
       </div>
 
-      <Sheet open={manualOpen} onClose={() => setManualOpen(false)} title="Type the barcode">
+      <Sheet open={manualOpen} onClose={() => setManualOpen(false)} title="Barcode eintippen">
         <div className="space-y-3 pb-2 pt-1 text-ink">
           <TextInput
             inputMode="numeric"
             autoFocus
-            placeholder="8, 12 or 13 digits"
+            placeholder="8, 12 oder 13 Ziffern"
             value={manualCode}
             onChange={(e) => setManualCode(e.target.value.replace(/\D/g, ''))}
             onKeyDown={(e) => e.key === 'Enter' && submitManual()}
           />
-          {manualCode.length >= 8 && !manualValid && <p className="text-sm text-danger">The check digit does not match. Check the number.</p>}
+          {manualCode.length >= 8 && !manualValid && <p className="text-sm text-danger">Die Prüfziffer passt nicht. Bitte die Nummer prüfen.</p>}
           <Button block size="lg" disabled={!manualValid} onClick={submitManual}>
-            Look up
+            Suchen
           </Button>
         </div>
       </Sheet>
@@ -266,15 +266,15 @@ export default function Scanner() {
       <Sheet
         open={phase.kind === 'product'}
         onClose={restart}
-        title="Is this the product?"
+        title="Ist das das Produkt?"
         footer={
           product && (
             <div className="flex gap-2">
               <Button variant="secondary" onClick={() => navigate(`/food/new?meal=${meal}${date !== today ? `&d=${date}` : ''}`, { state: { draft: product }, replace: true })}>
-                Edit first
+                Erst bearbeiten
               </Button>
               <Button className="flex-1" size="lg" onClick={() => void confirmProduct(product)}>
-                Confirm
+                Bestätigen
               </Button>
             </div>
           )
@@ -287,17 +287,17 @@ export default function Scanner() {
               <p className="text-sm text-ink-2">{[product.brand, product.barcode].filter(Boolean).join(' · ')}</p>
             </div>
             <table className="w-full text-sm tabular-nums">
-              <caption className="pb-1 text-left text-xs font-semibold uppercase tracking-wide text-ink-2">Per 100 g</caption>
+              <caption className="pb-1 text-left text-xs font-semibold text-ink-2">Pro 100 g</caption>
               <tbody className="divide-y divide-line">
                 {[
-                  ['Energy', `${fmtInt(product.per100.kcal)} kcal`],
-                  ['Protein', `${fmt1(product.per100.protein)} g`],
-                  ['Carbohydrate', `${fmt1(product.per100.carbs)} g`],
-                  ['of which sugar', product.per100.sugar != null ? `${fmt1(product.per100.sugar)} g` : null],
-                  ['Fat', `${fmt1(product.per100.fat)} g`],
-                  ['of which saturated', product.per100.satFat != null ? `${fmt1(product.per100.satFat)} g` : null],
-                  ['Fibre', product.per100.fibre != null ? `${fmt1(product.per100.fibre)} g` : null],
-                  ['Salt', product.per100.salt != null ? `${fmt2(product.per100.salt)} g` : null],
+                  ['Energie', `${fmtInt(product.per100.kcal)} kcal`],
+                  ['Eiweiß', `${fmt1(product.per100.protein)} g`],
+                  ['Kohlenhydrate', `${fmt1(product.per100.carbs)} g`],
+                  ['davon Zucker', product.per100.sugar != null ? `${fmt1(product.per100.sugar)} g` : null],
+                  ['Fett', `${fmt1(product.per100.fat)} g`],
+                  ['davon gesättigt', product.per100.satFat != null ? `${fmt1(product.per100.satFat)} g` : null],
+                  ['Ballaststoffe', product.per100.fibre != null ? `${fmt1(product.per100.fibre)} g` : null],
+                  ['Salz', product.per100.salt != null ? `${fmt2(product.per100.salt)} g` : null],
                 ]
                   .filter((r) => r[1] != null)
                   .map(([k, val]) => (
@@ -312,11 +312,11 @@ export default function Scanner() {
               <div className="flex gap-3 rounded-2xl bg-warn-soft px-4 py-3 text-sm text-warn">
                 <IconWarn size={18} className="mt-0.5 shrink-0" />
                 <span>
-                  The stated {fmtInt(product.per100.kcal)} kcal do not match the macros ({fmtInt(energy.computedKcal)} kcal). Crowd-sourced data can be wrong: compare with the label, or tap Edit first.
+                  Die angegebenen {fmtInt(product.per100.kcal)} kcal passen nicht zu den Makros ({fmtInt(energy.computedKcal)} kcal). Gemeinschaftsdaten können falsch sein: mit dem Etikett vergleichen oder „Erst bearbeiten“ tippen.
                 </span>
               </div>
             )}
-            <p className="text-xs text-ink-3">Product data from Open Food Facts, available under the Open Database License.</p>
+            <p className="text-xs text-ink-3">Produktdaten von Open Food Facts, unter der Open Database License.</p>
           </div>
         )}
       </Sheet>
@@ -324,15 +324,15 @@ export default function Scanner() {
       <Sheet
         open={phase.kind === 'notFound' || phase.kind === 'error'}
         onClose={restart}
-        title={phase.kind === 'error' ? 'Lookup failed' : 'Product not found'}
+        title={phase.kind === 'error' ? 'Suche fehlgeschlagen' : 'Produkt nicht gefunden'}
         footer={
           (phase.kind === 'notFound' || phase.kind === 'error') && (
             <div className="flex gap-2">
               <Button variant="secondary" onClick={restart}>
-                Scan again
+                Neu scannen
               </Button>
               <Button className="flex-1" size="lg" onClick={() => labelForm(phase.code, phase.kind === 'notFound' ? phase.name : undefined, phase.kind === 'notFound' ? phase.brand : undefined)}>
-                Add from label
+                Vom Etikett
               </Button>
             </div>
           )
@@ -342,11 +342,11 @@ export default function Scanner() {
           {phase.kind === 'notFound' &&
             (phase.name ? (
               <p>
-                Open Food Facts knows <b>{phase.name}</b> but has no complete nutrition values for it. Add them from the label; the product is then saved on this phone.
+                Open Food Facts kennt <b>{phase.name}</b>, hat aber keine vollständigen Nährwerte. Trag sie vom Etikett ein; das Produkt wird dann auf diesem iPhone gespeichert.
               </p>
             ) : (
               <p>
-                Open Food Facts has no product with the code <b className="tabular-nums">{phase.code}</b>. Add it from the label once; after that, scanning it works offline.
+                Open Food Facts hat kein Produkt mit dem Code <b className="tabular-nums">{phase.code}</b>. Trag es einmal vom Etikett ein; danach klappt das Scannen auch offline.
               </p>
             ))}
           {phase.kind === 'error' && <p>{phase.message}</p>}

@@ -54,7 +54,7 @@ export default function PhotoLog() {
       setPhoto(preview)
       const foods = [...(await db.foods.toArray()), ...(await recipeFoods())]
       setRows(matchItems(items, foods).map((m, i) => ({ ...m, key: i, grams: m.seen.grams })))
-      if (!items.length) setError('No food was recognised in this photo.')
+      if (!items.length) setError('In diesem Foto wurde kein Essen erkannt.')
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -81,7 +81,7 @@ export default function PhotoLog() {
       absDiffGrams: prev.absDiffGrams + seen.reduce((n, r) => n + Math.abs(r.grams - r.seen.grams), 0),
     })
     haptic('success')
-    toast({ message: `${entries.length} items · ${fmtInt(total)} kcal logged`, action: { label: 'Undo', onClick: () => void deleteEntries(entries.map((e) => e.id)) } })
+    toast({ message: `${entries.length} Einträge · ${fmtInt(total)} kcal eingetragen`, action: { label: 'Rückgängig', onClick: () => void deleteEntries(entries.map((e) => e.id)) } })
     navigate(back, { replace: true })
   }
 
@@ -94,11 +94,11 @@ export default function PhotoLog() {
   if (cfg === undefined) return null
   if (cfg === null)
     return (
-      <Screen back={back} title="Photo" tone="food">
-        <EmptyState icon={<IconCamera size={28} />} title="Add a key to log by photo">
-          Photo logging uses your own key for a vision model (Gemini's free tier works). The key stays on this phone.
+      <Screen back={back} title="Foto">
+        <EmptyState icon={<IconCamera size={28} />} title="Für Fotos braucht es einen Schlüssel">
+          Die Foto-Erfassung nutzt deinen eigenen Schlüssel für ein Bildmodell (Geminis kostenloser Tarif reicht). Der Schlüssel bleibt auf diesem iPhone.
           <div className="mt-4">
-            <Button onClick={() => navigate('/more/ai')}>Set it up</Button>
+            <Button onClick={() => navigate('/more/ai')}>Einrichten</Button>
           </div>
         </EmptyState>
       </Screen>
@@ -106,25 +106,25 @@ export default function PhotoLog() {
   const spent = (used ?? 0) >= cfg.limit
 
   return (
-    <Screen back={back} title={`Photo to ${MEAL_LABEL[meal].toLowerCase()}`} subtitle={date !== today ? relativeDay(date, today) : undefined} tone="food" large={false} bottomPad={false} className="pb-[calc(env(safe-area-inset-bottom)+7rem)]">
+    <Screen back={back} title={`Foto: ${MEAL_LABEL[meal]}`} subtitle={date !== today ? relativeDay(date, today) : undefined} large={false} bottomPad={false} className="pb-[calc(env(safe-area-inset-bottom)+7rem)]">
       <Segmented size="sm" className="mt-1" value={meal} options={MEALS.map((m) => ({ value: m, label: MEAL_LABEL[m] }))} onChange={setMeal} />
 
       {!rows && !busy && (
-        <Card tone="food" className="mt-3 !p-5">
+        <Card className="mt-3 !p-5">
           {photoUrl && <img src={photoUrl} alt="" className="mb-3 max-h-56 w-full rounded-[18px] object-cover" />}
-          <p className="text-[16px] font-semibold">Photograph the whole plate from above</p>
-          <p className="mt-1 text-[14px] text-ink-2">Good light and everything in view give the best guess. You check every item and its grams before anything is logged.</p>
+          <p className="text-[16px] font-semibold">Den ganzen Teller von oben fotografieren</p>
+          <p className="mt-1 text-[14px] text-ink-2">Gutes Licht und alles im Bild geben die beste Schätzung. Du prüfst jede Zutat und ihre Gramm, bevor etwas eingetragen wird.</p>
           {spent ? (
             <Notice tone="warn" className="mt-3">
-              Today's {cfg.limit} requests are used up. Log this meal by search instead; the count resets at midnight.
+              Die {cfg.limit} Anfragen für heute sind aufgebraucht. Trag die Mahlzeit über die Suche ein; um Mitternacht geht es wieder.
             </Notice>
           ) : (
             <Button block size="lg" className="mt-4" onClick={() => file.current?.click()}>
-              <IconCamera size={20} /> Take or choose a photo
+              <IconCamera size={20} /> Foto machen oder wählen
             </Button>
           )}
           <p className="mt-2 text-center text-[12px] text-ink-3">
-            {used ?? 0} of {cfg.limit} requests used today
+            {used ?? 0} von {cfg.limit} Anfragen heute genutzt
           </p>
         </Card>
       )}
@@ -133,7 +133,7 @@ export default function PhotoLog() {
       {busy && (
         <div className="mt-10 flex flex-col items-center gap-3 text-ink-2">
           <Spinner />
-          <p className="text-[14px]">Looking at the photo…</p>
+          <p className="text-[14px]">Schaue mir das Foto an …</p>
         </div>
       )}
       {error && (
@@ -141,7 +141,7 @@ export default function PhotoLog() {
           {error}
           <div className="mt-2 flex gap-2">
             <Button size="sm" variant="secondary" onClick={() => navigate(`/food/add?meal=${meal}${date !== today ? `&d=${date}` : ''}`)}>
-              Log by search
+              Über die Suche eintragen
             </Button>
           </div>
         </Notice>
@@ -150,13 +150,13 @@ export default function PhotoLog() {
       {rows && (
         <>
           <div className="mt-3 flex items-center gap-3">
-            {photoUrl && <img src={photoUrl} alt="The meal photo" className="size-20 shrink-0 rounded-[16px] object-cover" />}
+            {photoUrl && <img src={photoUrl} alt="Das Foto der Mahlzeit" className="size-20 shrink-0 rounded-[16px] object-cover" />}
             <div>
-              <p className="text-[13px] font-semibold text-ink-2">Total</p>
+              <p className="text-[13px] font-semibold text-ink-2">Gesamt</p>
               <p className="text-[34px] font-bold leading-none tracking-tight tabular-nums">
                 {fmtInt(total)} <span className="text-[15px] font-semibold text-ink-2">kcal</span>
               </p>
-              <p className="mt-1 text-[12px] text-ink-3">Values from your food list, not from the model</p>
+              <p className="mt-1 text-[12px] text-ink-3">Werte aus deiner Lebensmittelliste, nicht vom Modell</p>
             </div>
           </div>
           <div className="card mt-3 divide-y divide-line overflow-hidden">
@@ -166,26 +166,26 @@ export default function PhotoLog() {
                 <div key={r.key} className={cx('p-3', !r.food && 'bg-warn-soft')}>
                   <div className="flex items-start gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[15px] font-semibold">{r.food ? r.food.name : 'No match in your foods'}</p>
+                      <p className="truncate text-[15px] font-semibold">{r.food ? r.food.name : 'Kein Treffer in deinen Lebensmitteln'}</p>
                       <p className="truncate text-[12px] text-ink-2">
-                        Seen as “{r.seen.name}”{r.seen.grams ? `, about ${r.seen.grams} g` : ''}
+                        Erkannt als „{r.seen.name}“{r.seen.grams ? `, etwa ${r.seen.grams} g` : ''}
                       </p>
                     </div>
                     {low && (
                       <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-warn-soft px-2 py-0.5 text-[12px] font-bold text-warn-ink">
-                        <IconAlert size={12} /> check
+                        <IconAlert size={12} /> prüfen
                       </span>
                     )}
-                    <IconButton label={`Remove ${r.seen.name}`} className="-mr-1 -mt-1 size-9 text-ink-3" onClick={() => setRows(rows.filter((x) => x.key !== r.key))}>
+                    <IconButton label={`${r.seen.name} entfernen`} className="-mr-1 -mt-1 size-9 text-ink-3" onClick={() => setRows(rows.filter((x) => x.key !== r.key))}>
                       <IconTrash size={17} />
                     </IconButton>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <button type="button" aria-label="10 g less" className="press flex size-10 items-center justify-center rounded-full bg-fill" onClick={() => update(r.key, { grams: Math.max(5, r.grams - 10) })}>
+                    <button type="button" aria-label="10 g weniger" className="press flex size-10 items-center justify-center rounded-full bg-fill" onClick={() => update(r.key, { grams: Math.max(5, r.grams - 10) })}>
                       <IconMinus size={18} />
                     </button>
-                    <NumberInput value={r.grams} ariaLabel={`${r.food?.name ?? r.seen.name} grams`} onChange={(n) => update(r.key, { grams: n ?? 0 })} className="w-24" inputClassName="text-center !min-h-10" />
-                    <button type="button" aria-label="10 g more" className="press flex size-10 items-center justify-center rounded-full bg-fill" onClick={() => update(r.key, { grams: r.grams + 10 })}>
+                    <NumberInput value={r.grams} ariaLabel={`${r.food?.name ?? r.seen.name}, Gramm`} onChange={(n) => update(r.key, { grams: n ?? 0 })} className="w-24" inputClassName="text-center !min-h-10" />
+                    <button type="button" aria-label="10 g mehr" className="press flex size-10 items-center justify-center rounded-full bg-fill" onClick={() => update(r.key, { grams: r.grams + 10 })}>
                       <IconPlus size={18} />
                     </button>
                     <span className="ml-auto text-[14px] font-semibold tabular-nums">{r.food ? `${fmtInt((r.food.per100.kcal * r.grams) / 100)} kcal` : '–'}</span>
@@ -197,33 +197,33 @@ export default function PhotoLog() {
                       </button>
                     ))}
                     <button type="button" className="press rounded-full px-2 py-1 text-[12px] font-semibold text-brand-ink" onClick={() => setRematch(r.key)}>
-                      {r.food ? 'Other food…' : 'Pick a food…'}
+                      {r.food ? 'Anderes …' : 'Lebensmittel wählen …'}
                     </button>
                   </div>
                 </div>
               )
             })}
             <button type="button" className="press flex min-h-12 w-full items-center gap-2 px-4 text-[15px] font-semibold text-brand-ink" onClick={() => setRematch('new')}>
-              <IconPlus size={18} strokeWidth={2.6} /> Add an item
+              <IconPlus size={18} strokeWidth={2.6} /> Eintrag hinzufügen
             </button>
           </div>
           {unmatched > 0 && (
             <Notice tone="warn" className="mt-3">
-              {unmatched} item{unmatched === 1 ? ' has' : 's have'} no match in your foods. Pick one or remove {unmatched === 1 ? 'it' : 'them'}; scan or add a missing food first if needed.
+              {unmatched} {unmatched === 1 ? 'Eintrag hat' : 'Einträge haben'} keinen Treffer in deinen Lebensmitteln. Wähl eins aus oder entferne {unmatched === 1 ? 'ihn' : 'sie'}; fehlende Lebensmittel vorher scannen oder anlegen.
             </Notice>
           )}
           <Button block variant="ghost" className="mt-2" onClick={() => file.current?.click()} disabled={spent}>
-            Take another photo
+            Neues Foto
           </Button>
           <StickyFooter>
             <Button block size="lg" disabled={!ready.length || unmatched > 0} onClick={() => void log()}>
-              Log meal · {fmtInt(total)} kcal
+              Mahlzeit eintragen · {fmtInt(total)} kcal
             </Button>
           </StickyFooter>
         </>
       )}
 
-      <FoodSearchSheet open={rematch != null} title={rematch === 'new' ? 'Add an item' : 'Pick the food'} onClose={() => setRematch(null)} onPick={pick} />
+      <FoodSearchSheet open={rematch != null} title={rematch === 'new' ? 'Eintrag hinzufügen' : 'Lebensmittel wählen'} onClose={() => setRematch(null)} onPick={pick} />
     </Screen>
   )
 }

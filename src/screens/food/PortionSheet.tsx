@@ -76,7 +76,7 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
     if (!valid) return
     const e = await logFood(food, portion, meal, date, source)
     haptic('success')
-    toast({ message: `${food.name} · ${fmtInt(e.macros.kcal)} kcal added`, action: { label: 'Undo', onClick: () => void deleteEntries([e.id]) } })
+    toast({ message: `${food.name} · ${fmtInt(e.macros.kcal)} kcal eingetragen`, action: { label: 'Rückgängig', onClick: () => void deleteEntries([e.id]) } })
     onDone?.()
   }
 
@@ -90,7 +90,7 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
   const remove = async () => {
     if (!entry) return
     const rows = await deleteEntries([entry.id])
-    toast({ message: `${entry.name} deleted`, action: { label: 'Undo', onClick: () => restoreEntries(rows) } })
+    toast({ message: `${entry.name} gelöscht`, action: { label: 'Rückgängig', onClick: () => restoreEntries(rows) } })
     onDone?.()
   }
 
@@ -100,7 +100,7 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
     { name: '100 g', grams: 100, label: '100 g', plain: true },
   ]
   if (food.lastPortionG && !chips.some((c) => c.grams === food.lastPortionG)) {
-    chips.unshift({ name: 'last', grams: food.lastPortionG, label: `Last time · ${fmt1(food.lastPortionG)} g`, plain: true })
+    chips.unshift({ name: 'last', grams: food.lastPortionG, label: `Letztes Mal · ${fmt1(food.lastPortionG)} g`, plain: true })
   }
 
   return (
@@ -117,15 +117,15 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
         entry ? (
           <div className="flex gap-2">
             <Button variant="danger" size="lg" onClick={remove}>
-              Delete
+              Löschen
             </Button>
             <Button className="flex-1" size="lg" disabled={!valid} onClick={save}>
-              Save
+              Speichern
             </Button>
           </div>
         ) : (
           <Button block size="lg" disabled={!valid} onClick={add}>
-            Add to {MEAL_LABEL[meal].toLowerCase()}
+            Zu {MEAL_LABEL[meal]} hinzufügen
             {date !== localDay() ? ` · ${relativeDay(date)}` : ''}
           </Button>
         )
@@ -134,18 +134,18 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
       <div className="space-y-4 pt-1">
         {(!energy.ok || food.flagged) && (
           <Notice tone="warn">
-            The calories ({fmtInt(food.per100.kcal)} kcal per 100 g) do not match the macros ({fmtInt(energy.computedKcal)} kcal). Check the label.
+            Die Kalorien ({fmtInt(food.per100.kcal)} kcal pro 100 g) passen nicht zu den Makros ({fmtInt(energy.computedKcal)} kcal). Bitte das Etikett prüfen.
           </Notice>
         )}
 
         <div className="flex items-center justify-between gap-3 rounded-[24px] bg-fill p-2">
-          <button type="button" aria-label="Less" onClick={() => nudge(-1)} className="press flex size-12 items-center justify-center rounded-full bg-surface shadow-[0_2px_8px_-3px_rgba(0,0,0,0.2)]">
+          <button type="button" aria-label="Weniger" onClick={() => nudge(-1)} className="press flex size-12 items-center justify-center rounded-full bg-surface shadow-[0_2px_8px_-3px_rgba(0,0,0,0.2)]">
             <IconMinus size={22} strokeWidth={2.6} />
           </button>
           <div className="flex min-w-0 flex-1 flex-col items-center">
             <NumberInput
               value={grams}
-              ariaLabel="Amount in grams"
+              ariaLabel="Menge in Gramm"
               onChange={(n) => {
                 setGrams(n)
                 setServing(null)
@@ -154,9 +154,9 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
               className="w-full"
               inputClassName="!min-h-12 !bg-transparent !border-transparent text-center !text-[34px] font-bold tracking-tight !shadow-none !px-2"
             />
-            <span className="-mt-1 text-[13px] font-semibold text-ink-2">{serving ? `grams · ${fmt2(count)} × ${serving.name}` : 'grams'}</span>
+            <span className="-mt-1 text-[13px] font-semibold text-ink-2">{serving ? `Gramm · ${fmt2(count)} × ${serving.name}` : 'Gramm'}</span>
           </div>
-          <button type="button" aria-label="More" onClick={() => nudge(1)} className="press flex size-12 items-center justify-center rounded-full bg-surface shadow-[0_2px_8px_-3px_rgba(0,0,0,0.2)]">
+          <button type="button" aria-label="Mehr" onClick={() => nudge(1)} className="press flex size-12 items-center justify-center rounded-full bg-surface shadow-[0_2px_8px_-3px_rgba(0,0,0,0.2)]">
             <IconPlus size={22} strokeWidth={2.6} />
           </button>
         </div>
@@ -185,9 +185,9 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
             <div className="text-[12px] font-semibold text-ink-2">kcal</div>
           </div>
           {[
-            { label: 'Protein', v: m.protein, c: 'var(--protein)' },
-            { label: 'Carbs', v: m.carbs, c: 'var(--carbs)' },
-            { label: 'Fat', v: m.fat, c: 'var(--fat)' },
+            { label: 'Eiweiß', v: m.protein, c: 'var(--protein)' },
+            { label: 'Kohlenh.', v: m.carbs, c: 'var(--carbs)' },
+            { label: 'Fett', v: m.fat, c: 'var(--fat)' },
           ].map((x) => (
             <div key={x.label}>
               <div className="text-[22px] font-bold tracking-tight">{fmt1(x.v)}</div>
@@ -201,7 +201,7 @@ export function PortionSheet({ open, food, date, meal: initialMeal, entry, sourc
 
         <Segmented size="sm" value={meal} options={MEALS.map((x) => ({ value: x, label: MEAL_LABEL[x] }))} onChange={setMeal} />
         <p className="text-center text-[12px] text-ink-3">
-          Per 100 g: {fmtInt(food.per100.kcal)} kcal · P {fmt1(food.per100.protein)} · C {fmt1(food.per100.carbs)} · F {fmt1(food.per100.fat)} g
+          Pro 100 g: {fmtInt(food.per100.kcal)} kcal · E {fmt1(food.per100.protein)} · K {fmt1(food.per100.carbs)} · F {fmt1(food.per100.fat)} g
         </p>
       </div>
     </Sheet>

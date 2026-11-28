@@ -31,13 +31,15 @@ function Stack({ m, scale, vertical }: { m: WeekMinutes; scale: number; vertical
   )
 }
 
+const INTENSITY = { light: 'leicht', moderate: 'moderat', vigorous: 'intensiv' }
+
 export function Legend() {
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-ink-2" aria-hidden>
       {(['light', 'moderate', 'vigorous'] as const).map((k) => (
-        <span key={k} className="inline-flex items-center gap-1.5 capitalize">
+        <span key={k} className="inline-flex items-center gap-1.5">
           <span className="size-2.5 rounded-[3px]" style={{ background: SHADES[k] }} />
-          {k}
+          {INTENSITY[k]}
         </span>
       ))}
       <span className="inline-flex items-center gap-1.5">
@@ -60,24 +62,23 @@ export default function Cardio() {
   })
   const now = weeks[weeks.length - 1].m
   const scale = Math.max(WHO_WEEKLY_MIN * 1.25, ...weeks.map((w) => w.m.total))
-  const label = (d: string) => parseDay(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  const label = (d: string) => parseDay(d).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })
 
   return (
     <Screen
       back="/train"
       title="Cardio"
-      tone="train"
       actions={
         <Button size="sm" onClick={() => navigate('/train/cardio/new')}>
-          <IconPlus size={16} strokeWidth={2.6} /> Log
+          <IconPlus size={16} strokeWidth={2.6} /> Eintragen
         </Button>
       }
     >
-      <Card tone="train" className="!p-5">
-        <p className="text-[13px] font-semibold text-ink-2">This week, minutes by intensity</p>
+      <Card className="!p-5">
+        <p className="text-[13px] font-semibold text-ink-2">Diese Woche</p>
         <p className="mt-0.5 flex items-baseline gap-1.5">
           <span className="text-[52px] font-bold leading-none tracking-[-0.045em] tabular-nums">{fmtInt(now.total)}</span>
-          <span className="text-[15px] font-semibold text-ink-2">min</span>
+          <span className="text-[15px] font-semibold text-ink-2">Min</span>
         </p>
         <div className="relative mt-4 h-4 rounded-full bg-fill">
           <div className="flex h-full overflow-hidden rounded-full">
@@ -87,8 +88,8 @@ export default function Cardio() {
         </div>
         <p className="mt-3 text-[14px] text-ink-2">
           {now.moderateEquivalent >= WHO_WEEKLY_MIN
-            ? `${fmtInt(now.moderateEquivalent)} moderate-equivalent minutes: at or above the WHO's 150.`
-            : `${fmtInt(now.moderateEquivalent)} of the WHO's 150 moderate minutes a week; a vigorous minute counts as two.`}
+            ? `${fmtInt(now.moderateEquivalent)} moderat gerechnete Minuten: WHO-Empfehlung von 150 erreicht.`
+            : `${fmtInt(now.moderateEquivalent)} von 150 moderaten Minuten pro Woche (WHO); eine intensive Minute zählt doppelt.`}
         </p>
         <div className="mt-3">
           <Legend />
@@ -96,7 +97,7 @@ export default function Cardio() {
       </Card>
 
       <Card className="mt-3 !p-4">
-        <p className="text-[13px] font-semibold text-ink-2">Minutes per week, last {WEEKS} weeks</p>
+        <p className="text-[13px] font-semibold text-ink-2">Minuten pro Woche, letzte {WEEKS} Wochen</p>
         <div className="relative mt-3 h-40">
           <span className="absolute inset-x-0 border-t-2 border-dashed border-ink/60" style={{ bottom: `${(WHO_WEEKLY_MIN / scale) * 100}%` }} />
           <span className="absolute right-0 -translate-y-full pb-0.5 text-[11px] font-semibold text-ink-2" style={{ bottom: `${(WHO_WEEKLY_MIN / scale) * 100}%` }}>
@@ -104,7 +105,7 @@ export default function Cardio() {
           </span>
           <div className="absolute inset-0 flex items-end gap-2">
             {weeks.map((w) => (
-              <div key={w.start} className="flex h-full flex-1 flex-col justify-end" aria-label={`Week of ${label(w.start)}: ${fmtInt(w.m.total)} minutes`} role="img">
+              <div key={w.start} className="flex h-full flex-1 flex-col justify-end" aria-label={`Woche ab ${label(w.start)}: ${fmtInt(w.m.total)} Minuten`} role="img">
                 <div className="flex w-full flex-col-reverse overflow-hidden rounded-t-[6px]" style={{ height: `${(w.m.total / scale) * 100}%` }}>
                   <Stack m={w.m} scale={w.m.total || 1} vertical />
                 </div>
@@ -118,7 +119,7 @@ export default function Cardio() {
             const newMonth = i === 0 || parseDay(weeks[i - 1].start).getMonth() !== d.getMonth()
             return (
               <span key={w.start} className="flex-1 truncate">
-                {i === weeks.length - 1 ? 'Now' : newMonth ? label(w.start) : d.getDate()}
+                {i === weeks.length - 1 ? 'Jetzt' : newMonth ? label(w.start) : d.getDate()}
               </span>
             )
           })}
@@ -129,12 +130,12 @@ export default function Cardio() {
         <Toggle
           checked={!!addBurned}
           onChange={(v) => void setSetting('addBurnedCalories', v)}
-          label="Add burned calories to the food budget"
-          hint="Off by default: your activity level already counts training, so adding them again counts it twice."
+          label="Verbrannte Kalorien zum Essensbudget addieren"
+          hint="Standardmäßig aus: Dein Aktivitätslevel enthält das Training schon, sonst zählt es doppelt."
         />
       </Group>
 
-      <SectionTitle>Sessions</SectionTitle>
+      <SectionTitle>Einheiten</SectionTitle>
       {sessions && sessions.length > 0 ? (
         <Group>
           {sessions.map((s) => {
@@ -143,7 +144,7 @@ export default function Cardio() {
               <ListRow
                 key={s.id}
                 title={`${CARDIO_LABEL[s.type]} · ${s.durationMin} min`}
-                subtitle={[formatDayShort(s.date), s.distanceKm ? `${fmt1(s.distanceKm)} km` : null, pace, s.rpe ? `effort ${s.rpe}` : null].filter(Boolean).join(' · ')}
+                subtitle={[formatDayShort(s.date), s.distanceKm ? `${fmt1(s.distanceKm)} km` : null, pace, s.rpe ? `Anstrengung ${s.rpe}` : null].filter(Boolean).join(' · ')}
                 detail={s.kcal ? `${s.kcalEstimated ? '≈ ' : ''}${fmtInt(s.kcal)} kcal` : undefined}
                 onClick={() => navigate(`/train/cardio/${s.id}`)}
               />
@@ -151,8 +152,8 @@ export default function Cardio() {
           })}
         </Group>
       ) : (
-        <EmptyState icon={<IconTimer size={28} />} title="No cardio in the last 8 weeks">
-          Runs, rides and other sessions logged here count toward the weekly minutes. Sessions from a watch can arrive through the Health import.
+        <EmptyState icon={<IconTimer size={28} />} title="Kein Cardio in den letzten 8 Wochen">
+          Läufe, Radtouren und andere Einheiten zählen zu den Wochenminuten. Einheiten von der Uhr kommen über den Health-Import.
         </EmptyState>
       )}
     </Screen>

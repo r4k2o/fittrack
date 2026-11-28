@@ -18,28 +18,28 @@ function Detail({ ex, onClose }: { ex: Exercise; onClose: () => void }) {
   const saveStep = async () => {
     if (step == null || step < 0) return
     await db.exercises.update(ex.id, { loadStepKg: step === DEFAULT_LOAD_STEP[ex.equipment] ? undefined : step, updatedAt: new Date().toISOString() })
-    toast({ message: 'Load step saved' })
+    toast({ message: 'Steigerung gespeichert' })
   }
   return (
     <div className="space-y-4 pb-2">
       <p className="text-sm text-ink-2">{exerciseSubtitle(ex)}</p>
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className="rounded-2xl bg-fill p-3">
-          <div className="text-xs font-semibold text-ink-2">Movement</div>
+          <div className="text-xs font-semibold text-ink-2">Bewegung</div>
           <div className="font-semibold">{PATTERN_LABEL[ex.pattern]}</div>
         </div>
         <div className="rounded-2xl bg-fill p-3">
-          <div className="text-xs font-semibold text-ink-2">Also works</div>
+          <div className="text-xs font-semibold text-ink-2">Trainiert auch</div>
           <div className="font-semibold">{ex.secondary.map((m) => MUSCLE_LABEL[m]).join(', ') || '–'}</div>
         </div>
       </div>
-      {ex.jointStress.length > 0 && <p className="text-sm text-ink-2">Loads the {ex.jointStress.map((j) => JOINT_LABEL[j]).join(', ')}. Pain is a reason to stop.</p>}
+      {ex.jointStress.length > 0 && <p className="text-sm text-ink-2">Belastet: {ex.jointStress.map((j) => JOINT_LABEL[j]).join(', ')}. Bei Schmerzen aufhören.</p>}
       <div className="flex items-end gap-2">
-        <Field label="Smallest load step" hint="Added when every set reaches the top of its rep range.">
-          <NumberInput value={step} unit="kg" ariaLabel="Load step" onChange={setStep} />
+        <Field label="Kleinste Steigerung" hint="Kommt dazu, wenn jeder Satz das obere Ende des Wiederholungsbereichs erreicht.">
+          <NumberInput value={step} unit="kg" ariaLabel="Steigerung" onChange={setStep} />
         </Field>
         <Button variant="secondary" className="mb-6" onClick={() => void saveStep()} disabled={step === loadStep(ex)}>
-          Save
+          Speichern
         </Button>
       </div>
       {ex.instructions && ex.instructions.length > 0 && (
@@ -49,7 +49,7 @@ function Detail({ ex, onClose }: { ex: Exercise; onClose: () => void }) {
           ))}
         </ol>
       )}
-      {!ex.custom && <p className="text-xs text-ink-3">Description from free-exercise-db (public domain).</p>}
+      {!ex.custom && <p className="text-xs text-ink-3">Anleitung auf Englisch, aus free-exercise-db (gemeinfrei).</p>}
       {ex.custom === 1 && (
         <Button
           variant="danger"
@@ -57,10 +57,10 @@ function Detail({ ex, onClose }: { ex: Exercise; onClose: () => void }) {
           onClick={async () => {
             await db.exercises.delete(ex.id)
             onClose()
-            toast({ message: `${ex.name} deleted`, action: { label: 'Undo', onClick: () => void db.exercises.put(ex) } })
+            toast({ message: `${ex.name} gelöscht`, action: { label: 'Rückgängig', onClick: () => void db.exercises.put(ex) } })
           }}
         >
-          Delete exercise
+          Übung löschen
         </Button>
       )}
     </div>
@@ -82,10 +82,10 @@ function NewExercise({ onDone }: { onDone: () => void }) {
   return (
     <div className="space-y-4 pb-2">
       <Field label="Name">
-        <TextInput autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Cable Y-Raise" />
+        <TextInput autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="z. B. Y-Raises am Kabel" />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Equipment">
+        <Field label="Gerät">
           <select className={selectCls} value={equipment} onChange={(e) => setEquipment(e.target.value as Equipment)}>
             {Object.entries(EQUIPMENT_LABEL).map(([k, v]) => (
               <option key={k} value={k}>
@@ -94,7 +94,7 @@ function NewExercise({ onDone }: { onDone: () => void }) {
             ))}
           </select>
         </Field>
-        <Field label="Main muscle">
+        <Field label="Hauptmuskel">
           <select className={selectCls} value={primary} onChange={(e) => setPrimary(e.target.value as Muscle)}>
             {Object.entries(MUSCLE_LABEL).map(([k, v]) => (
               <option key={k} value={k}>
@@ -104,7 +104,7 @@ function NewExercise({ onDone }: { onDone: () => void }) {
           </select>
         </Field>
       </div>
-      <Field label="Movement">
+      <Field label="Bewegung">
         <select
           className={selectCls}
           value={pattern}
@@ -122,18 +122,18 @@ function NewExercise({ onDone }: { onDone: () => void }) {
         </select>
       </Field>
       <div className="-mx-4 rounded-2xl">
-        <Toggle label="Compound" hint="Several joints move: longer rest, lower reps." checked={compound} onChange={setCompound} />
+        <Toggle label="Grundübung" hint="Mehrere Gelenke bewegen sich: längere Pause, weniger Wdh." checked={compound} onChange={setCompound} />
       </div>
       <Segmented
         value={unit}
         options={[
-          { value: 'reps', label: 'Counted in reps' },
-          { value: 'seconds', label: 'Held in seconds' },
+          { value: 'reps', label: 'Wiederholungen' },
+          { value: 'seconds', label: 'Sekunden halten' },
         ]}
         onChange={setUnit}
       />
       <Button block size="lg" disabled={!name.trim()} onClick={() => void save()}>
-        Save exercise
+        Übung speichern
       </Button>
     </div>
   )
@@ -144,13 +144,11 @@ export default function ExerciseLibrary() {
   const [creating, setCreating] = useState(false)
   return (
     <Screen
-      tone="train"
       back
-      title="Exercises"
-      subtitle="158 common lifts and your own"
+      title="Übungen"
       actions={
         <Button size="sm" variant="ghost" onClick={() => setCreating(true)}>
-          <IconPlus size={18} /> New
+          <IconPlus size={18} /> Neu
         </Button>
       }
     >
@@ -158,10 +156,10 @@ export default function ExerciseLibrary() {
       <Sheet open={!!open} onClose={() => setOpen(null)} title={open?.name}>
         {open && <Detail ex={open} onClose={() => setOpen(null)} />}
       </Sheet>
-      <Sheet open={creating} onClose={() => setCreating(false)} title="New exercise">
+      <Sheet open={creating} onClose={() => setCreating(false)} title="Neue Übung">
         <NewExercise onDone={() => setCreating(false)} />
       </Sheet>
-      <p className="mt-4 text-center text-xs text-ink-3">Load steps by default: {Object.entries(DEFAULT_LOAD_STEP).filter(([, v]) => v > 0).map(([k, v]) => `${EQUIPMENT_LABEL[k as Equipment].toLowerCase()} ${fmt2(v)} kg`).join(', ')}.</p>
+      <p className="mt-4 text-center text-xs text-ink-3">Standard-Steigerung: {Object.entries(DEFAULT_LOAD_STEP).filter(([, v]) => v > 0).map(([k, v]) => `${EQUIPMENT_LABEL[k as Equipment].toLowerCase()} ${fmt2(v)} kg`).join(', ')}.</p>
     </Screen>
   )
 }

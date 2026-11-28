@@ -18,50 +18,50 @@ type Result = { ok: boolean; detail: string }
 const TEST_CODE = '3017624010701'
 
 const CHECKS: { key: Key; title: string; what: string }[] = [
-  { key: 'installed', title: 'Installed mode', what: 'Opened from the Home Screen icon, so data lands in the installed app and is kept.' },
-  { key: 'storage', title: 'Persistent storage', what: 'The system will not evict the data when the disk runs short.' },
-  { key: 'wakeLock', title: 'Screen stays awake', what: 'Needed during workouts (iOS 18.4 or later).' },
-  { key: 'barcode', title: 'Barcode and lookup', what: 'Decodes a test barcode offline, then asks Open Food Facts for it.' },
-  { key: 'backup', title: 'Backup saved and restored', what: 'Saves a backup through the share sheet, then reads it back without changing anything.' },
+  { key: 'installed', title: 'Als App installiert', what: 'Vom Home-Bildschirm geöffnet, damit die Daten in der installierten App landen und bleiben.' },
+  { key: 'storage', title: 'Dauerhafter Speicher', what: 'Das System löscht die Daten nicht, wenn der Platz knapp wird.' },
+  { key: 'wakeLock', title: 'Bildschirm bleibt an', what: 'Wichtig beim Training (ab iOS 18.4).' },
+  { key: 'barcode', title: 'Barcode und Suche', what: 'Liest einen Test-Barcode offline und fragt Open Food Facts danach.' },
+  { key: 'backup', title: 'Backup sichern und lesen', what: 'Sichert ein Backup über das Teilen-Menü und liest es wieder ein, ohne etwas zu ändern.' },
 ]
 
 async function checkInstalled(): Promise<Result> {
   return isStandalone()
-    ? { ok: true, detail: 'Running as an installed app.' }
-    : { ok: false, detail: 'Running in a browser tab. Install with Share → Add to Home Screen and open the app from its icon.' }
+    ? { ok: true, detail: 'Läuft als installierte App.' }
+    : { ok: false, detail: 'Läuft in einem Browser-Tab. Über Teilen → Zum Home-Bildschirm installieren und vom Symbol öffnen.' }
 }
 
 async function checkStorage(): Promise<Result> {
-  if (!navigator.storage?.persisted) return { ok: false, detail: 'This browser does not report storage persistence.' }
+  if (!navigator.storage?.persisted) return { ok: false, detail: 'Dieser Browser meldet keinen dauerhaften Speicher.' }
   let persisted = await navigator.storage.persisted()
   if (!persisted && navigator.storage.persist) persisted = await navigator.storage.persist()
   const est = await navigator.storage.estimate?.()
-  const used = est?.usage != null ? ` ${fmt1(est.usage / 1024 / 1024)} MB used.` : ''
+  const used = est?.usage != null ? ` ${fmt1(est.usage / 1024 / 1024)} MB belegt.` : ''
   return persisted
-    ? { ok: true, detail: `Granted.${used}` }
-    : { ok: false, detail: `Not granted yet. WebKit grants it more readily to apps opened from the Home Screen; open the app from its icon and run this again.${used}` }
+    ? { ok: true, detail: `Erteilt.${used}` }
+    : { ok: false, detail: `Noch nicht erteilt. WebKit gewährt ihn eher Apps vom Home-Bildschirm; die App über ihr Symbol öffnen und erneut testen.${used}` }
 }
 
 async function checkWakeLock(): Promise<Result> {
-  if (!('wakeLock' in navigator)) return { ok: false, detail: 'No wake lock in this browser. Update iOS to 18.4 or later.' }
+  if (!('wakeLock' in navigator)) return { ok: false, detail: 'Dieser Browser kann den Bildschirm nicht anlassen. iOS auf 18.4 oder neuer aktualisieren.' }
   try {
     const s = await navigator.wakeLock.request('screen')
     await s.release()
-    return { ok: true, detail: 'The screen can be kept on during a workout.' }
+    return { ok: true, detail: 'Der Bildschirm bleibt beim Training an.' }
   } catch (e) {
-    return { ok: false, detail: `The request was refused: ${(e as Error).message}` }
+    return { ok: false, detail: `Anfrage abgelehnt: ${(e as Error).message}` }
   }
 }
 
 async function checkBarcode(): Promise<Result> {
   const res = await fetch(`${import.meta.env.BASE_URL}check-barcode.png`)
-  if (!res.ok) return { ok: false, detail: 'The test image is missing from the app files.' }
+  if (!res.ok) return { ok: false, detail: 'Das Testbild fehlt in den App-Dateien.' }
   const found = await detectInFile(await res.blob()).catch(() => null)
-  if (!found || found.code !== TEST_CODE) return { ok: false, detail: 'The decoder did not read the test barcode.' }
+  if (!found || found.code !== TEST_CODE) return { ok: false, detail: 'Der Test-Barcode wurde nicht erkannt.' }
   const lookup = await fetchProduct(found.code)
-  if (lookup.status === 'found') return { ok: true, detail: `Decoded ${found.code}; Open Food Facts answered with "${lookup.food.name}".` }
-  if (lookup.status === 'error') return { ok: false, detail: `Decoded ${found.code}, but the lookup failed: ${lookup.message}` }
-  return { ok: false, detail: `Decoded ${found.code}, but Open Food Facts did not return the product.` }
+  if (lookup.status === 'found') return { ok: true, detail: `${found.code} erkannt; Open Food Facts antwortet mit „${lookup.food.name}“.` }
+  if (lookup.status === 'error') return { ok: false, detail: `${found.code} erkannt, aber die Suche schlug fehl: ${lookup.message}` }
+  return { ok: false, detail: `${found.code} erkannt, aber Open Food Facts lieferte kein Produkt.` }
 }
 
 export default function DeviceCheck() {
@@ -125,22 +125,22 @@ export default function DeviceCheck() {
     try {
       const r = await readBackup(file)
       if (!r.ok) {
-        await record('backup', { ok: false, detail: r.errors[0] ?? 'The file could not be read.' })
+        await record('backup', { ok: false, detail: r.errors[0] ?? 'Die Datei ließ sich nicht lesen.' })
         return
       }
       const plan = await previewRestore(r.content, 'merge')
       const rows = plan.reduce((s, p) => s + p.inBackup, 0)
-      await record('backup', { ok: true, detail: `${file.name} read back: ${fmtInt(rows)} rows, all valid. Nothing was changed.` })
+      await record('backup', { ok: true, detail: `${file.name} gelesen: ${fmtInt(rows)} Zeilen, alle gültig. Nichts wurde geändert.` })
     } finally {
       setRunning(null)
     }
   }
 
   return (
-    <Screen back title="Device check">
-      <Notice className="mb-3">Run this before entering real data and after each iOS update. Results are kept on this phone only.</Notice>
+    <Screen back title="Gerätetest">
+      <Notice className="mb-3">Vor echten Daten und nach jedem iOS-Update ausführen. Die Ergebnisse bleiben auf diesem iPhone.</Notice>
       <Button block size="lg" disabled={running != null} onClick={() => void runAll()}>
-        {running === 'all' ? <Spinner /> : null} Run checks 1–4
+        {running === 'all' ? <Spinner /> : null} Tests 1–4 starten
       </Button>
 
       <div className="mt-4 space-y-3">
@@ -165,15 +165,15 @@ export default function DeviceCheck() {
               <div className="mt-3 flex gap-2 pl-12">
                 {c.key !== 'backup' ? (
                   <Button size="sm" variant="secondary" disabled={running != null} onClick={() => void run(c.key)}>
-                    {running === c.key ? <Spinner className="size-4" /> : r ? 'Run again' : 'Run'}
+                    {running === c.key ? <Spinner className="size-4" /> : r ? 'Nochmal' : 'Starten'}
                   </Button>
                 ) : (
                   <>
                     <Button size="sm" variant="secondary" disabled={running != null} onClick={() => void saveBackup()}>
-                      1. Save a backup
+                      1. Backup sichern
                     </Button>
                     <Button size="sm" variant={backupShared ? 'primary' : 'secondary'} disabled={running != null} onClick={() => fileRef.current?.click()}>
-                      2. Pick it again
+                      2. Wieder auswählen
                     </Button>
                   </>
                 )}
@@ -183,7 +183,7 @@ export default function DeviceCheck() {
         })}
       </div>
       <input ref={fileRef} type="file" accept=".zip,application/zip" className="hidden" onChange={(e) => void readBack(e.target.files?.[0])} />
-      {saved?.ranAt && <p className="mt-4 text-center text-xs text-ink-3">Last run {new Date(saved.ranAt).toLocaleString()}</p>}
+      {saved?.ranAt && <p className="mt-4 text-center text-xs text-ink-3">Zuletzt {new Date(saved.ranAt).toLocaleString('de-DE')}</p>}
     </Screen>
   )
 }

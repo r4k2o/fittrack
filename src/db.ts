@@ -156,6 +156,8 @@ export interface MealTemplate extends Row {
 
 export interface Exercise extends Row {
   name: string
+  /** The English name of a library exercise, kept so search finds either. */
+  nameEn?: string
   primary: Muscle[]
   secondary: Muscle[]
   equipment: Equipment

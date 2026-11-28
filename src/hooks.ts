@@ -38,8 +38,9 @@ export function useNow(ms = 1000): number {
   return now
 }
 
+/** The target in force on a day; days before the first target show the first one. */
 export function useTarget(date: string) {
-  return useLiveQuery(() => targetFor(date), [date])
+  return useLiveQuery(async () => (await targetFor(date)) ?? (await db.nutritionTargets.orderBy('effectiveFrom').first()), [date])
 }
 
 /**

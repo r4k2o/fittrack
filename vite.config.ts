@@ -17,7 +17,8 @@ export default defineConfig({
       manifest: {
         name: 'Fittrack',
         short_name: 'Fittrack',
-        description: 'A private logbook for food, training and body weight. Your data stays on this phone.',
+        description: 'Ein privates Logbuch für Essen, Training und Gewicht. Deine Daten bleiben auf diesem iPhone.',
+        lang: 'de',
         display: 'standalone', // standalone keeps the Home Screen exemption from Safari's 7-day data removal
         orientation: 'portrait',
         start_url: '.',

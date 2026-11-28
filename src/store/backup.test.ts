@@ -123,6 +123,6 @@ describe('backup', () => {
     const newer = zipSync({ 'manifest.json': strToU8(JSON.stringify({ ...manifest, schemaVersion: 99 })) })
     const n = decodeBackup(newer, 1)
     expect(n.ok).toBe(false)
-    if (!n.ok) expect(n.errors[0]).toContain('newer version')
+    if (!n.ok) expect(n.errors[0]).toContain('neueren App-Version')
   })
 })

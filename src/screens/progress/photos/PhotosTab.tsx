@@ -13,22 +13,22 @@ import { IconCamera, IconLock, IconPlus, IconStar } from '../../../ui/icons'
 import { Button, Card, cx } from '../../../ui/kit'
 
 const GUIDE: [string, string][] = [
-  ['Time', 'Morning, after the bathroom, before eating'],
-  ['Light', 'The same spot, facing a window or a fixed lamp; never a ceiling light alone'],
-  ['Distance and height', 'Phone on a shelf or tripod about 2.5 m away at chest height, in portrait'],
-  ['Poses', 'Front, side and back, relaxed, arms slightly away from the body'],
-  ['Clothing', 'The same each time'],
-  ['Trigger', 'The 10-second timer with a countdown'],
+  ['Zeit', 'Morgens nach der Toilette, vor dem Frühstück'],
+  ['Licht', 'Gleicher Ort, Blick zum Fenster oder zu einer festen Lampe; nie nur Deckenlicht'],
+  ['Abstand', 'iPhone im Regal oder auf einem Stativ, etwa 2,5 m entfernt, auf Brusthöhe, hochkant'],
+  ['Posen', 'Vorne, Seite und Hinten, locker, Arme leicht vom Körper weg'],
+  ['Kleidung', 'Jedes Mal dieselbe'],
+  ['Auslöser', 'Der 10-Sekunden-Timer mit Countdown'],
 ]
 
 export function CaptureGuide({ onDone }: { onDone?: () => void }) {
   return (
     <Card className="!p-4">
-      <p className="text-[16px] font-semibold">Take them the same way every time</p>
-      <p className="mt-1 text-[14px] text-ink-2">Comparison only works when only you change between photos.</p>
+      <p className="text-[16px] font-semibold">Jedes Mal gleich fotografieren</p>
+      <p className="mt-1 text-[14px] text-ink-2">Vergleichen klappt nur, wenn sich zwischen den Fotos nur du veränderst.</p>
       <dl className="mt-3 divide-y divide-line">
         {GUIDE.map(([k, v]) => (
-          <div key={k} className="grid grid-cols-[7.5rem_1fr] gap-2 py-2 text-[14px]">
+          <div key={k} className="grid grid-cols-[5.5rem_1fr] gap-2 py-2 text-[14px]">
             <dt className="font-semibold">{k}</dt>
             <dd className="text-ink-2">{v}</dd>
           </div>
@@ -36,7 +36,7 @@ export function CaptureGuide({ onDone }: { onDone?: () => void }) {
       </dl>
       {onDone && (
         <Button size="sm" className="mt-2" onClick={onDone}>
-          Got it
+          Verstanden
         </Button>
       )}
     </Card>
@@ -71,16 +71,16 @@ export default function PhotosTab() {
       {guideSeen === false && <CaptureGuide onDone={() => void setSetting('photoGuideSeen', true)} />}
       <div className={cx('flex gap-2', guideSeen === false && 'mt-3')}>
         <Button size="lg" className="flex-1" onClick={() => navigate('/progress/photos/new?pose=front')}>
-          <IconCamera size={20} /> Take photos
+          <IconCamera size={20} /> Fotos machen
         </Button>
         <Button size="lg" variant="secondary" disabled={(photos?.length ?? 0) < 2} onClick={() => navigate('/progress/photos/compare')}>
-          Compare
+          Vergleichen
         </Button>
       </div>
 
       <div className="card mt-3 p-3">
-        <div className="grid grid-cols-[4.5rem_1fr_1fr_1fr] gap-2 px-1 pb-2 text-center text-[12px] font-bold uppercase tracking-wider text-ink-3">
-          <span className="text-left">Week</span>
+        <div className="grid grid-cols-[4.5rem_1fr_1fr_1fr] gap-2 px-1 pb-2 text-center text-[12px] font-semibold text-ink-3">
+          <span className="text-left">Woche</span>
           {POSES.map((p) => (
             <span key={p}>{POSE_LABEL[p]}</span>
           ))}
@@ -91,7 +91,7 @@ export default function PhotosTab() {
             return (
               <div key={w} className="grid grid-cols-[4.5rem_1fr_1fr_1fr] items-center gap-2">
                 <div className="text-[12px] leading-tight">
-                  <p className="font-bold">{w === thisWeek ? 'This week' : w.replace(/^\d{4}-W/, 'Week ')}</p>
+                  <p className="font-bold">{w === thisWeek ? 'Diese Woche' : w.replace(/^\d{4}-W/, 'KW ')}</p>
                   {any?.weightKg != null && <p className="tabular-nums text-ink-2">{fmt1(any.weightKg)} kg</p>}
                 </div>
                 {POSES.map((p) => {
@@ -102,7 +102,7 @@ export default function PhotosTab() {
                     <button
                       key={p}
                       type="button"
-                      aria-label={`Take the ${POSE_LABEL[p].toLowerCase()} photo`}
+                      aria-label={`Foto ${POSE_LABEL[p]} machen`}
                       onClick={() => navigate(`/progress/photos/new?pose=${p}`)}
                       className="press flex aspect-[3/4] items-center justify-center rounded-[14px] border-2 border-dashed border-line text-ink-3"
                     >
@@ -119,7 +119,7 @@ export default function PhotosTab() {
       </div>
       <p className="mt-3 flex items-start gap-2 px-1 text-[13px] text-ink-2">
         <IconLock size={15} className="mt-0.5 shrink-0" />
-        Photos stay on this phone and are never sent anywhere. They go into a backup only when its "include photos" switch is on.
+        Fotos bleiben auf diesem iPhone und werden nirgendwohin gesendet. Ins Backup kommen sie nur, wenn dort „Fotos einschließen“ an ist.
       </p>
       {guideSeen && (
         <div className="mt-4">

@@ -9,22 +9,22 @@ import { sumNutrients } from '../../lib/macros'
 import { copyEntries, deleteEntries, foodFromEntry, MEAL_LABEL, MEALS, restoreEntries } from '../../store/diary'
 import { deleteMealTemplate, recipeFood, saveMealTemplate } from '../../store/recipes'
 import { IconCalendar, IconCopy, IconDots, IconPlus, IconStar, IconTrash } from '../../ui/icons'
-import { Button, cx, Group, IconButton, ListRow, MacroBar, Screen, Sheet, SwipeRow, TextInput } from '../../ui/kit'
+import { Button, cx, Group, IconButton, ListRow, MacroBar, Screen, Sheet, SwipeRow, TextInput, TodayButton } from '../../ui/kit'
 import { haptic } from '../../ui/motion'
 import { useToast } from '../../ui/toast'
-import { MealIcon, WeekStrip } from '../shared/WeekStrip'
+import { WeekStrip } from '../shared/WeekStrip'
 import { PortionSheet } from './PortionSheet'
 
-/** "today", "tomorrow" or a short date, for use inside a sentence. */
+/** "heute", "morgen" or a short date, for use inside a sentence. */
 function dayInSentence(day: string, today: string): string {
   const r = relativeDay(day, today)
-  return ['Today', 'Yesterday', 'Tomorrow'].includes(r) ? r.toLowerCase() : r
+  return ['Heute', 'Gestern', 'Morgen'].includes(r) ? r.toLowerCase() : r
 }
 
 function entryAmount(e: DiaryEntry): string {
-  const amount = e.servingName && e.servingCount ? `${fmt1(e.servingCount)} × ${e.servingName}` : e.grams ? `${fmt1(e.grams)} g` : e.source === 'quick' ? 'Quick add' : ''
+  const amount = e.servingName && e.servingCount ? `${fmt1(e.servingCount)} × ${e.servingName}` : e.grams ? `${fmt1(e.grams)} g` : e.source === 'quick' ? 'Schnell erfasst' : ''
   // Entries from a meal photo stay marked, since their grams started as a model's guess.
-  return e.source === 'photo' ? `${amount} · from photo` : amount
+  return e.source === 'photo' ? `${amount} · vom Foto` : amount
 }
 
 export default function Diary() {
@@ -53,7 +53,10 @@ export default function Diary() {
   const totals = sumNutrients(sorted.map((e) => e.macros))
   const kcalTarget = target?.kcal ?? 0
   const left = kcalTarget - totals.kcal
-  const addTo = (meal: Meal) => navigate(`/food/add?meal=${meal}${date !== today ? `&d=${date}` : ''}`)
+  const addTo = (meal: Meal) => {
+    haptic()
+    navigate(`/food/add?meal=${meal}${date !== today ? `&d=${date}` : ''}`)
+  }
   const nextDay = date === today ? addDays(today, 1) : today
 
   const openEntry = async (e: DiaryEntry) => {
@@ -69,7 +72,7 @@ export default function Diary() {
     if (!rows.length) return
     const copies = await copyEntries(rows, to)
     haptic()
-    toast({ message: `${label} copied to ${dayInSentence(to, today)}`, action: { label: 'Undo', onClick: () => void deleteEntries(copies.map((c) => c.id)) } })
+    toast({ message: `${label} auf ${dayInSentence(to, today)} kopiert`, action: { label: 'Rückgängig', onClick: () => void deleteEntries(copies.map((c) => c.id)) } })
   }
 
   const saveMeal = async () => {
@@ -78,105 +81,98 @@ export default function Diary() {
     const t = await saveMealTemplate(saving.name, rows)
     setSaving(null)
     haptic('success')
-    toast({ message: `Saved "${t.name}". Find it under Add food.`, action: { label: 'Undo', onClick: () => void deleteMealTemplate(t.id) } })
+    toast({ message: `„${t.name}“ gespeichert`, action: { label: 'Rückgängig', onClick: () => void deleteMealTemplate(t.id) } })
   }
 
   const remove = async (ids: string[], label: string) => {
     const rows = await deleteEntries(ids)
     haptic()
-    toast({ message: `${label} deleted`, action: { label: 'Undo', onClick: () => restoreEntries(rows) } })
+    toast({ message: `${label} gelöscht`, action: { label: 'Rückgängig', onClick: () => restoreEntries(rows) } })
   }
 
   return (
     <Screen
-      tone="food"
       eyebrow={date === today ? formatDayLong(date) : relativeDay(date, today)}
-      title="Food"
+      title="Essen"
       actions={
-        <IconButton label="Pick a day" variant="glass" onClick={() => setPickDay(true)}>
-          <IconCalendar size={20} />
-        </IconButton>
+        <>
+          {date !== today && <TodayButton onClick={() => setDate(today)} />}
+          <IconButton label="Tag wählen" variant="glass" onClick={() => setPickDay(true)}>
+            <IconCalendar size={20} />
+          </IconButton>
+        </>
       }
     >
       <WeekStrip selected={date} today={today} onSelect={setDate} onWeek={(monday) => setDate(monday)} marked={logged} />
 
-      <div className="card mt-3 p-5">
+      <div className="card mt-3 p-4">
         <div className="flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[13px] font-semibold text-ink-2">Eaten</p>
-            <p className="text-[34px] font-bold leading-none tracking-[-0.035em]">
-              {fmtInt(totals.kcal)}
-              <span className="ml-1 text-[15px] font-semibold tracking-normal text-ink-2">/ {fmtInt(kcalTarget)} kcal</span>
-            </p>
-          </div>
-          <p className={cx('rounded-full px-3 py-1 text-[13px] font-semibold', left < 0 ? 'bg-warn-soft text-warn-ink' : 'bg-brand-soft text-brand-ink')}>
-            {left < 0 ? `${fmtInt(-left)} over` : `${fmtInt(left)} left`}
+          <p className="text-[30px] font-bold leading-none tracking-[-0.03em] tabular-nums">
+            {fmtInt(totals.kcal)}
+            <span className="ml-1.5 text-[15px] font-medium tracking-normal text-ink-2">von {fmtInt(kcalTarget)} kcal</span>
           </p>
+          <p className={cx('text-[14px] font-semibold tabular-nums', left < 0 ? 'text-warn-ink' : 'text-ink-2')}>{left < 0 ? `${fmtInt(-left)} drüber` : `${fmtInt(left)} übrig`}</p>
         </div>
-        <div className="mt-3 h-2.5 overflow-hidden rounded-full" style={{ background: left < 0 ? 'var(--warn-soft)' : 'var(--brand-track)' }}>
+        <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ background: left < 0 ? 'var(--warn-soft)' : 'var(--brand-track)' }}>
           <div
-            className="h-full rounded-full transition-[width] duration-700"
-            style={{ width: `${kcalTarget ? Math.min(100, (totals.kcal / kcalTarget) * 100) : 0}%`, background: left < 0 ? 'var(--warn)' : 'linear-gradient(90deg, var(--btn-from), var(--brand))' }}
+            className="h-full rounded-full transition-[width] duration-700 ease-[var(--ease-out)]"
+            style={{ width: `${kcalTarget ? Math.min(100, (totals.kcal / kcalTarget) * 100) : 0}%`, background: left < 0 ? 'var(--warn)' : 'var(--brand)' }}
           />
         </div>
         <div className="mt-4 grid grid-cols-3 gap-3">
-          <MacroBar compact label="Protein" value={totals.protein} target={target?.proteinG ?? 0} color="var(--protein)" track="var(--protein-track)" />
-          <MacroBar compact label="Carbs" value={totals.carbs} target={target?.carbsG ?? 0} color="var(--carbs)" track="var(--carbs-track)" />
-          <MacroBar compact label="Fat" value={totals.fat} target={target?.fatG ?? 0} color="var(--fat)" track="var(--fat-track)" />
+          <MacroBar compact label="Eiweiß" value={totals.protein} target={target?.proteinG ?? 0} color="var(--protein)" track="var(--protein-track)" />
+          <MacroBar compact label="Kohlenh." value={totals.carbs} target={target?.carbsG ?? 0} color="var(--carbs)" track="var(--carbs-track)" />
+          <MacroBar compact label="Fett" value={totals.fat} target={target?.fatG ?? 0} color="var(--fat)" track="var(--fat-track)" />
         </div>
       </div>
 
       {MEALS.map((meal, i) => {
         const rows = byMeal(meal)
-        const m = sumNutrients(rows.map((e) => e.macros))
+        const kcal = rows.reduce((n, e) => n + e.macros.kcal, 0)
         return (
-          <section key={meal} className="card animate-rise mt-3 overflow-hidden" style={{ '--i': i } as CSSProperties}>
-            <div className="flex items-center gap-3 px-4 pb-2 pt-4">
-              <MealIcon meal={meal} size={36} />
-              <div className="min-w-0 flex-1">
-                <h2 className="text-[17px] font-bold">{MEAL_LABEL[meal]}</h2>
-                <p className="text-[13px] text-ink-2">
-                  {rows.length ? `${fmtInt(m.kcal)} kcal · P ${fmtInt(m.protein)} · C ${fmtInt(m.carbs)} · F ${fmtInt(m.fat)}` : 'Nothing logged yet'}
-                </p>
-              </div>
+          <section key={meal} className="animate-rise mt-5" style={{ '--i': i } as CSSProperties}>
+            <div className="flex min-h-11 items-center gap-1 pl-1">
+              <h2 className="min-w-0 flex-1 text-[18px] font-semibold tracking-[-0.01em]">
+                {MEAL_LABEL[meal]}
+                {rows.length > 0 && <span className="ml-2 text-[15px] font-medium tabular-nums text-ink-3">{fmtInt(kcal)} kcal</span>}
+              </h2>
               {rows.length > 0 && (
-                <IconButton label={`${MEAL_LABEL[meal]} options`} className="size-9 text-ink-2" onClick={() => setMealMenu(meal)}>
-                  <IconDots size={20} className="rotate-90" />
+                <IconButton label={`${MEAL_LABEL[meal]}: Optionen`} className="size-10 text-ink-2" onClick={() => setMealMenu(meal)}>
+                  <IconDots size={20} />
                 </IconButton>
               )}
+              <IconButton label={`${MEAL_LABEL[meal]}: hinzufügen`} variant="fill" className="size-10" onClick={() => addTo(meal)}>
+                <IconPlus size={19} strokeWidth={2.4} />
+              </IconButton>
             </div>
             {rows.length > 0 && (
-              <div className="divide-y divide-line border-t border-line">
+              <div className="card mt-1.5 divide-y divide-line overflow-hidden">
                 {rows.map((e) => (
                   <SwipeRow
                     key={e.id}
                     onTap={() => void openEntry(e)}
                     actions={[
-                      { label: dayInSentence(nextDay, today) === 'tomorrow' ? 'Tomorrow' : 'Today', icon: <IconCopy size={18} />, tone: 'brand', onClick: () => void copy([e], nextDay, e.name) },
-                      { label: 'Delete', icon: <IconTrash size={18} />, tone: 'danger', onClick: () => void remove([e.id], e.name) },
+                      { label: dayInSentence(nextDay, today) === 'morgen' ? 'Morgen' : 'Heute', icon: <IconCopy size={18} />, tone: 'brand', onClick: () => void copy([e], nextDay, e.name) },
+                      { label: 'Löschen', icon: <IconTrash size={18} />, tone: 'danger', onClick: () => void remove([e.id], e.name) },
                     ]}
                   >
-                    <div className="flex min-h-[58px] cursor-pointer items-center gap-3 px-4 py-2.5">
+                    <div className="flex min-h-[56px] cursor-pointer items-center gap-3 px-4 py-2.5">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[16px] font-medium">{e.name}</p>
                         <p className="truncate text-[13px] text-ink-2">{[e.brand, entryAmount(e)].filter(Boolean).join(' · ')}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[16px] font-semibold">{fmtInt(e.macros.kcal)}</p>
-                        <p className="text-[12px] text-ink-3">kcal</p>
-                      </div>
+                      <p className="shrink-0 text-[15px] font-semibold tabular-nums">
+                        {fmtInt(e.macros.kcal)}
+                        <span className="ml-0.5 text-[12px] font-medium text-ink-3"> kcal</span>
+                      </p>
                     </div>
                   </SwipeRow>
                 ))}
               </div>
             )}
-            <button type="button" onClick={() => addTo(meal)} className="flex min-h-12 w-full items-center gap-2 border-t border-line px-4 text-[15px] font-semibold text-brand-ink active:bg-fill">
-              <IconPlus size={18} strokeWidth={2.6} /> Add food
-            </button>
           </section>
         )
       })}
-      <p className="mt-4 px-2 text-center text-[13px] text-ink-3">Tap an entry to change it; swipe left to copy or delete.</p>
 
       <PortionSheet
         open={!!editing}
@@ -196,7 +192,7 @@ export default function Diary() {
                 <ListRow
                   icon={<IconCopy size={18} />}
                   iconTone="body"
-                  title="Copy to today"
+                  title="Auf heute kopieren"
                   onClick={() => {
                     void copy(byMeal(mealMenu), today, MEAL_LABEL[mealMenu])
                     setMealMenu(null)
@@ -207,7 +203,7 @@ export default function Diary() {
                 <ListRow
                   icon={<IconCopy size={18} />}
                   iconTone="body"
-                  title={`Copy to ${dayInSentence(addDays(date, 1), today)}`}
+                  title={`Auf ${dayInSentence(addDays(date, 1), today)} kopieren`}
                   onClick={() => {
                     void copy(byMeal(mealMenu), addDays(date, 1), MEAL_LABEL[mealMenu])
                     setMealMenu(null)
@@ -217,8 +213,8 @@ export default function Diary() {
               <ListRow
                 icon={<IconStar size={18} />}
                 iconTone="amber"
-                title="Save as a meal"
-                subtitle="Log it again in one tap"
+                title="Als Mahlzeit speichern"
+                subtitle="Später mit einem Tippen eintragen"
                 onClick={() => {
                   setSaving({ meal: mealMenu, name: '' })
                   setMealMenu(null)
@@ -227,7 +223,7 @@ export default function Diary() {
               <ListRow
                 icon={<IconTrash size={18} />}
                 iconTone="danger"
-                title="Delete meal"
+                title="Mahlzeit löschen"
                 destructive
                 onClick={() => {
                   void remove(
@@ -240,7 +236,7 @@ export default function Diary() {
             </Group>
             <div className="flex items-end gap-2">
               <label className="flex-1">
-                <span className="mb-1.5 block px-1 text-[13px] font-semibold text-ink-2">Copy to another day</span>
+                <span className="mb-1.5 block px-1 text-[13px] font-semibold text-ink-2">Auf anderen Tag kopieren</span>
                 <TextInput type="date" value={copyDate} onChange={(e) => setCopyDate(e.target.value)} />
               </label>
               <Button
@@ -252,7 +248,7 @@ export default function Diary() {
                   setMealMenu(null)
                 }}
               >
-                Copy
+                Kopieren
               </Button>
             </div>
           </div>
@@ -262,22 +258,22 @@ export default function Diary() {
       <Sheet
         open={!!saving}
         onClose={() => setSaving(null)}
-        title="Save as a meal"
+        title="Als Mahlzeit speichern"
         footer={
           <Button block size="lg" disabled={!saving?.name.trim()} onClick={() => void saveMeal()}>
-            Save
+            Speichern
           </Button>
         }
       >
         {saving && (
           <div className="space-y-3 pb-1">
-            <TextInput autoFocus placeholder="e.g. Usual breakfast" value={saving.name} onChange={(e) => setSaving({ ...saving, name: e.target.value })} />
+            <TextInput autoFocus placeholder="z. B. Frühstück wie immer" value={saving.name} onChange={(e) => setSaving({ ...saving, name: e.target.value })} />
             <p className="px-1 text-[14px] text-ink-2">{byMeal(saving.meal).map((e) => e.name).join(', ')}</p>
           </div>
         )}
       </Sheet>
 
-      <Sheet open={pickDay} onClose={() => setPickDay(false)} title="Go to a day">
+      <Sheet open={pickDay} onClose={() => setPickDay(false)} title="Tag wählen">
         <div className="space-y-3 pb-1">
           <TextInput
             type="date"
@@ -286,16 +282,18 @@ export default function Diary() {
               if (e.target.value) setDate(e.target.value)
             }}
           />
-          <Button
-            block
-            variant="secondary"
-            onClick={() => {
-              setDate(today)
-              setPickDay(false)
-            }}
-          >
-            Back to today
-          </Button>
+          {date !== today && (
+            <Button
+              block
+              variant="secondary"
+              onClick={() => {
+                setDate(today)
+                setPickDay(false)
+              }}
+            >
+              Zurück zu heute
+            </Button>
+          )}
         </div>
       </Sheet>
     </Screen>

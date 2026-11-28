@@ -35,31 +35,31 @@ export default function Targets() {
 
   if (missing)
     return (
-      <Screen back title="Targets">
-        <EmptyState title="No targets yet">Complete your profile first.</EmptyState>
+      <Screen back title="Ziele">
+        <EmptyState title="Noch keine Ziele">Füll zuerst dein Profil aus.</EmptyState>
       </Screen>
     )
   if (!inputs || !about || !saved) return null
 
   const save = async () => {
     await saveProfileAndTargets({ ...about, weightKg: inputs.weightKg }, inputs)
-    toast({ message: 'Targets saved from today' })
+    toast({ message: 'Ziele ab heute gespeichert' })
     navigate(-1)
   }
 
   return (
-    <Screen tone="brand" back title="Targets" subtitle={`In effect since ${formatDate(saved.from)}`}>
+    <Screen back title="Kalorien und Makros" subtitle={`Gültig seit ${formatDate(saved.from)}`}>
       <div className="space-y-4 pt-2">
         {Math.abs(saved.weightKg - inputs.weightKg) >= 0.1 && (
           <Notice>
-            Your weight changed since these targets were set ({fmt1(saved.weightKg)} → {fmt1(inputs.weightKg)} kg). The numbers below use the new weight; save to apply them.
+            Dein Gewicht hat sich seit diesen Zielen geändert ({fmt1(saved.weightKg)} → {fmt1(inputs.weightKg)} kg). Die Zahlen unten nutzen das neue Gewicht; speichern übernimmt sie.
           </Notice>
         )}
         <TargetsEditor inputs={inputs} onChange={setInputs} defaultOpen />
         <Button block size="lg" onClick={() => void save()}>
-          Save targets
+          Ziele speichern
         </Button>
-        <p className="pb-4 text-center text-sm text-ink-2">Saving starts a new target from today. Charts compare each day with the target that was valid that day.</p>
+        <p className="pb-4 text-center text-sm text-ink-2">Speichern gilt ab heute. Diagramme vergleichen jeden Tag mit dem Ziel, das an dem Tag galt.</p>
       </div>
     </Screen>
   )

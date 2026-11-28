@@ -2,7 +2,8 @@
 
 import Dexie from 'dexie'
 import { db, newRow, type Exercise, type NutritionTarget } from '../db'
-import { weekMinutes } from '../lib/cardio'
+import { CARDIO_LABEL, weekMinutes } from '../lib/cardio'
+import type { DayLoad } from '../lib/consistency'
 import { addDays, localDay, weekStart } from '../lib/dates'
 import { adherenceByWeek, targetLookup, weeklyBestE1rm, weeklySets, type DayIntake } from '../lib/progress'
 import { adaptiveProposal, weeklyReview, type AdaptiveProposal, type WeeklyReview } from '../lib/review'
@@ -20,6 +21,42 @@ export async function exerciseMap(): Promise<Map<string, Exercise>> {
 export async function setsByWeek(from: string, to: string): Promise<Map<string, Volume>> {
   const sets = await db.setLogs.filter((s) => s.date >= from && s.date <= to).toArray()
   return weeklySets(sets, await exerciseMap())
+}
+
+/** Finished workouts, their hard sets and cardio minutes per day, for the consistency calendar. */
+export async function dayLoads(from: string, to: string): Promise<Map<string, DayLoad>> {
+  const out = new Map<string, DayLoad>()
+  const get = (date: string) => {
+    let d = out.get(date)
+    if (!d) {
+      d = { date, sessions: 0, sets: 0, cardioMin: 0, names: [] }
+      out.set(date, d)
+    }
+    return d
+  }
+  const sessions = await db.sessions.where('date').between(from, to, true, true).filter((s) => !!s.endedAt).toArray()
+  for (const s of sessions) {
+    const d = get(s.date)
+    d.sessions++
+    d.names.push(s.name)
+  }
+  if (sessions.length) {
+    const ids = sessions.map((s) => s.id)
+    const done = new Map(sessions.map((s) => [s.id, s.date]))
+    await db.setLogs
+      .where('sessionId')
+      .anyOf(ids)
+      .each((x) => {
+        const date = done.get(x.sessionId)
+        if (date && x.kind === 'work') get(date).sets++
+      })
+  }
+  for (const c of await cardioBetween(from, to)) {
+    const d = get(c.date)
+    d.cardioMin += c.durationMin
+    d.names.push(CARDIO_LABEL[c.type] ?? 'Cardio')
+  }
+  return out
 }
 
 /** Lifts with the most sessions that give an estimated 1RM, most frequent first. */

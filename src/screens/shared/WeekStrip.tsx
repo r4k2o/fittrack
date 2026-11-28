@@ -1,10 +1,10 @@
 import type { Meal } from '../../db'
 import { addDays, parseDay, weekStart } from '../../lib/dates'
+import { WEEKDAY_LONG } from '../../lib/volume'
 import { IconApple, IconChevronLeft, IconChevronRight, IconMoon, IconSun, IconSunrise } from '../../ui/icons'
 import { cx, IconButton, IconTile, type IconTone } from '../../ui/kit'
 
-const LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-const NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const LETTERS = ['M', 'D', 'M', 'D', 'F', 'S', 'S']
 
 /** A week of days: tap one to select it; arrows move a week. Dots mark days with data. */
 export function WeekStrip({
@@ -25,7 +25,7 @@ export function WeekStrip({
   return (
     <div className="card flex items-center gap-0.5 !rounded-[24px] p-1.5">
       {onWeek && (
-        <IconButton label="Previous week" className="size-9 text-ink-2" onClick={() => onWeek(addDays(monday, -7))}>
+        <IconButton label="Vorherige Woche" className="size-9 text-ink-2" onClick={() => onWeek(addDays(monday, -7))}>
           <IconChevronLeft size={18} />
         </IconButton>
       )}
@@ -42,7 +42,7 @@ export function WeekStrip({
           )
           const cls = cx('flex flex-col items-center rounded-[18px] py-1.5 transition-colors duration-200', isSel ? 'bg-ink' : onSelect && 'active:bg-fill')
           return onSelect ? (
-            <button key={d} type="button" aria-label={`${NAMES[i]} ${parseDay(d).getDate()}`} aria-pressed={isSel} className={cls} onClick={() => onSelect(d)}>
+            <button key={d} type="button" aria-label={`${WEEKDAY_LONG[i]}, ${parseDay(d).getDate()}.`} aria-pressed={isSel} className={cls} onClick={() => onSelect(d)}>
               {inner}
             </button>
           ) : (
@@ -53,7 +53,7 @@ export function WeekStrip({
         })}
       </div>
       {onWeek && (
-        <IconButton label="Next week" className="size-9 text-ink-2" onClick={() => onWeek(addDays(monday, 7))}>
+        <IconButton label="Nächste Woche" className="size-9 text-ink-2" onClick={() => onWeek(addDays(monday, 7))}>
           <IconChevronRight size={18} />
         </IconButton>
       )}

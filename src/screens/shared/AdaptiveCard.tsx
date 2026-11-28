@@ -26,19 +26,19 @@ export function AdaptiveCard({ showProgress = false }: { showProgress?: boolean 
   if (proposal && (!hidden || showProgress)) {
     const r = proposal.result
     return (
-      <Card tone="brand" className="!p-4">
+      <Card className="!p-4">
         <div className="flex items-start gap-3">
           <IconTile tone="brand" size={36}>
             <IconTarget size={20} />
           </IconTile>
           <div className="min-w-0 flex-1">
-            <p className="text-[16px] font-semibold">Targets from your own data</p>
+            <p className="text-[16px] font-semibold">Ziele aus deinen Daten</p>
             <p className="mt-1 text-[14px] text-ink-2">
-              Over the last 14 days you used about <b className="text-ink">{fmtInt(proposal.measuredKcal)} kcal</b> a day, {Math.abs(proposal.diffPct).toFixed(0)}%{' '}
-              {proposal.diffPct > 0 ? 'more' : 'less'} than the {fmtInt(proposal.currentKcal)} kcal your targets assume. New target: <b className="text-ink">{fmtInt(r.kcal)} kcal</b>,{' '}
-              {r.proteinG} g protein, {r.carbsG} g carbs, {r.fatG} g fat.
+              In den letzten 14 Tagen hast du etwa <b className="text-ink">{fmtInt(proposal.measuredKcal)} kcal</b> pro Tag verbraucht, {Math.abs(proposal.diffPct).toFixed(0)} %{' '}
+              {proposal.diffPct > 0 ? 'mehr' : 'weniger'} als die {fmtInt(proposal.currentKcal)} kcal deiner Ziele. Neues Ziel: <b className="text-ink">{fmtInt(r.kcal)} kcal</b>,{' '}
+              {r.proteinG} g Eiweiß, {r.carbsG} g Kohlenhydrate, {r.fatG} g Fett.
             </p>
-            <p className="mt-1 text-[12px] text-ink-3">7,700 kcal per kg is a convention, so this steers rather than measures.</p>
+            <p className="mt-1 text-[12px] text-ink-3">7.700 kcal pro kg sind eine Faustregel; das hier lenkt, es misst nicht.</p>
           </div>
         </div>
         <div className="mt-3 flex gap-2">
@@ -47,14 +47,14 @@ export function AdaptiveCard({ showProgress = false }: { showProgress?: boolean 
             onClick={async () => {
               await acceptProposal(proposal, today)
               haptic('success')
-              toast({ message: `Target updated to ${fmtInt(r.kcal)} kcal from today` })
+              toast({ message: `Ab heute ${fmtInt(r.kcal)} kcal als Ziel` })
             }}
           >
-            Use new targets
+            Neue Ziele übernehmen
           </Button>
           {!hidden && (
             <Button size="sm" variant="secondary" onClick={() => void snoozeProposal(today)}>
-              Ignore
+              Ignorieren
             </Button>
           )}
         </div>
@@ -64,16 +64,16 @@ export function AdaptiveCard({ showProgress = false }: { showProgress?: boolean 
   if (!showProgress) return null
   return (
     <Card className="!p-4">
-      <p className="text-[16px] font-semibold">Expenditure from your data</p>
+      <p className="text-[16px] font-semibold">Verbrauch aus deinen Daten</p>
       {estimate ? (
         <p className="mt-1 text-[14px] text-ink-2">
-          About <b className="text-ink">{fmtInt(estimate.kcal)} kcal</b> a day over the last 14 days: {fmtInt(estimate.avgIntake)} kcal eaten on average, trend{' '}
+          Etwa <b className="text-ink">{fmtInt(estimate.kcal)} kcal</b> pro Tag in den letzten 14 Tagen: im Schnitt {fmtInt(estimate.avgIntake)} kcal gegessen, Trend{' '}
           {estimate.trendChangeKg >= 0 ? '+' : ''}
-          {fmt1(estimate.trendChangeKg)} kg. Within 5% of your targets' maintenance, so nothing changes.
+          {fmt1(estimate.trendChangeKg)} kg. Weniger als 5 % Abweichung von deinem Erhaltungsbedarf, also bleibt alles, wie es ist.
         </p>
       ) : (
         <p className="mt-1 text-[14px] text-ink-2">
-          Needs 14 days with at least 12 of them logged and a weight trend: {loggedDays} of 14 days logged so far. Then the app compares what you ate with how your weight moved.
+          Braucht 14 Tage, davon mindestens 12 erfasst, und einen Gewichtstrend: bisher {loggedDays} von 14 Tagen. Dann vergleicht die App, was du gegessen hast, mit deinem Gewicht.
         </p>
       )}
     </Card>

@@ -13,45 +13,45 @@ export default function About() {
   }, [])
   const mb = (b?: number) => (b == null ? '–' : `${fmt1(b / 1024 / 1024)} MB`)
   return (
-    <Screen back title="About">
+    <Screen back title="Info">
       <Card>
         <p className="text-lg font-bold">Fittrack {__APP_VERSION__}</p>
-        <p className="mt-1 text-sm text-ink-2">A private logbook for food, training and body weight. No account, no server: every record stays in this app on this phone.</p>
+        <p className="mt-1 text-sm text-ink-2">Ein privates Logbuch für Essen, Training und Gewicht. Kein Konto, kein Server: Alle Daten bleiben in dieser App auf diesem iPhone.</p>
       </Card>
 
-      <SectionTitle>Disclaimer</SectionTitle>
+      <SectionTitle>Hinweis</SectionTitle>
       <Card>
         <p className="text-[15px] leading-relaxed">{DISCLAIMER}</p>
       </Card>
 
-      <SectionTitle>Storage</SectionTitle>
+      <SectionTitle>Speicher</SectionTitle>
       <Group>
-        <ListRow title="Installed to the Home Screen" detail={isStandalone() ? 'Yes' : 'No'} />
+        <ListRow title="Auf dem Home-Bildschirm" detail={isStandalone() ? 'Ja' : 'Nein'} />
         <ListRow
-          title="Persistent storage"
-          subtitle="Exempt from eviction when the disk runs short"
-          detail={persisted == null ? 'Unknown' : persisted ? 'Yes' : 'Not granted'}
+          title="Dauerhafter Speicher"
+          subtitle="Wird bei knappem Platz nicht gelöscht"
+          detail={persisted == null ? 'Unbekannt' : persisted ? 'Ja' : 'Nicht erteilt'}
         />
-        <ListRow title="Used" detail={`${mb(estimate?.usage)} of ${mb(estimate?.quota)}`} />
+        <ListRow title="Belegt" detail={`${mb(estimate?.usage)} von ${mb(estimate?.quota)}`} />
       </Group>
 
-      <SectionTitle>Credits</SectionTitle>
+      <SectionTitle>Quellen</SectionTitle>
       <Card className="space-y-2 text-sm text-ink-2">
         <p>
-          Product data from{' '}
+          Produktdaten von{' '}
           <a className="text-brand-ink underline" href="https://world.openfoodfacts.org" target="_blank" rel="noreferrer">
             Open Food Facts
           </a>
-          , available under the Open Database License.
+          , unter der Open Database License.
         </p>
         <p>
-          Exercise library seeded from{' '}
+          Übungsbibliothek auf Basis von{' '}
           <a className="text-brand-ink underline" href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noreferrer">
             free-exercise-db
           </a>{' '}
-          (public domain).
+          (gemeinfrei).
         </p>
-        <p>Barcode decoding with ZXing compiled to WebAssembly.</p>
+        <p>Barcode-Erkennung mit ZXing als WebAssembly.</p>
       </Card>
     </Screen>
   )

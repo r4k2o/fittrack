@@ -1,4 +1,4 @@
-// Progress: segments for body, training, food, sleep and photos, one chart per metric
+// Progress: segments for training, body, food, sleep and photos, one chart per metric
 // with its unit and averaging window in the title. The weekly review and the compare
 // view open from the header. No chart presents a single noisy day as progress.
 
@@ -6,10 +6,10 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useToday } from '../../hooks'
-import { addDays, weekStart } from '../../lib/dates'
+import { addDays, formatDayShort, weekStart } from '../../lib/dates'
 import { reviewForWeek } from '../../store/progress'
 import { IconChevronLeft, IconChevronRight, IconPlus } from '../../ui/icons'
-import { Button, IconButton, Screen, Segmented, Sheet, Spinner, type Tone } from '../../ui/kit'
+import { Button, IconButton, Screen, Segmented, Sheet, Spinner } from '../../ui/kit'
 import { WeeklyReviewCard } from '../shared/WeeklyReviewCard'
 import { WeightSheet } from '../shared/WeightSheet'
 import BodyTab from './BodyTab'
@@ -18,23 +18,25 @@ import PhotosTab from './photos/PhotosTab'
 import SleepTab from './SleepTab'
 import TrainingTab from './TrainingTab'
 
-const TABS = ['body', 'training', 'food', 'sleep', 'photos'] as const
+const TABS = ['training', 'body', 'food', 'sleep', 'photos'] as const
 type Tab = (typeof TABS)[number]
-const LABEL: Record<Tab, string> = { body: 'Body', training: 'Training', food: 'Food', sleep: 'Sleep', photos: 'Photos' }
-const TONE: Record<Tab, Tone> = { body: 'body', training: 'train', food: 'food', sleep: 'neutral', photos: 'neutral' }
-const EYEBROW: Record<Tab, string> = {
-  body: 'Weight and body fat',
-  training: 'Sets, strength and cardio',
-  food: 'Adherence and expenditure',
-  sleep: 'Sleep and steps',
-  photos: 'Progress photos',
+const LABEL: Record<Tab, string> = { training: 'Training', body: 'Körper', food: 'Essen', sleep: 'Schlaf', photos: 'Fotos' }
+const LAST_TAB = 'fittrack.progressTab'
+
+function lastTab(): Tab {
+  try {
+    const t = localStorage.getItem(LAST_TAB) as Tab | null
+    return t && TABS.includes(t) ? t : 'training'
+  } catch {
+    return 'training'
+  }
 }
 
 export default function Progress() {
   const navigate = useNavigate()
   const today = useToday()
   const [params, setParams] = useSearchParams()
-  const tab: Tab = TABS.includes(params.get('tab') as Tab) ? (params.get('tab') as Tab) : 'body'
+  const tab: Tab = TABS.includes(params.get('tab') as Tab) ? (params.get('tab') as Tab) : lastTab()
   const [logOpen, setLogOpen] = useState(false)
   const lastMonday = addDays(weekStart(today), -7)
   const [reviewWeek, setReviewWeek] = useState<string | null>(null)
@@ -42,19 +44,17 @@ export default function Progress() {
 
   return (
     <Screen
-      tone={TONE[tab]}
-      eyebrow={EYEBROW[tab]}
-      title="Progress"
+      title="Fortschritt"
       actions={
         <>
           <Button size="sm" variant="glass" onClick={() => setReviewWeek(lastMonday)}>
-            Review
+            Rückblick
           </Button>
           <Button size="sm" variant="glass" onClick={() => navigate('/progress/compare')}>
-            Compare
+            Vergleich
           </Button>
           {tab === 'body' && (
-            <IconButton label="Log weight" variant="glass" className="size-9" onClick={() => setLogOpen(true)}>
+            <IconButton label="Gewicht eintragen" variant="glass" className="size-9" onClick={() => setLogOpen(true)}>
               <IconPlus size={18} strokeWidth={2.6} />
             </IconButton>
           )}
@@ -66,7 +66,14 @@ export default function Progress() {
         className="mb-3"
         value={tab}
         options={TABS.map((t) => ({ value: t, label: LABEL[t] }))}
-        onChange={(t) => setParams(t === 'body' ? {} : { tab: t }, { replace: true })}
+        onChange={(t) => {
+          try {
+            localStorage.setItem(LAST_TAB, t)
+          } catch {
+            // private mode: the tab is simply not remembered
+          }
+          setParams({ tab: t }, { replace: true })
+        }}
       />
       {tab === 'body' && <BodyTab onLog={() => setLogOpen(true)} />}
       {tab === 'training' && <TrainingTab />}
@@ -75,15 +82,15 @@ export default function Progress() {
       {tab === 'photos' && <PhotosTab />}
 
       <WeightSheet open={logOpen} onClose={() => setLogOpen(false)} />
-      <Sheet open={!!reviewWeek} onClose={() => setReviewWeek(null)} title="Weekly review">
+      <Sheet open={!!reviewWeek} onClose={() => setReviewWeek(null)} title="Wochenrückblick">
         {reviewWeek && (
           <div className="pb-2">
             <div className="mb-2 flex items-center justify-between">
-              <IconButton label="Earlier week" className="size-10" onClick={() => setReviewWeek(addDays(reviewWeek, -7))}>
+              <IconButton label="Woche davor" className="size-10" onClick={() => setReviewWeek(addDays(reviewWeek, -7))}>
                 <IconChevronLeft size={20} />
               </IconButton>
-              <span className="text-[14px] font-semibold text-ink-2">{reviewWeek === lastMonday ? 'Last week' : reviewWeek === weekStart(today) ? 'This week so far' : 'Earlier'}</span>
-              <IconButton label="Later week" className="size-10" disabled={reviewWeek >= weekStart(today)} onClick={() => setReviewWeek(addDays(reviewWeek, 7))}>
+              <span className="text-[14px] font-semibold text-ink-2">{reviewWeek === lastMonday ? 'Letzte Woche' : reviewWeek === weekStart(today) ? 'Diese Woche bisher' : `Woche ab ${formatDayShort(reviewWeek)}`}</span>
+              <IconButton label="Woche danach" className="size-10" disabled={reviewWeek >= weekStart(today)} onClick={() => setReviewWeek(addDays(reviewWeek, 7))}>
                 <IconChevronRight size={20} />
               </IconButton>
             </div>

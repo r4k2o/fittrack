@@ -8,6 +8,7 @@ import { addDays, localDay, weekStart } from '../lib/dates'
 import { homeVersion } from '../lib/home'
 import { prescriptionFor, type GeneratedPlan, type PlanAnswers } from '../lib/planner'
 import { performanceScore } from '../lib/training'
+import { countsAsCompound, sessionMinutes } from '../lib/volume'
 import { getSetting, setSetting } from './settings'
 import { startSession } from './training'
 
@@ -339,9 +340,81 @@ export async function startPlanDay(day: PlanDayFull, opts: { home?: boolean } = 
   return startSession(`${day.name} · Zuhause`, rows.map((r) => r.exerciseId), day.id, { swaps, home: true })
 }
 
-/** Home mode on: starting any plan day gives its home version. */
-export async function homeModeOn(): Promise<boolean> {
-  return getSetting('homeMode')
+export interface PreviewRow {
+  id: string
+  exerciseId: string
+  name: string
+  sets: number
+  repMin: number
+  repMax: number
+  unit: Exercise['unit']
+  /** The planned exercise's name when this one stands in for it at home. */
+  replaces: string | null
+}
+
+export interface DayPreview {
+  rows: PreviewRow[]
+  /** Planned exercises with no home replacement. */
+  dropped: string[]
+  minutes: number
+}
+
+/** What a plan day will look like when started: at the gym or at home, normal or lighter week. */
+export async function dayPreview(day: PlanDayFull, opts: { home?: boolean; deload?: boolean } = {}): Promise<DayPreview> {
+  let rows: (PlanExercise & { from?: string })[] = day.exercises
+  let dropped: string[] = []
+  let library: Exercise[]
+  if (opts.home) {
+    library = await db.exercises.toArray()
+    const plan = await db.plans.get(day.planId)
+    const answers = plan ? planAnswers(plan) : null
+    const v = homeVersion(day.exercises, library, answers ?? undefined)
+    rows = v.rows
+    dropped = v.dropped
+  } else {
+    library = (await db.exercises.bulkGet(day.exercises.map((e) => e.exerciseId))).filter((e): e is Exercise => !!e)
+  }
+  const byId = new Map(library.map((e) => [e.id, e]))
+  const out: PreviewRow[] = rows.map((r) => {
+    const ex = byId.get(r.exerciseId)
+    return {
+      id: r.id,
+      exerciseId: r.exerciseId,
+      name: ex?.name ?? '',
+      sets: opts.deload ? Math.ceil(r.sets / 2) : r.sets,
+      repMin: r.repMin,
+      repMax: r.repMax,
+      unit: ex?.unit ?? 'reps',
+      replaces: r.from && r.from !== r.exerciseId ? (byId.get(r.from)?.name ?? null) : null,
+    }
+  })
+  const minutes = sessionMinutes(
+    out.map((r, i) => {
+      const ex = byId.get(r.exerciseId)
+      return { id: r.id, compound: ex ? countsAsCompound(ex) : true, sets: r.sets, pairWith: rows[i].supersetWith }
+    }),
+  )
+  return { rows: out, dropped, minutes }
+}
+
+/** Whether plan days start at home on this day: the whole plan, or just this day. */
+export async function homeOn(day = localDay()): Promise<boolean> {
+  return (await getSetting('homeMode')) || (await getSetting('homeDay')) === day
+}
+
+/**
+ * Gym or home for one day. Choosing the gym while the whole plan is set to home
+ * switches the plan back too, since "at the gym" cannot mean anything else.
+ * Returns what was switched off, for an undo.
+ */
+export async function setHomeFor(day: string, home: boolean): Promise<{ planWasHome: boolean }> {
+  const planWasHome = await getSetting('homeMode')
+  if (home) await setSetting('homeDay', day)
+  else {
+    await setSetting('homeDay', null)
+    if (planWasHome) await setSetting('homeMode', false)
+  }
+  return { planWasHome }
 }
 
 // ---- lighter week --------------------------------------------------------------------------

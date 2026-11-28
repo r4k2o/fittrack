@@ -14,7 +14,7 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const LIBRARY_VERSION = 2
+const LIBRARY_VERSION = 3
 
 const here = dirname(fileURLToPath(import.meta.url))
 const src = process.argv[2]
@@ -301,7 +301,16 @@ for (const e of out) {
   if (names.has(e.name)) throw new Error(`duplicate name: ${e.name}`)
   names.add(e.name)
 }
-out.sort((a, b) => a.name.localeCompare(b.name))
+
+// German names for the app; the English one stays as nameEn, so search finds either.
+const GERMAN = JSON.parse(readFileSync(resolve(here, 'exercise-names-de.json'), 'utf8'))
+for (const e of out) {
+  const de = GERMAN[e.name]
+  if (!de) throw new Error(`no German name for ${e.name}: add it to scripts/exercise-names-de.json`)
+  e.nameEn = e.name
+  e.name = de
+}
+out.sort((a, b) => a.name.localeCompare(b.name, 'de'))
 
 const target = resolve(here, '../src/data/exercises.json')
 writeFileSync(

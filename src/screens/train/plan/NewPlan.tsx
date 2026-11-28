@@ -1,5 +1,5 @@
-// Questionnaire, then preview: "Use this plan" saves it as the active plan,
-// "Regenerate" offers a different mix of exercises for the same answers.
+// Questionnaire, then preview: "Plan übernehmen" saves it as the active plan,
+// "Neu mischen" offers a different mix of exercises for the same answers.
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -24,21 +24,20 @@ export default function NewPlan() {
     setSaving(true)
     await adoptPlan(draft.plan)
     haptic('success')
-    toast({ message: 'Plan saved. Your week is on Train.' })
+    toast({ message: 'Plan gespeichert' })
     navigate('/train', { replace: true })
   }
 
   return (
     <Screen
-      tone="train"
       back={step === 'preview' ? undefined : '/train'}
-      title={step === 'questions' ? 'New plan' : 'Your plan'}
-      subtitle={step === 'questions' ? 'Seven questions, about a minute' : undefined}
+      title={step === 'questions' ? 'Neuer Plan' : 'Dein Plan'}
+      subtitle={step === 'questions' ? 'Acht kurze Fragen' : undefined}
       large={false}
       actions={
         step === 'preview' ? (
           <Button size="sm" variant="glass" onClick={() => setStep('questions')}>
-            Change answers
+            Antworten ändern
           </Button>
         ) : undefined
       }
@@ -51,7 +50,6 @@ export default function NewPlan() {
         </div>
       ) : step === 'questions' ? (
         <>
-          <p className="mb-3 px-1 text-[15px] text-ink-2">The plan follows published rules for weekly sets, rest and exercise choice. You can edit everything afterwards.</p>
           <PlanQuestions value={draft.answers} onChange={(a) => draft.setAnswers(a)} />
           <StickyFooter>
             <Button
@@ -65,7 +63,7 @@ export default function NewPlan() {
                 window.scrollTo({ top: 0 })
               }}
             >
-              Build my plan
+              Plan erstellen
             </Button>
           </StickyFooter>
         </>
@@ -76,16 +74,16 @@ export default function NewPlan() {
             <Button
               size="lg"
               variant="secondary"
-              aria-label="Regenerate with other exercises"
+              aria-label="Mit anderen Übungen neu erstellen"
               onClick={() => {
                 haptic()
                 draft.regenerate()
               }}
             >
-              <IconRepeat size={19} /> Regenerate
+              <IconRepeat size={19} /> Neu mischen
             </Button>
             <Button size="lg" className="flex-1" disabled={saving} onClick={() => void use()}>
-              Use this plan
+              Plan übernehmen
             </Button>
           </StickyFooter>
         </>

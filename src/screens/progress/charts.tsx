@@ -14,6 +14,8 @@ import { css, withAlpha } from './chartUtils'
 
 Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Filler)
 
+const MONTH = new Intl.DateTimeFormat('de-DE', { month: 'short' })
+
 export interface Series {
   label: string
   /** A CSS custom property such as "--body", read at draw time so both themes work. */
@@ -207,7 +209,7 @@ export function WeekBars({
         )}
         <div className="absolute inset-0 flex items-end gap-1.5">
           {weeks.map((w) => (
-            <div key={w.week} className="flex h-full flex-1 flex-col justify-end" role="img" aria-label={`Week of ${formatDayShort(w.week)}: ${w.value == null ? 'no data' : `${format(w.value)} ${unit}`}`}>
+            <div key={w.week} className="flex h-full flex-1 flex-col justify-end" role="img" aria-label={`Woche ab ${formatDayShort(w.week)}: ${w.value == null ? 'keine Daten' : `${format(w.value)} ${unit}`}`}>
               {w.value != null ? (
                 <div className="w-full rounded-t-[6px] transition-[height] duration-500" style={{ height: `${Math.max(2, (w.value / scale) * 100)}%`, background: `var(${colorVar})` }} />
               ) : (
@@ -223,7 +225,7 @@ export function WeekBars({
           const newMonth = i === 0 || parseDay(weeks[i - 1].week).getMonth() !== d.getMonth()
           return (
             <span key={w.week} className="flex-1 truncate">
-              {newMonth ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : d.getDate()}
+              {newMonth ? MONTH.format(d).replace('.', '') : d.getDate()}
             </span>
           )
         })}
@@ -253,10 +255,10 @@ export function RangePicker({ value, onChange }: { value: Range; onChange: (r: R
       size="sm"
       value={value}
       options={[
-        { value: 28 as Range, label: '4 weeks' },
-        { value: 84 as Range, label: '12 weeks' },
-        { value: 365 as Range, label: '1 year' },
-        { value: 0 as Range, label: 'All' },
+        { value: 28 as Range, label: '4 Wo.' },
+        { value: 84 as Range, label: '12 Wo.' },
+        { value: 365 as Range, label: '1 Jahr' },
+        { value: 0 as Range, label: 'Alles' },
       ]}
       onChange={onChange}
     />

@@ -72,7 +72,7 @@ export function decodeBackup(bytes: Uint8Array, currentSchema: number): DecodeRe
   if (manifest.schemaVersion > currentSchema) {
     return {
       ok: false,
-      errors: [`This backup comes from a newer version of the app (schema ${manifest.schemaVersion}). Update the app first: close it and open it again.`],
+      errors: [`Dieses Backup stammt aus einer neueren App-Version (Schema ${manifest.schemaVersion}). Erst die App aktualisieren: schließen und neu öffnen.`],
     }
   }
 
@@ -91,7 +91,7 @@ export function decodeBackup(bytes: Uint8Array, currentSchema: number): DecodeRe
   }
   for (const name of Object.keys(entries)) {
     if (name.startsWith('data/') && !STORE_NAMES.includes(name.slice(5, -5) as StoreName)) {
-      warnings.push(`${name} is not a store this version knows; it was ignored.`)
+      warnings.push(`${name} kennt diese Version nicht; ignoriert.`)
     }
   }
 
@@ -112,7 +112,7 @@ export function decodeBackup(bytes: Uint8Array, currentSchema: number): DecodeRe
       }
     })
     const expected = manifest.counts[store]
-    if (expected != null && expected !== rows.length) warnings.push(`${store}: manifest says ${expected} rows, file has ${rows.length}.`)
+    if (expected != null && expected !== rows.length) warnings.push(`${store}: laut Manifest ${expected} Zeilen, die Datei hat ${rows.length}.`)
   }
 
   const files: Record<string, Uint8Array> = {}
@@ -120,7 +120,7 @@ export function decodeBackup(bytes: Uint8Array, currentSchema: number): DecodeRe
     for (const field of ['image', 'thumbnail'] as const) {
       const ref = photo[field] as { $file?: string } | undefined
       const path = ref?.$file
-      if (!path || !entries[path]) errors.push(`photos: file ${path ?? '(missing)'} is not in the archive.`)
+      if (!path || !entries[path]) errors.push(`photos: Datei ${path ?? '(fehlt)'} ist nicht im Archiv.`)
       else files[path] = entries[path]
     }
   }

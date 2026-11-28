@@ -15,7 +15,7 @@ import { frequentFoods, myFoods, recentFoods } from '../../store/foods'
 import { deleteMealTemplate, listMealTemplates, logMealTemplate, recipeFoods, restoreMealTemplate } from '../../store/recipes'
 import { recipeIdOf } from '../../lib/recipes'
 import { IconBarcode, IconCamera, IconDots, IconEdit, IconFood, IconList, IconPlus, IconRepeat, IconSearch, IconStar, IconX } from '../../ui/icons'
-import { Button, EmptyState, Group, IconButton, IconTile, ListRow, Screen, Segmented, Sheet, Spinner } from '../../ui/kit'
+import { Button, EmptyState, Group, IconButton, ListRow, Screen, Segmented, Sheet, Spinner } from '../../ui/kit'
 import { haptic } from '../../ui/motion'
 import { useToast } from '../../ui/toast'
 import { PortionSheet } from './PortionSheet'
@@ -35,7 +35,7 @@ function FoodRow({ food, onPick, onQuick, onEdit }: { food: Food; onPick: (f: Fo
   return (
     <div className="flex min-h-[60px] items-center">
       {onEdit && (
-        <IconButton label={`Edit ${food.name}`} className="ml-1.5 size-9 shrink-0 text-ink-3" onClick={() => onEdit(food)}>
+        <IconButton label={`${food.name} bearbeiten`} className="ml-1.5 size-9 shrink-0 text-ink-3" onClick={() => onEdit(food)}>
           <IconEdit size={18} />
         </IconButton>
       )}
@@ -51,7 +51,7 @@ function FoodRow({ food, onPick, onQuick, onEdit }: { food: Food; onPick: (f: Fo
       </button>
       <button
         type="button"
-        aria-label={`Add ${food.name}, ${p.label}`}
+        aria-label={`${food.name} hinzufügen, ${p.label}`}
         onClick={() => onQuick(food)}
         className="press mx-3 flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand-ink"
       >
@@ -111,21 +111,21 @@ export default function AddFood() {
     const p = usualPortion(f)
     const e = await logFood(f, p, meal, date, query ? 'search' : 'recent')
     haptic('success')
-    toast({ message: `${f.name} · ${fmtInt(e.macros.kcal)} kcal added`, action: { label: 'Undo', onClick: () => void deleteEntries([e.id]) } })
+    toast({ message: `${f.name} · ${fmtInt(e.macros.kcal)} kcal eingetragen`, action: { label: 'Rückgängig', onClick: () => void deleteEntries([e.id]) } })
   }
 
   const addTemplate = async (t: MealTemplate) => {
     const rows = await logMealTemplate(t, meal, date)
     const kcal = rows.reduce((n, e) => n + e.macros.kcal, 0)
     haptic('success')
-    toast({ message: `${t.name} added · ${fmtInt(kcal)} kcal`, action: { label: 'Undo', onClick: () => void deleteEntries(rows.map((r) => r.id)) } })
+    toast({ message: `${t.name} eingetragen · ${fmtInt(kcal)} kcal`, action: { label: 'Rückgängig', onClick: () => void deleteEntries(rows.map((r) => r.id)) } })
     go(back)
   }
 
   const removeTemplate = async (t: MealTemplate) => {
     const row = await deleteMealTemplate(t.id)
     setTemplateMenu(null)
-    if (row) toast({ message: `${row.name} deleted`, action: { label: 'Undo', onClick: () => restoreMealTemplate(row) } })
+    if (row) toast({ message: `${row.name} gelöscht`, action: { label: 'Rückgängig', onClick: () => restoreMealTemplate(row) } })
   }
 
   const editRecipe = (f: Food) => {
@@ -136,7 +136,7 @@ export default function AddFood() {
   const addMeal = async (r: NonNullable<typeof repeat>[number]) => {
     const copies = await copyEntries(r.entries, date, meal)
     haptic('success')
-    toast({ message: `Added ${r.entries.length} items · ${fmtInt(r.kcal)} kcal`, action: { label: 'Undo', onClick: () => void deleteEntries(copies.map((c) => c.id)) } })
+    toast({ message: `${r.entries.length} Einträge · ${fmtInt(r.kcal)} kcal eingetragen`, action: { label: 'Rückgängig', onClick: () => void deleteEntries(copies.map((c) => c.id)) } })
     go(back)
   }
 
@@ -150,13 +150,12 @@ export default function AddFood() {
 
   return (
     <Screen
-      tone="food"
       back={back}
-      title={`Add to ${MEAL_LABEL[meal].toLowerCase()}`}
+      title={MEAL_LABEL[meal]}
       subtitle={date !== today ? relativeDay(date, today) : undefined}
       actions={
         <Button size="sm" variant="ghost" onClick={() => go(back)}>
-          Done
+          Fertig
         </Button>
       }
     >
@@ -169,18 +168,18 @@ export default function AddFood() {
             autoComplete="off"
             autoCorrect="off"
             spellCheck={false}
-            placeholder="Search foods"
+            placeholder="Lebensmittel suchen"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="min-h-[52px] w-full rounded-full bg-transparent pl-12 pr-24 outline-none placeholder:text-ink-3"
           />
           <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-1">
             {query && (
-              <button type="button" aria-label="Clear search" className="flex size-9 items-center justify-center rounded-full text-ink-3" onClick={() => setQuery('')}>
+              <button type="button" aria-label="Suche leeren" className="flex size-9 items-center justify-center rounded-full text-ink-3" onClick={() => setQuery('')}>
                 <IconX size={18} />
               </button>
             )}
-            <button type="button" aria-label="Scan a barcode" className="press flex size-10 items-center justify-center rounded-full bg-ink text-page" onClick={() => go(`/food/scan?${qs}`)}>
+            <button type="button" aria-label="Barcode scannen" className="press flex size-10 items-center justify-center rounded-full bg-ink text-page" onClick={() => go(`/food/scan?${qs}`)}>
               <IconBarcode size={20} />
             </button>
           </div>
@@ -194,14 +193,14 @@ export default function AddFood() {
           {results.length > 0 ? (
             rows(results)
           ) : (
-            <EmptyState icon={<IconSearch size={28} />} title={`Nothing found for "${query}"`}>
-              {foodList ? 'Try another word, scan the package, or add it from the label.' : 'There is no food list yet: import one under More → Food list, scan the package, or add it from the label.'}
+            <EmptyState icon={<IconSearch size={28} />} title={`Nichts gefunden für „${query}“`}>
+              {foodList ? 'Anderes Wort probieren, die Packung scannen oder vom Etikett eintragen.' : 'Noch keine Lebensmittelliste: unter Mehr → Lebensmittelliste importieren, die Packung scannen oder vom Etikett eintragen.'}
               <div className="mt-4 flex justify-center gap-2">
                 <Button size="sm" variant="secondary" onClick={() => go(`/food/scan?${qs}`)}>
-                  Scan
+                  Scannen
                 </Button>
                 <Button size="sm" variant="secondary" onClick={() => go(`/food/new?${qs}&name=${encodeURIComponent(query.trim())}`)}>
-                  Add from label
+                  Vom Etikett
                 </Button>
               </div>
             </EmptyState>
@@ -211,15 +210,13 @@ export default function AddFood() {
         <>
           <div className="mt-4 grid grid-cols-4 gap-2">
             {[
-              { label: 'Scan', icon: <IconBarcode size={19} />, tone: 'brand' as const, to: `/food/scan?${qs}` },
-              { label: 'Photo', icon: <IconCamera size={19} />, tone: 'pink' as const, to: `/food/photo?${qs}` },
-              { label: 'Quick add', icon: <IconFood size={19} />, tone: 'amber' as const, to: `/food/quick?${qs}` },
-              { label: 'New food', icon: <IconEdit size={19} />, tone: 'indigo' as const, to: `/food/new?${qs}` },
+              { label: 'Scannen', icon: <IconBarcode size={20} />, to: `/food/scan?${qs}` },
+              { label: 'Foto', icon: <IconCamera size={20} />, to: `/food/photo?${qs}` },
+              { label: 'Schnell', icon: <IconFood size={20} />, to: `/food/quick?${qs}` },
+              { label: 'Neu', icon: <IconEdit size={20} />, to: `/food/new?${qs}` },
             ].map((a, i) => (
-              <button key={a.label} type="button" onClick={() => go(a.to)} style={{ '--i': i } as CSSProperties} className="card press animate-rise flex flex-col items-start gap-2.5 !rounded-[22px] p-3 text-left">
-                <IconTile tone={a.tone} size={34}>
-                  {a.icon}
-                </IconTile>
+              <button key={a.label} type="button" onClick={() => go(a.to)} style={{ '--i': i } as CSSProperties} className="card press animate-rise flex flex-col items-center gap-1.5 !rounded-[18px] px-1 py-3 text-center">
+                {a.icon}
                 <span className="text-[13px] font-semibold leading-tight">{a.label}</span>
               </button>
             ))}
@@ -227,22 +224,22 @@ export default function AddFood() {
 
           {templates && templates.length > 0 && (
             <>
-              <h2 className="mb-2.5 mt-7 px-1 text-[20px] font-bold tracking-tight">Saved meals</h2>
+              <h2 className="mb-2 mt-7 px-1 text-[18px] font-semibold tracking-[-0.01em]">Gespeicherte Mahlzeiten</h2>
               <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
                 {templates.map((t) => (
                   <div key={t.id} className="card flex w-[78%] max-w-72 shrink-0 snap-start flex-col !rounded-[24px] p-4">
                     <div className="flex items-center gap-2 text-[13px] font-semibold text-ink-2">
                       <IconStar size={16} />
                       <span className="min-w-0 flex-1 truncate">{t.name}</span>
-                      <IconButton label={`${t.name} options`} className="-my-2 -mr-2 size-9 text-ink-3" onClick={() => setTemplateMenu(t)}>
-                        <IconDots size={18} className="rotate-90" />
+                      <IconButton label={`${t.name}: Optionen`} className="-my-2 -mr-2 size-9 text-ink-3" onClick={() => setTemplateMenu(t)}>
+                        <IconDots size={18} />
                       </IconButton>
                     </div>
                     <p className="mt-1 line-clamp-2 min-h-[2.6em] text-[15px] font-medium leading-snug">{t.items.map((e) => e.name).join(', ')}</p>
                     <div className="mt-3 flex items-center justify-between">
                       <span className="text-[15px] font-semibold">{fmtInt(t.items.reduce((n, e) => n + e.macros.kcal, 0))} kcal</span>
                       <Button size="sm" onClick={() => void addTemplate(t)}>
-                        Add all
+                        Alles eintragen
                       </Button>
                     </div>
                   </div>
@@ -253,7 +250,7 @@ export default function AddFood() {
 
           {repeat && repeat.length > 0 && (
             <>
-              <h2 className="mb-2.5 mt-7 px-1 text-[20px] font-bold tracking-tight">Repeat a meal</h2>
+              <h2 className="mb-2 mt-7 px-1 text-[18px] font-semibold tracking-[-0.01em]">Mahlzeit wiederholen</h2>
               <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
                 {repeat.map((r) => (
                   <div key={r.date} className="card flex w-[78%] max-w-72 shrink-0 snap-start flex-col !rounded-[24px] p-4">
@@ -265,7 +262,7 @@ export default function AddFood() {
                     <div className="mt-3 flex items-center justify-between">
                       <span className="text-[15px] font-semibold">{fmtInt(r.kcal)} kcal</span>
                       <Button size="sm" onClick={() => void addMeal(r)}>
-                        Add all
+                        Alles eintragen
                       </Button>
                     </div>
                   </div>
@@ -279,17 +276,17 @@ export default function AddFood() {
             size="sm"
             value={tab}
             options={[
-              { value: 'recent' as Tab, label: 'Recent' },
-              { value: 'frequent' as Tab, label: 'Frequent' },
-              { value: 'mine' as Tab, label: 'Mine' },
-              { value: 'recipes' as Tab, label: 'Recipes' },
+              { value: 'recent' as Tab, label: 'Zuletzt' },
+              { value: 'frequent' as Tab, label: 'Häufig' },
+              { value: 'mine' as Tab, label: 'Eigene' },
+              { value: 'recipes' as Tab, label: 'Rezepte' },
             ]}
             onChange={setTab}
           />
           <div className="mt-3">
             {tab === 'recipes' && (
               <Button block variant="secondary" className="mb-3" onClick={() => go('/food/recipe/new')}>
-                <IconList size={18} /> New recipe
+                <IconList size={18} /> Neues Rezept
               </Button>
             )}
             {!list ? (
@@ -299,12 +296,12 @@ export default function AddFood() {
             ) : list.length ? (
               rows(list, tab === 'recipes')
             ) : tab === 'recipes' ? (
-              <EmptyState icon={<IconList size={28} />} title="No recipes yet">
-                Weigh the ingredients raw, the finished dish once cooked, and log it by serving or by grams.
+              <EmptyState icon={<IconList size={28} />} title="Noch keine Rezepte">
+                Zutaten roh wiegen, das fertige Gericht nach dem Kochen, dann nach Portion oder Gramm eintragen.
               </EmptyState>
             ) : (
-              <EmptyState icon={<IconFood size={28} />} title={tab === 'mine' ? 'No scanned or saved foods yet' : tab === 'frequent' ? 'Foods you log often show up here' : 'Foods you log show up here'}>
-                {tab === 'mine' ? 'Scan a package or add a food from its label.' : 'Search above, or scan a barcode.'}
+              <EmptyState icon={<IconFood size={28} />} title={tab === 'mine' ? 'Noch keine eigenen Lebensmittel' : tab === 'frequent' ? 'Hier erscheint, was du oft isst' : 'Hier erscheint, was du einträgst'}>
+                {tab === 'mine' ? 'Scanne eine Packung oder trag ein Lebensmittel vom Etikett ein.' : 'Oben suchen oder einen Barcode scannen.'}
               </EmptyState>
             )}
           </div>
@@ -314,7 +311,7 @@ export default function AddFood() {
       <Sheet open={!!templateMenu} onClose={() => setTemplateMenu(null)} title={templateMenu?.name}>
         {templateMenu && (
           <Group className="!shadow-none">
-            <ListRow title="Delete saved meal" destructive onClick={() => void removeTemplate(templateMenu)} />
+            <ListRow title="Gespeicherte Mahlzeit löschen" destructive onClick={() => void removeTemplate(templateMenu)} />
           </Group>
         )}
       </Sheet>

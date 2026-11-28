@@ -36,6 +36,10 @@ export interface SettingsMap {
   photoGuideSeen: boolean
   /** Train at home: every plan day starts with bodyweight and band exercises. */
   homeMode: boolean
+  /** Just this day at home (a local date); the next day is back to the gym. */
+  homeDay: string | null
+  /** 1 once plan and workout names from the English version were renamed to German. */
+  namesVersion: number
   /** Optional vision/language model. The key stays on this phone and never goes into a backup. */
   aiProvider: 'gemini' | 'openrouter' | 'mistral'
   aiModel: string | null
@@ -64,6 +68,8 @@ export const SETTING_DEFAULTS: SettingsMap = {
   adaptiveSnoozedUntil: null,
   photoGuideSeen: false,
   homeMode: false,
+  homeDay: null,
+  namesVersion: 0,
   aiProvider: 'gemini',
   aiModel: null,
   aiApiKey: null,

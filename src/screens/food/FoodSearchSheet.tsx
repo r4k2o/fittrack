@@ -39,13 +39,13 @@ export function FoodSearchSheet({ open, title, onPick, onClose }: { open: boolea
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
-          placeholder="Search foods"
+          placeholder="Lebensmittel suchen"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="min-h-12 w-full rounded-2xl bg-fill pl-12 pr-4 outline-none placeholder:text-ink-3 focus:ring-2 focus:ring-accent"
         />
       </div>
-      {!q.trim() && <p className="mb-1 mt-4 px-1 text-[13px] font-semibold text-ink-2">Recent</p>}
+      {!q.trim() && <p className="mb-1 mt-4 px-1 text-[13px] font-semibold text-ink-2">Zuletzt</p>}
       <div className="mt-2">
         {!list ? (
           <div className="flex justify-center py-8 text-ink-2">
@@ -72,7 +72,7 @@ export function FoodSearchSheet({ open, title, onPick, onClose }: { open: boolea
             ))}
           </div>
         ) : (
-          <EmptyState title={q.trim() ? `Nothing found for "${q}"` : 'No foods yet'}>Scan the package or add it from its label first, or import a food list under More.</EmptyState>
+          <EmptyState title={q.trim() ? `Nichts gefunden für „${q}“` : 'Noch keine Lebensmittel'}>Scanne zuerst die Packung, trag es vom Etikett ein oder importiere unter Mehr eine Lebensmittelliste.</EmptyState>
         )}
       </div>
     </Sheet>

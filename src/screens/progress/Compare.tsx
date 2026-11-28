@@ -18,15 +18,15 @@ import { ChartCard, RangePicker, TimeChart, type Range } from './charts'
 type Key = 'weight' | 'bodyFat' | 'steps' | 'sleep' | 'sleepScore' | 'kcal' | 'protein' | 'strength' | 'cardio'
 
 const OPTIONS: { key: Key; label: string; unit: string; format: (n: number) => string }[] = [
-  { key: 'weight', label: 'Weight trend', unit: 'kg', format: (n) => `${fmt1(n)} kg` },
-  { key: 'bodyFat', label: 'Body fat, weekly average', unit: '%', format: (n) => `${fmt1(n)}%` },
-  { key: 'steps', label: 'Steps, 7-day average', unit: 'steps', format: fmtInt },
-  { key: 'sleep', label: 'Sleep, 7-day average', unit: 'h', format: (n) => fmtSleep(n * 60) },
-  { key: 'sleepScore', label: 'Sleep score, 7-day average', unit: '', format: fmtInt },
-  { key: 'kcal', label: 'Calories eaten, 7-day average', unit: 'kcal', format: (n) => `${fmtInt(n)} kcal` },
-  { key: 'protein', label: 'Protein, 7-day average', unit: 'g', format: (n) => `${fmtInt(n)} g` },
-  { key: 'strength', label: 'Estimated 1RM, top lift, weekly best', unit: 'kg', format: (n) => `${fmt1(n)} kg` },
-  { key: 'cardio', label: 'Cardio minutes per week', unit: 'min', format: (n) => `${fmtInt(n)} min` },
+  { key: 'weight', label: 'Gewichtstrend', unit: 'kg', format: (n) => `${fmt1(n)} kg` },
+  { key: 'bodyFat', label: 'Körperfett, Wochenschnitt', unit: '%', format: (n) => `${fmt1(n)} %` },
+  { key: 'steps', label: 'Schritte, 7-Tage-Schnitt', unit: 'Schritte', format: fmtInt },
+  { key: 'sleep', label: 'Schlaf, 7-Tage-Schnitt', unit: 'h', format: (n) => fmtSleep(n * 60) },
+  { key: 'sleepScore', label: 'Schlafscore, 7-Tage-Schnitt', unit: '', format: fmtInt },
+  { key: 'kcal', label: 'Kalorien, 7-Tage-Schnitt', unit: 'kcal', format: (n) => `${fmtInt(n)} kcal` },
+  { key: 'protein', label: 'Eiweiß, 7-Tage-Schnitt', unit: 'g', format: (n) => `${fmtInt(n)} g` },
+  { key: 'strength', label: 'Geschätztes 1RM, Hauptübung, Wochenbestwert', unit: 'kg', format: (n) => `${fmt1(n)} kg` },
+  { key: 'cardio', label: 'Cardio-Minuten pro Woche', unit: 'Min', format: (n) => `${fmtInt(n)} Min` },
 ]
 
 async function load(key: Key, from: string, to: string): Promise<{ points: DayValue[]; note?: string }> {
@@ -90,15 +90,15 @@ export default function Compare() {
   const empty = (d?: { points: DayValue[] }) => !!d && !d.points.some((p) => p.date >= from)
 
   return (
-    <Screen back="/progress" title="Compare" tone="body">
+    <Screen back="/progress" title="Vergleich">
       <div className="grid grid-cols-1 gap-3 pt-1">
-        <Select label="Top chart" value={a} onChange={setA} />
-        <Select label="Bottom chart" value={b} onChange={setB} />
+        <Select label="Oberes Diagramm" value={a} onChange={setA} />
+        <Select label="Unteres Diagramm" value={b} onChange={setB} />
       </div>
       <RangePicker value={range} onChange={setRange} />
       <ChartCard title={`${optA.label}${dataA?.note ? ` (${dataA.note})` : ''}`}>
         {empty(dataA) ? (
-          <p className="mt-2 text-[14px] text-ink-2">No data in this range.</p>
+          <p className="mt-2 text-[14px] text-ink-2">Keine Daten in diesem Zeitraum.</p>
         ) : (
           <div className="mt-3">
             <TimeChart series={seriesA} from={from} to={today} format={optA.format} height={180} hover={hover} onHover={setHover} label={optA.label} />
@@ -107,14 +107,14 @@ export default function Compare() {
       </ChartCard>
       <ChartCard title={`${optB.label}${dataB?.note ? ` (${dataB.note})` : ''}`}>
         {empty(dataB) ? (
-          <p className="mt-2 text-[14px] text-ink-2">No data in this range.</p>
+          <p className="mt-2 text-[14px] text-ink-2">Keine Daten in diesem Zeitraum.</p>
         ) : (
           <div className="mt-3">
             <TimeChart series={seriesB} from={from} to={today} format={optB.format} height={180} hover={hover} onHover={setHover} label={optB.label} />
           </div>
         )}
       </ChartCard>
-      <Notice className="mt-3">Both charts share one time axis. Lines moving together show an overlap, not that one causes the other.</Notice>
+      <Notice className="mt-3">Beide Diagramme teilen eine Zeitachse. Wenn Linien zusammen laufen, heißt das nicht, dass das eine das andere verursacht.</Notice>
     </Screen>
   )
 }

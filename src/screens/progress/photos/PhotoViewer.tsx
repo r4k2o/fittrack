@@ -18,15 +18,15 @@ export default function PhotoViewer() {
   if (photo === undefined) return null
   if (photo === null)
     return (
-      <Screen back="/progress?tab=photos" title="Photo">
-        <EmptyState title="Photo not found">It may have been deleted or replaced by a retake.</EmptyState>
+      <Screen back="/progress?tab=photos" title="Foto">
+        <EmptyState title="Foto nicht gefunden">Vielleicht wurde es gelöscht oder durch ein neues ersetzt.</EmptyState>
       </Screen>
     )
   const day = localDay(new Date(photo.takenAt))
   const remove = async () => {
     const row = await deletePhoto(photo.id)
     navigate('/progress?tab=photos', { replace: true })
-    if (row) toast({ message: 'Photo deleted', action: { label: 'Undo', onClick: () => restorePhotos([row]) } })
+    if (row) toast({ message: 'Foto gelöscht', action: { label: 'Rückgängig', onClick: () => restorePhotos([row]) } })
   }
   return (
     <Screen
@@ -34,23 +34,23 @@ export default function PhotoViewer() {
       title={`${POSE_LABEL[photo.pose]} · ${formatDayLong(day)}`}
       actions={
         <>
-          <IconButton label={photo.starred ? 'Unstar' : 'Star: keep it when retaking this week'} className={photo.starred ? 'text-amber-500' : 'text-ink-2'} onClick={() => void setStarred(photo.id, !photo.starred)}>
+          <IconButton label={photo.starred ? 'Markierung entfernen' : 'Markieren: beim neuen Foto dieser Woche behalten'} className={photo.starred ? 'text-amber-500' : 'text-ink-2'} onClick={() => void setStarred(photo.id, !photo.starred)}>
             <IconStar size={20} fill={photo.starred ? 'currentColor' : 'none'} />
           </IconButton>
-          <IconButton label="Delete photo" className="text-danger" onClick={() => void remove()}>
+          <IconButton label="Foto löschen" className="text-danger" onClick={() => void remove()}>
             <IconTrash size={20} />
           </IconButton>
         </>
       }
     >
-      <div className="overflow-hidden rounded-[24px] bg-fill">{url && <img src={url} alt={`${POSE_LABEL[photo.pose]} photo of ${formatDayLong(day)}`} className="w-full" />}</div>
+      <div className="overflow-hidden rounded-[24px] bg-fill">{url && <img src={url} alt={`Foto ${POSE_LABEL[photo.pose]} vom ${formatDayLong(day)}`} className="w-full" />}</div>
       <p className="mt-3 px-1 text-[15px] text-ink-2">
-        {photo.isoWeek.replace('-W', ', week ')}
-        {photo.weightKg != null ? ` · ${fmt1(photo.weightKg)} kg that day` : ''}
-        {photo.starred ? ' · starred, kept when you retake this week' : ''}
+        {photo.isoWeek.replace(/^(\d+)-W(\d+)$/, 'KW $2, $1')}
+        {photo.weightKg != null ? ` · ${fmt1(photo.weightKg)} kg an dem Tag` : ''}
+        {photo.starred ? ' · markiert, bleibt beim neuen Foto dieser Woche' : ''}
       </p>
       <Button block size="lg" variant="secondary" className="mt-4" onClick={() => navigate(`/progress/photos/compare?pose=${photo.pose}&b=${photo.id}`)}>
-        Compare with another week
+        Mit anderer Woche vergleichen
       </Button>
     </Screen>
   )

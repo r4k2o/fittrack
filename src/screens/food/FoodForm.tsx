@@ -69,10 +69,10 @@ export default function FoodForm() {
       : null
   const energy = per100 ? checkEnergy(per100) : null
   const code = barcode.trim() ? normalizeBarcode(barcode.trim()) : null
-  const barcodeError = barcode.trim() && !code ? 'Not a valid EAN or UPC code.' : undefined
-  const macroError = per100 && per100.protein + per100.carbs + per100.fat > 100 ? 'Protein, carbohydrate and fat add up to more than 100 g.' : undefined
+  const barcodeError = barcode.trim() && !code ? 'Kein gültiger EAN- oder UPC-Code.' : undefined
+  const macroError = per100 && per100.protein + per100.carbs + per100.fat > 100 ? 'Eiweiß, Kohlenhydrate und Fett ergeben zusammen mehr als 100 g.' : undefined
   const valid = !!name.trim() && !!per100 && per100.kcal >= 0 && per100.kcal <= 900 && !barcodeError && !macroError
-  const servings = servingG && servingG > 0 ? [{ name: servingName.trim() || '1 serving', grams: servingG }] : []
+  const servings = servingG && servingG > 0 ? [{ name: servingName.trim() || '1 Portion', grams: servingG }] : []
 
   const set = (k: keyof Nutrients) => (n: number | null) => setV((cur) => ({ ...cur, [k]: n }))
 
@@ -80,7 +80,7 @@ export default function FoodForm() {
     if (!valid || !per100) return
     if (existing) {
       await updateFood({ ...existing, name: name.trim(), brand: brand.trim() || undefined, barcode: code ?? undefined, per100, servings })
-      toast({ message: 'Food saved' })
+      toast({ message: 'Lebensmittel gespeichert' })
       navigate(-1)
       return
     }
@@ -94,7 +94,7 @@ export default function FoodForm() {
     })
     if (meal) setSaved(food)
     else {
-      toast({ message: `${food.name} saved` })
+      toast({ message: `${food.name} gespeichert` })
       navigate(-1)
     }
   }
@@ -102,18 +102,18 @@ export default function FoodForm() {
   const remove = async () => {
     if (!existing) return
     await deleteFood(existing.id)
-    toast({ message: `${existing.name} deleted`, action: { label: 'Undo', onClick: () => void db.foods.put(existing) } })
+    toast({ message: `${existing.name} gelöscht`, action: { label: 'Rückgängig', onClick: () => void db.foods.put(existing) } })
     navigate(-1)
   }
 
   return (
-    <Screen tone="food" back title={existing ? 'Edit food' : 'New food'} subtitle={existing ? undefined : 'Values per 100 g, from the nutrition label'}>
+    <Screen back title={existing ? 'Lebensmittel bearbeiten' : 'Neues Lebensmittel'} subtitle={existing ? undefined : 'Werte pro 100 g vom Etikett'}>
       <div className="space-y-4 pt-2">
         <Field label="Name">
-          <TextInput value={name} autoFocus={!foodId && !name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Skyr natur" />
+          <TextInput value={name} autoFocus={!foodId && !name} onChange={(e) => setName(e.target.value)} placeholder="z. B. Skyr natur" />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Brand (optional)">
+          <Field label="Marke (optional)">
             <TextInput value={brand} onChange={(e) => setBrand(e.target.value)} />
           </Field>
           <Field label="Barcode (optional)" error={barcodeError}>
@@ -121,39 +121,39 @@ export default function FoodForm() {
           </Field>
         </div>
 
-        <div className="rounded-3xl bg-surface p-4">
-          <p className="mb-3 font-semibold">Per 100 g</p>
+        <div className="card p-4">
+          <p className="mb-3 font-semibold">Pro 100 g</p>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Energy">
-              <NumberInput value={v.kcal} unit="kcal" ariaLabel="Energy per 100 g" onChange={set('kcal')} />
+            <Field label="Energie">
+              <NumberInput value={v.kcal} unit="kcal" ariaLabel="Energie pro 100 g" onChange={set('kcal')} />
             </Field>
-            <Field label="Protein">
-              <NumberInput value={v.protein} unit="g" ariaLabel="Protein per 100 g" onChange={set('protein')} />
+            <Field label="Eiweiß">
+              <NumberInput value={v.protein} unit="g" ariaLabel="Eiweiß pro 100 g" onChange={set('protein')} />
             </Field>
-            <Field label="Carbohydrate">
-              <NumberInput value={v.carbs} unit="g" ariaLabel="Carbohydrate per 100 g" onChange={set('carbs')} />
+            <Field label="Kohlenhydrate">
+              <NumberInput value={v.carbs} unit="g" ariaLabel="Kohlenhydrate pro 100 g" onChange={set('carbs')} />
             </Field>
-            <Field label="Fat">
-              <NumberInput value={v.fat} unit="g" ariaLabel="Fat per 100 g" onChange={set('fat')} />
+            <Field label="Fett">
+              <NumberInput value={v.fat} unit="g" ariaLabel="Fett pro 100 g" onChange={set('fat')} />
             </Field>
           </div>
           <button type="button" className="mt-3 flex items-center gap-1 text-sm font-semibold text-brand-ink" onClick={() => setMore(!more)} aria-expanded={more}>
-            Fibre, sugar, saturated fat, salt
+            Ballaststoffe, Zucker, gesättigte Fette, Salz
             <IconChevronDown size={16} className={cx('transition-transform', more && 'rotate-180')} />
           </button>
           {more && (
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <Field label="Fibre">
-                <NumberInput value={v.fibre} unit="g" ariaLabel="Fibre per 100 g" onChange={set('fibre')} />
+              <Field label="Ballaststoffe">
+                <NumberInput value={v.fibre} unit="g" ariaLabel="Ballaststoffe pro 100 g" onChange={set('fibre')} />
               </Field>
-              <Field label="Sugar">
-                <NumberInput value={v.sugar} unit="g" ariaLabel="Sugar per 100 g" onChange={set('sugar')} />
+              <Field label="Zucker">
+                <NumberInput value={v.sugar} unit="g" ariaLabel="Zucker pro 100 g" onChange={set('sugar')} />
               </Field>
-              <Field label="Saturated fat">
-                <NumberInput value={v.satFat} unit="g" ariaLabel="Saturated fat per 100 g" onChange={set('satFat')} />
+              <Field label="Gesättigte Fette">
+                <NumberInput value={v.satFat} unit="g" ariaLabel="Gesättigte Fette pro 100 g" onChange={set('satFat')} />
               </Field>
-              <Field label="Salt">
-                <NumberInput value={v.salt} unit="g" ariaLabel="Salt per 100 g" onChange={set('salt')} />
+              <Field label="Salz">
+                <NumberInput value={v.salt} unit="g" ariaLabel="Salz pro 100 g" onChange={set('salt')} />
               </Field>
             </div>
           )}
@@ -163,29 +163,29 @@ export default function FoodForm() {
           <div className="flex gap-3 rounded-2xl bg-warn-soft px-4 py-3 text-sm text-warn">
             <IconWarn size={18} className="mt-0.5 shrink-0" />
             <span>
-              {fmtInt(per100?.kcal ?? 0)} kcal does not match the macros, which give {fmtInt(energy.computedKcal)} kcal. Check for kJ in the kcal field or a typo. You can still save it.
+              {fmtInt(per100?.kcal ?? 0)} kcal passen nicht zu den Makros, die {fmtInt(energy.computedKcal)} kcal ergeben. Steht kJ im kcal-Feld oder ist es ein Tippfehler? Speichern geht trotzdem.
             </span>
           </div>
         )}
         {macroError && <p className="text-sm text-danger">{macroError}</p>}
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Serving (optional)">
-            <TextInput value={servingName} placeholder="e.g. 1 cup" onChange={(e) => setServingName(e.target.value)} />
+          <Field label="Portion (optional)">
+            <TextInput value={servingName} placeholder="z. B. 1 Becher" onChange={(e) => setServingName(e.target.value)} />
           </Field>
-          <Field label="Serving weight">
-            <NumberInput value={servingG} unit="g" ariaLabel="Serving weight" onChange={setServingG} />
+          <Field label="Portionsgewicht">
+            <NumberInput value={servingG} unit="g" ariaLabel="Portionsgewicht" onChange={setServingG} />
           </Field>
         </div>
 
         <div className="flex gap-2 pt-2">
           {existing && (
             <Button variant="danger" onClick={remove}>
-              Delete
+              Löschen
             </Button>
           )}
           <Button className="flex-1" size="lg" disabled={!valid} onClick={save}>
-            {existing ? 'Save' : meal ? 'Save and log' : 'Save'}
+            {existing ? 'Speichern' : meal ? 'Speichern und eintragen' : 'Speichern'}
           </Button>
         </div>
       </div>

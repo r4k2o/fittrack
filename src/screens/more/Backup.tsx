@@ -16,24 +16,24 @@ import { Button, Card, Group, Notice, Screen, SectionTitle, Segmented, Sheet, Sp
 import { useToast } from '../../ui/toast'
 
 const STORE_LABEL: Record<string, string> = {
-  profile: 'Profile',
-  goals: 'Goals',
-  nutritionTargets: 'Targets',
-  foods: 'Foods',
-  recipes: 'Recipes',
-  diaryEntries: 'Diary entries',
-  mealTemplates: 'Saved meals',
-  exercises: 'Custom exercises',
-  plans: 'Plans',
-  planDays: 'Plan days and routines',
-  planExercises: 'Plan exercises',
-  sessions: 'Workouts',
-  setLogs: 'Sets',
+  profile: 'Profil',
+  goals: 'Ziele',
+  nutritionTargets: 'Kalorienziele',
+  foods: 'Lebensmittel',
+  recipes: 'Rezepte',
+  diaryEntries: 'Tagebucheinträge',
+  mealTemplates: 'Gespeicherte Mahlzeiten',
+  exercises: 'Eigene Übungen',
+  plans: 'Pläne',
+  planDays: 'Plantage und Routinen',
+  planExercises: 'Planübungen',
+  sessions: 'Trainings',
+  setLogs: 'Sätze',
   cardioSessions: 'Cardio',
-  metrics: 'Body metrics',
-  photos: 'Progress photos',
-  imports: 'Imports',
-  settings: 'Settings',
+  metrics: 'Körperwerte',
+  photos: 'Fortschrittsfotos',
+  imports: 'Importe',
+  settings: 'Einstellungen',
 }
 
 export default function Backup() {
@@ -58,7 +58,7 @@ export default function Backup() {
       const outcome = await shareFiles([file], file.name)
       if (outcome !== 'cancelled') {
         await markBackedUp()
-        toast({ message: outcome === 'shared' ? 'Backup handed to the share sheet' : `Downloaded ${file.name}` })
+        toast({ message: outcome === 'shared' ? 'Backup an das Teilen-Menü übergeben' : `${file.name} heruntergeladen` })
       }
     } finally {
       setBusy(null)
@@ -69,7 +69,7 @@ export default function Backup() {
     setBusy('csv')
     try {
       const files = await exportCsv()
-      await shareFiles(files, 'Fittrack CSV export')
+      await shareFiles(files, 'Fittrack CSV-Export')
     } finally {
       setBusy(null)
     }
@@ -103,11 +103,11 @@ export default function Backup() {
     setBusy('restore')
     try {
       await applyRestore(restore.content, mode)
-      toast({ message: mode === 'replace' ? 'Restored: this phone now matches the backup' : 'Merged: newer rows from the backup were added' })
+      toast({ message: mode === 'replace' ? 'Wiederhergestellt: Dieses iPhone entspricht jetzt dem Backup' : 'Zusammengeführt: Neuere Daten aus dem Backup wurden ergänzt' })
       setRestore(null)
       setPlan(null)
     } catch (e) {
-      setErrors([`The restore failed and nothing was changed: ${(e as Error).message}`])
+      setErrors([`Wiederherstellen fehlgeschlagen, nichts wurde geändert: ${(e as Error).message}`])
     } finally {
       setBusy(null)
     }
@@ -116,36 +116,36 @@ export default function Backup() {
   const changed = plan?.filter((p) => p.add || p.update || p.remove) ?? []
 
   return (
-    <Screen back title="Backup and restore">
+    <Screen back title="Backup">
       <Card>
-        <p className="text-sm text-ink-2">Last backup</p>
-        <p className="text-xl font-bold">{age == null ? 'Never' : age === 0 ? 'Today' : `${age} ${age === 1 ? 'day' : 'days'} ago`}</p>
-        <p className="mt-2 text-sm text-ink-2">Everything you log lives only on this phone. Save a backup to Files (iCloud Drive) every week; the app reminds you on Today after 7 days.</p>
+        <p className="text-sm text-ink-2">Letztes Backup</p>
+        <p className="text-xl font-bold">{age == null ? 'Noch nie' : age === 0 ? 'Heute' : `Vor ${age} ${age === 1 ? 'Tag' : 'Tagen'}`}</p>
+        <p className="mt-2 text-sm text-ink-2">Alles, was du einträgst, liegt nur auf diesem iPhone. Sichere jede Woche ein Backup in Dateien (iCloud Drive); nach 7 Tagen erinnert dich die App.</p>
       </Card>
 
-      <SectionTitle>Save a backup</SectionTitle>
+      <SectionTitle>Backup sichern</SectionTitle>
       <Group>
         <Toggle
-          label="Include progress photos"
-          hint={photoCount ? `${photoCount} photos make the file larger` : 'No photos yet'}
+          label="Fotos einschließen"
+          hint={photoCount ? `${photoCount} Fotos machen die Datei größer` : 'Noch keine Fotos'}
           checked={includePhotos}
           onChange={setIncludePhotos}
           disabled={!photoCount}
         />
       </Group>
       <Button block size="lg" className="mt-3" disabled={busy != null} onClick={() => void doExport()}>
-        {busy === 'export' ? <Spinner /> : <IconShare />} Save backup
+        {busy === 'export' ? <Spinner /> : <IconShare />} Backup sichern
       </Button>
-      <p className="mt-2 px-1 text-sm text-ink-2">In the share sheet choose "Save to Files". Files are dated and never overwritten.</p>
+      <p className="mt-2 px-1 text-sm text-ink-2">Im Teilen-Menü „In Dateien sichern“ wählen. Dateien tragen das Datum und werden nie überschrieben.</p>
 
-      <SectionTitle>Restore</SectionTitle>
+      <SectionTitle>Wiederherstellen</SectionTitle>
       <Button block variant="secondary" size="lg" disabled={busy != null} onClick={() => fileRef.current?.click()}>
-        {busy === 'read' ? <Spinner /> : <IconUpload />} Choose a backup file
+        {busy === 'read' ? <Spinner /> : <IconUpload />} Backup-Datei wählen
       </Button>
       <input ref={fileRef} type="file" accept=".zip,application/zip" className="hidden" onChange={(e) => void pick(e.target.files?.[0])} />
       {errors && (
         <Notice tone="danger" className="mt-3">
-          <p className="font-semibold">This file cannot be restored. Nothing was changed.</p>
+          <p className="font-semibold">Diese Datei lässt sich nicht wiederherstellen. Nichts wurde geändert.</p>
           <ul className="mt-1 list-disc pl-5">
             {errors.slice(0, 6).map((e) => (
               <li key={e}>{e}</li>
@@ -154,11 +154,11 @@ export default function Backup() {
         </Notice>
       )}
 
-      <SectionTitle>Other apps</SectionTitle>
+      <SectionTitle>Andere Apps</SectionTitle>
       <Button block variant="secondary" disabled={busy != null} onClick={() => void doCsv()}>
-        {busy === 'csv' ? <Spinner /> : <IconShare />} Export CSV for Numbers or Excel
+        {busy === 'csv' ? <Spinner /> : <IconShare />} CSV für Numbers oder Excel
       </Button>
-      <p className="mt-2 px-1 text-sm text-ink-2">Diary, sets, cardio and body metrics as four CSV files. The backup's JSON files are readable without the app too.</p>
+      <p className="mt-2 px-1 text-sm text-ink-2">Tagebuch, Sätze, Cardio und Körperwerte als vier CSV-Dateien. Die JSON-Dateien im Backup sind auch ohne die App lesbar.</p>
 
       <Notice className="mt-6">{BACKUP_ADVICE}</Notice>
 
@@ -168,39 +168,39 @@ export default function Backup() {
           setRestore(null)
           setPlan(null)
         }}
-        title="Restore this backup?"
+        title="Dieses Backup wiederherstellen?"
         footer={
           <Button block size="lg" variant={mode === 'replace' ? 'danger' : 'primary'} disabled={busy === 'restore'} onClick={() => void apply()}>
-            {busy === 'restore' ? <Spinner /> : mode === 'replace' ? 'Replace everything' : 'Merge'}
+            {busy === 'restore' ? <Spinner /> : mode === 'replace' ? 'Alles ersetzen' : 'Zusammenführen'}
           </Button>
         }
       >
         {restore && (
           <div className="space-y-4 pb-2">
             <p className="text-sm text-ink-2">
-              {restore.fileName} · made {new Date(restore.content.manifest.exportedAt).toLocaleString()}
+              {restore.fileName} · erstellt {new Date(restore.content.manifest.exportedAt).toLocaleString('de-DE')}
             </p>
             <Segmented
               value={mode}
               options={[
-                { value: 'merge', label: 'Merge' },
-                { value: 'replace', label: 'Replace' },
+                { value: 'merge', label: 'Zusammenführen' },
+                { value: 'replace', label: 'Ersetzen' },
               ]}
               onChange={(m) => void changeMode(m)}
             />
             <p className="text-sm text-ink-2">
               {mode === 'merge'
-                ? 'Adds rows that are missing and keeps the newer version of rows that exist on both. Rows deleted after the backup was made come back.'
-                : 'Makes this phone match the backup exactly. Use it for an empty app or a new phone. Anything logged after the backup is lost.'}
+                ? 'Ergänzt Fehlendes und behält bei Doppelten die neuere Version. Was nach dem Backup gelöscht wurde, kommt zurück.'
+                : 'Macht dieses iPhone exakt zum Stand des Backups. Für eine leere App oder ein neues iPhone. Alles, was nach dem Backup eingetragen wurde, geht verloren.'}
             </p>
             {restore.content.warnings.length > 0 && <Notice tone="warn">{restore.content.warnings.join(' ')}</Notice>}
             <table className="w-full text-sm tabular-nums">
               <thead>
-                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-ink-2">
-                  <th className="py-1 font-semibold">Data</th>
-                  <th className="py-1 text-right font-semibold">Add</th>
-                  <th className="py-1 text-right font-semibold">Update</th>
-                  <th className="py-1 text-right font-semibold">Remove</th>
+                <tr className="text-left text-xs font-semibold text-ink-2">
+                  <th className="py-1 font-semibold">Daten</th>
+                  <th className="py-1 text-right font-semibold">Neu</th>
+                  <th className="py-1 text-right font-semibold">Geändert</th>
+                  <th className="py-1 text-right font-semibold">Entfernt</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -216,13 +216,13 @@ export default function Backup() {
                 ) : (
                   <tr>
                     <td colSpan={4} className="py-3 text-ink-2">
-                      Nothing would change: this phone already holds everything in the backup.
+                      Nichts würde sich ändern: Dieses iPhone hat schon alles aus dem Backup.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
-            <p className="text-xs text-ink-3">The restore runs as one transaction: if it fails, nothing changes.</p>
+            <p className="text-xs text-ink-3">Die Wiederherstellung läuft als eine Transaktion: Schlägt sie fehl, ändert sich nichts.</p>
           </div>
         )}
       </Sheet>

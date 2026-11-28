@@ -34,15 +34,15 @@ export default function Summary() {
   if (session === undefined || !sets || !exercises) return null
   if (session === null) {
     return (
-      <Screen back="/train" title="Workout">
-        <EmptyState title="This workout no longer exists" />
+      <Screen back="/train" title="Training">
+        <EmptyState title="Dieses Training gibt es nicht mehr" />
       </Screen>
     )
   }
 
   const stats = sessionStats(sets)
   const duration = session.endedAt ? (new Date(session.endedAt).getTime() - new Date(session.startedAt).getTime()) / 1000 : 0
-  const name = (exId: string) => exercises.find((e) => e.id === exId)?.name ?? 'Exercise'
+  const name = (exId: string) => exercises.find((e) => e.id === exId)?.name ?? 'Übung'
   const byExercise = (exId: string) => sets.filter((s) => s.exerciseId === exId && s.kind === 'work').sort((a, b) => a.setIndex - b.setIndex)
 
   const saveRoutine = async () => {
@@ -50,7 +50,7 @@ export default function Summary() {
     await saveRoutineFromSession(session.id, naming.trim())
     haptic('success')
     setNaming(null)
-    toast({ message: `Saved as routine "${naming.trim()}"` })
+    toast({ message: `Als Routine „${naming.trim()}“ gespeichert` })
   }
 
   const remove = async () => {
@@ -59,9 +59,9 @@ export default function Summary() {
     await deleteSession(session.id)
     navigate('/train', { replace: true })
     toast({
-      message: 'Workout deleted',
+      message: 'Training gelöscht',
       action: {
-        label: 'Undo',
+        label: 'Rückgängig',
         onClick: async () => {
           await db.sessions.put(row)
           await db.setLogs.bulkPut(keep)
@@ -71,20 +71,20 @@ export default function Summary() {
   }
 
   return (
-    <Screen tone="train" back="/train" title={session.name} subtitle={formatDayLong(session.date)}>
-      <Card tone="train" className="animate-rise mt-1 !p-6 text-center">
+    <Screen back="/train" title={session.name} subtitle={formatDayLong(session.date)}>
+      <Card className="animate-rise mt-1 !p-6 text-center">
         <span className="animate-pop mx-auto flex size-16 items-center justify-center rounded-full btn-accent">
           <IconCheck size={34} strokeWidth={3} />
         </span>
-        <p className="mt-4 text-title2">Workout complete</p>
+        <p className="mt-4 text-title2">Training geschafft</p>
         <p className="mt-1 text-[15px] text-ink-2">
           {session.name} · {formatDayLong(session.date)}
         </p>
-        <div className="mt-5 grid grid-cols-3 divide-x divide-line rounded-[22px] bg-surface/70 py-3">
+        <div className="mt-5 grid grid-cols-3 divide-x divide-line rounded-[18px] bg-fill py-3">
           {[
-            { label: 'Duration', value: fmtDuration(duration) },
-            { label: 'Work sets', value: fmtInt(stats.workSets) },
-            { label: 'Volume, kg', value: fmtInt(stats.volumeKg) },
+            { label: 'Dauer', value: fmtDuration(duration) },
+            { label: 'Sätze', value: fmtInt(stats.workSets) },
+            { label: 'Volumen, kg', value: fmtInt(stats.volumeKg) },
           ].map((x) => (
             <div key={x.label}>
               <div className="truncate text-[24px] font-bold tracking-tight">{x.value}</div>
@@ -96,7 +96,7 @@ export default function Summary() {
 
       {records && records.length > 0 && (
         <>
-          <SectionTitle>Records</SectionTitle>
+          <SectionTitle>Rekorde</SectionTitle>
           <Card className="space-y-4 !p-4">
             {records.map((r) => (
               <div key={r.exerciseId} className="flex items-center gap-3">
@@ -106,7 +106,7 @@ export default function Summary() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{name(r.exerciseId)}</span>
                   <span className="block text-[14px] text-ink-2">
-                    Estimated 1RM {fmt1(r.e1rm)} kg{r.previous != null ? `, up from ${fmt1(r.previous)} kg` : ' · first record'}
+                    Geschätztes 1RM {fmt1(r.e1rm)} kg{r.previous != null ? `, vorher ${fmt1(r.previous)} kg` : ' · erster Rekord'}
                   </span>
                 </span>
               </div>
@@ -115,7 +115,7 @@ export default function Summary() {
         </>
       )}
 
-      <SectionTitle>Exercises</SectionTitle>
+      <SectionTitle>Übungen</SectionTitle>
       <div className="space-y-2.5">
         {session.exerciseIds.map((exId) => {
           const list = byExercise(exId)
@@ -141,30 +141,30 @@ export default function Summary() {
 
       <div className="mt-6 space-y-2">
         {!session.planDayId && stats.workSets > 0 && (
-          <Button block size="lg" variant="secondary" onClick={() => setNaming(session.name === 'Workout' ? '' : session.name)}>
-            Save as routine
+          <Button block size="lg" variant="secondary" onClick={() => setNaming(session.name === 'Training' || session.name === 'Workout' ? '' : session.name)}>
+            Als Routine speichern
           </Button>
         )}
         <Button block size="lg" onClick={() => navigate('/train')}>
-          Done
+          Fertig
         </Button>
         <Button block variant="ghost" className="!text-danger" onClick={() => void remove()}>
-          Delete workout
+          Training löschen
         </Button>
       </div>
 
       <Sheet
         open={naming != null}
         onClose={() => setNaming(null)}
-        title="Save as routine"
+        title="Als Routine speichern"
         footer={
           <Button block size="lg" disabled={!naming?.trim()} onClick={() => void saveRoutine()}>
-            Save
+            Speichern
           </Button>
         }
       >
-        <p className="mb-3 text-[15px] text-ink-2">Same exercises and number of sets. Next time, each set starts from this workout's numbers.</p>
-        <TextInput autoFocus placeholder="e.g. Upper A" value={naming ?? ''} onChange={(e) => setNaming(e.target.value)} />
+        <p className="mb-3 text-[15px] text-ink-2">Gleiche Übungen und Satzzahl. Beim nächsten Mal startet jeder Satz mit den Werten von heute.</p>
+        <TextInput autoFocus placeholder="z. B. Oberkörper A" value={naming ?? ''} onChange={(e) => setNaming(e.target.value)} />
       </Sheet>
     </Screen>
   )

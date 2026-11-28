@@ -15,7 +15,7 @@ import ExerciseLibrary from './screens/train/ExerciseLibrary'
 import Session from './screens/train/Session'
 import Summary from './screens/train/Summary'
 import Train from './screens/train/Train'
-import { seedExercises } from './store/seed'
+import { migrateNames, seedExercises } from './store/seed'
 import { getSetting, setSetting } from './store/settings'
 import { IconFood, IconMore, IconProgress, IconToday, IconTrain } from './ui/icons'
 import { cx, Spinner } from './ui/kit'
@@ -97,6 +97,7 @@ function Root() {
     void (async () => {
       if (!(await getSetting('firstRunAt'))) await setSetting('firstRunAt', new Date().toISOString())
       await seedExercises()
+      await migrateNames()
     })()
   }, [])
 

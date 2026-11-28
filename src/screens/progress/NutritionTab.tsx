@@ -50,31 +50,31 @@ export default function NutritionTab() {
 
   if (intakes.length === 0)
     return (
-      <EmptyState icon={<IconFood size={30} />} title="No food logged yet">
-        Adherence and weekly averages appear once you log meals.
+      <EmptyState icon={<IconFood size={30} />} title="Noch nichts gegessen erfasst">
+        Trefferquote und Wochenschnitte erscheinen, sobald du Mahlzeiten einträgst.
         <div className="mt-5">
-          <Button onClick={() => navigate('/food')}>Go to Food</Button>
+          <Button onClick={() => navigate('/food')}>Zum Essen</Button>
         </div>
       </EmptyState>
     )
 
   return (
     <>
-      <Card tone="food" className="animate-rise !p-5">
-        <p className="text-[13px] font-semibold text-ink-2">This week on target</p>
+      <Card className="animate-rise !p-5">
+        <p className="text-[13px] font-semibold text-ink-2">Diese Woche im Ziel</p>
         <p className="mt-1 flex items-baseline gap-2">
           <span className="text-[52px] font-bold leading-none tracking-[-0.045em] tabular-nums">{thisWeek?.onTarget ?? 0}</span>
-          <span className="text-[17px] font-semibold text-ink-2">of {thisWeek?.logged ?? 0} logged days</span>
+          <span className="text-[17px] font-semibold text-ink-2">von {thisWeek?.logged ?? 0} erfassten Tagen</span>
         </p>
-        <p className="mt-2 text-[14px] text-ink-2">A day counts when calories are within 10% of the target and protein reaches 90% of it.</p>
+        <p className="mt-2 text-[14px] text-ink-2">Ein Tag zählt, wenn die Kalorien höchstens 10 % vom Ziel abweichen und Eiweiß 90 % erreicht.</p>
       </Card>
 
-      <ChartCard title="Days on target, % of logged days per week">
+      <ChartCard title="Tage im Ziel, % pro Woche">
         <div className="mt-2">
-          <Legend items={[{ label: 'Share of logged days on target', colorVar: '--food', kind: 'bar' }]} />
+          <Legend items={[{ label: 'Anteil der erfassten Tage im Ziel', colorVar: '--food', kind: 'bar' }]} />
         </div>
         <div className="mt-3">
-          <WeekBars weeks={bars} max={100} format={(n) => `${Math.round(n)}%`} colorVar="--food" unit="of logged days on target" />
+          <WeekBars weeks={bars} max={100} format={(n) => `${Math.round(n)} %`} colorVar="--food" unit="der erfassten Tage im Ziel" />
         </div>
       </ChartCard>
 
@@ -82,13 +82,13 @@ export default function NutritionTab() {
         <AdaptiveCard showProgress />
       </div>
 
-      <SectionTitle>Weekly averages</SectionTitle>
+      <SectionTitle>Wochenschnitt</SectionTitle>
       <Group>
         {perWeek.map((w) => (
           <ListRow
             key={w.week}
-            title={`Week of ${formatDayShort(w.week)}`}
-            subtitle={`${w.days} of 7 days logged`}
+            title={`Woche ab ${formatDayShort(w.week)}`}
+            subtitle={`${w.days} von 7 Tagen erfasst`}
             detail={
               <span className="block text-right">
                 <span className="block font-semibold text-ink tabular-nums">
@@ -97,7 +97,7 @@ export default function NutritionTab() {
                 </span>
                 <span className="block text-[12px] tabular-nums">
                   {fmtInt(w.protein)}
-                  {w.target ? ` / ${fmtInt(w.target.proteinG)}` : ''} g protein
+                  {w.target ? ` / ${fmtInt(w.target.proteinG)}` : ''} g Eiweiß
                 </span>
               </span>
             }

@@ -39,7 +39,7 @@ export const PROVIDERS: Record<AiProvider, { label: string; model: string; limit
 }
 
 export const PHOTO_PROMPT = `You see a photo of a meal. List each separate food you can see.
-For each give: "name" (a short generic English food name, e.g. "cooked white rice", "grilled chicken breast"),
+For each give: "name" (a short generic German food name, e.g. "Reis gekocht", "Hähnchenbrust gebraten"),
 "grams" (your best estimate of the edible weight on the plate) and "confidence" (0 to 1, how sure you are of both).
 Do not estimate calories. Reply with JSON only: {"items":[{"name":"...","grams":123,"confidence":0.8}]}.
 If there is no food in the photo, reply {"items":[]}.`

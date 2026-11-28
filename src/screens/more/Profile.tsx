@@ -50,44 +50,44 @@ export default function Profile() {
   const save = async () => {
     if (!inputs || !check.ok) return
     await saveProfileAndTargets({ sex: about.sex as Sex, birthDate: about.birthDate, heightCm: about.heightCm as number, weightKg: about.weightKg as number, bodyFatPct: about.bodyFatPct }, inputs)
-    toast({ message: 'Profile saved; targets recalculated from today' })
+    toast({ message: 'Profil gespeichert, Ziele ab heute neu berechnet' })
     navigate(-1)
   }
 
   return (
-    <Screen tone="brand" back title="Profile and goal">
+    <Screen back title="Profil und Ziel">
       <div className="space-y-4 pt-2">
-        <Field group label="Sex" error={check.errors.sex}>
+        <Field group label="Geschlecht" error={check.errors.sex}>
           <Segmented
             value={about.sex ?? ('' as Sex)}
             options={[
-              { value: 'male' as Sex, label: 'Male' },
-              { value: 'female' as Sex, label: 'Female' },
+              { value: 'male' as Sex, label: 'Männlich' },
+              { value: 'female' as Sex, label: 'Weiblich' },
             ]}
             onChange={(sex) => setAbout({ ...about, sex })}
           />
         </Field>
-        <Field label="Birth date" error={check.errors.birthDate}>
+        <Field label="Geburtsdatum" error={check.errors.birthDate}>
           <TextInput type="date" value={about.birthDate} max={localDay()} onChange={(e) => setAbout({ ...about, birthDate: e.target.value })} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Height" error={check.errors.heightCm}>
-            <NumberInput value={about.heightCm} unit="cm" ariaLabel="Height" onChange={(heightCm) => setAbout({ ...about, heightCm })} />
+          <Field label="Größe" error={check.errors.heightCm}>
+            <NumberInput value={about.heightCm} unit="cm" ariaLabel="Größe" onChange={(heightCm) => setAbout({ ...about, heightCm })} />
           </Field>
-          <Field label="Current weight" error={check.errors.weightKg}>
-            <NumberInput value={about.weightKg} unit="kg" ariaLabel="Current weight" onChange={(weightKg) => setAbout({ ...about, weightKg })} />
+          <Field label="Aktuelles Gewicht" error={check.errors.weightKg}>
+            <NumberInput value={about.weightKg} unit="kg" ariaLabel="Aktuelles Gewicht" onChange={(weightKg) => setAbout({ ...about, weightKg })} />
           </Field>
         </div>
-        <Field label="Body fat (optional)" error={check.errors.bodyFatPct}>
-          <NumberInput value={about.bodyFatPct} unit="%" ariaLabel="Body fat" onChange={(bodyFatPct) => setAbout({ ...about, bodyFatPct })} />
+        <Field label="Körperfett (optional)" error={check.errors.bodyFatPct}>
+          <NumberInput value={about.bodyFatPct} unit="%" ariaLabel="Körperfett" onChange={(bodyFatPct) => setAbout({ ...about, bodyFatPct })} />
         </Field>
 
-        <SectionTitle>Goal</SectionTitle>
+        <SectionTitle>Ziel</SectionTitle>
         <Segmented value={goal} options={(Object.keys(GOALS) as GoalType[]).map((g) => ({ value: g, label: GOALS[g].label }))} onChange={setGoal} />
         <p className="px-1 text-sm text-ink-2">{GOALS[goal].blurb}</p>
 
-        <SectionTitle>Activity, training included</SectionTitle>
-        <div className="overflow-hidden rounded-3xl bg-surface">
+        <SectionTitle>Aktivität inklusive Training</SectionTitle>
+        <div className="card overflow-hidden">
           {ACTIVITY_LEVELS.map((l) => (
             <label key={l.factor} className="flex min-h-14 cursor-pointer items-center gap-3 border-t border-line px-4 py-2 first:border-t-0">
               <input type="radio" name="activity" className="size-5 accent-[var(--brand)]" checked={Math.abs(activity - l.factor) < 0.001} onChange={() => setActivity(l.factor)} />
@@ -98,19 +98,19 @@ export default function Profile() {
             </label>
           ))}
         </div>
-        {!ACTIVITY_LEVELS.some((l) => Math.abs(activity - l.factor) < 0.001) && <p className="px-1 text-sm text-ink-2">Your factor of {activity} was set with the slider under Targets.</p>}
+        {!ACTIVITY_LEVELS.some((l) => Math.abs(activity - l.factor) < 0.001) && <p className="px-1 text-sm text-ink-2">Dein Faktor {String(activity).replace('.', ',')} wurde mit dem Regler unter Ziele gesetzt.</p>}
 
         {preview && (
           <Notice>
-            New targets from today: <b>{fmtInt(preview.kcal)} kcal</b>, protein {preview.proteinG} g, carbs {preview.carbsG} g, fat {preview.fatG} g
-            {prevKcal != null && prevKcal !== preview.kcal ? ` (now ${fmtInt(prevKcal)} kcal)` : ''}. Earlier days keep their targets.
+            Neue Ziele ab heute: <b>{fmtInt(preview.kcal)} kcal</b>, Eiweiß {preview.proteinG} g, Kohlenhydrate {preview.carbsG} g, Fett {preview.fatG} g
+            {prevKcal != null && prevKcal !== preview.kcal ? ` (bisher ${fmtInt(prevKcal)} kcal)` : ''}. Frühere Tage behalten ihre Ziele.
           </Notice>
         )}
         <Button block size="lg" disabled={!check.ok} onClick={() => void save()}>
-          Save
+          Speichern
         </Button>
         <Button block variant="ghost" onClick={() => navigate('/more/targets')}>
-          Fine-tune the targets
+          Ziele feinjustieren
         </Button>
       </div>
     </Screen>

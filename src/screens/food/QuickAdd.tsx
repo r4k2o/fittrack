@@ -31,7 +31,7 @@ export default function QuickAdd() {
       setEntry(e)
       setDate(e.date)
       setMeal(e.meal)
-      setName(e.name === 'Quick add' ? '' : e.name)
+      setName(e.name === 'Quick add' || e.name === 'Schnell erfasst' ? '' : e.name)
       setKcal(e.macros.kcal)
       setProtein(e.macros.protein || null)
       setCarbs(e.macros.carbs || null)
@@ -49,7 +49,7 @@ export default function QuickAdd() {
     if (entry) await updateQuickAdd(entry, q, meal)
     else {
       const e = await logQuickAdd(q, meal, date)
-      toast({ message: `Added ${fmtInt(e.macros.kcal)} kcal`, action: { label: 'Undo', onClick: () => void deleteEntries([e.id]) } })
+      toast({ message: `${fmtInt(e.macros.kcal)} kcal eingetragen`, action: { label: 'Rückgängig', onClick: () => void deleteEntries([e.id]) } })
     }
     navigate(back)
   }
@@ -57,44 +57,44 @@ export default function QuickAdd() {
   const remove = async () => {
     if (!entry) return
     const rows = await deleteEntries([entry.id])
-    toast({ message: 'Entry deleted', action: { label: 'Undo', onClick: () => restoreEntries(rows) } })
+    toast({ message: 'Eintrag gelöscht', action: { label: 'Rückgängig', onClick: () => restoreEntries(rows) } })
     navigate(back)
   }
 
   return (
-    <Screen tone="food" back={back} title={entry ? 'Edit quick add' : 'Quick add'} subtitle={date !== today ? relativeDay(date, today) : undefined}>
+    <Screen back={back} title={entry ? 'Schnell erfasst' : 'Schnell erfassen'} subtitle={date !== today ? relativeDay(date, today) : undefined}>
       <div className="space-y-4 pt-2">
-        <Field label="Calories">
-          <NumberInput value={kcal} integer unit="kcal" autoFocus={!editId} ariaLabel="Calories" onChange={setKcal} onEnter={save} />
+        <Field label="Kalorien">
+          <NumberInput value={kcal} integer unit="kcal" autoFocus={!editId} ariaLabel="Kalorien" onChange={setKcal} onEnter={save} />
         </Field>
         <div className="grid grid-cols-3 gap-2">
-          <Field label="Protein">
-            <NumberInput value={protein} unit="g" ariaLabel="Protein" onChange={setProtein} />
+          <Field label="Eiweiß">
+            <NumberInput value={protein} unit="g" ariaLabel="Eiweiß" onChange={setProtein} />
           </Field>
-          <Field label="Carbs">
-            <NumberInput value={carbs} unit="g" ariaLabel="Carbohydrate" onChange={setCarbs} />
+          <Field label="Kohlenh.">
+            <NumberInput value={carbs} unit="g" ariaLabel="Kohlenhydrate" onChange={setCarbs} />
           </Field>
-          <Field label="Fat">
-            <NumberInput value={fat} unit="g" ariaLabel="Fat" onChange={setFat} />
+          <Field label="Fett">
+            <NumberInput value={fat} unit="g" ariaLabel="Fett" onChange={setFat} />
           </Field>
         </div>
         {fromMacros != null && kcal == null && (
           <Button size="sm" variant="secondary" onClick={() => setKcal(fromMacros)}>
-            Use {fmtInt(fromMacros)} kcal from the macros
+            {fmtInt(fromMacros)} kcal aus den Makros übernehmen
           </Button>
         )}
         <Field label="Name (optional)">
-          <TextInput value={name} placeholder="e.g. Restaurant pasta" onChange={(e) => setName(e.target.value)} />
+          <TextInput value={name} placeholder="z. B. Pasta im Restaurant" onChange={(e) => setName(e.target.value)} />
         </Field>
         <Segmented size="sm" value={meal} options={MEALS.map((m) => ({ value: m, label: MEAL_LABEL[m] }))} onChange={setMeal} />
         <div className="flex gap-2 pt-2">
           {entry && (
             <Button variant="danger" onClick={remove}>
-              Delete
+              Löschen
             </Button>
           )}
           <Button className="flex-1" size="lg" disabled={!valid} onClick={save}>
-            {entry ? 'Save' : 'Add'}
+            {entry ? 'Speichern' : 'Eintragen'}
           </Button>
         </div>
       </div>

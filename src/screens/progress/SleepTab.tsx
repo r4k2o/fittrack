@@ -38,19 +38,19 @@ export default function SleepTab() {
 
   const sleepSeries = useMemo(
     () => [
-      { label: '7-day average', colorVar: '--indigo', points: sleepMa.map((p) => ({ date: p.date, value: p.value / 60 })), mode: 'line' as const, endDot: true },
-      { label: 'Night', colorVar: '--ink-3', points: (sleep ?? []).map((p) => ({ date: p.date, value: p.value / 60 })), mode: 'points' as const },
+      { label: '7-Tage-Schnitt', colorVar: '--indigo', points: sleepMa.map((p) => ({ date: p.date, value: p.value / 60 })), mode: 'line' as const, endDot: true },
+      { label: 'Nacht', colorVar: '--ink-3', points: (sleep ?? []).map((p) => ({ date: p.date, value: p.value / 60 })), mode: 'points' as const },
     ],
     [sleep, sleepMa],
   )
-  const scoreSeries = useMemo(() => [{ label: '7-day average', colorVar: '--indigo', points: scoreMa, mode: 'line' as const, endDot: true }], [scoreMa])
+  const scoreSeries = useMemo(() => [{ label: '7-Tage-Schnitt', colorVar: '--indigo', points: scoreMa, mode: 'line' as const, endDot: true }], [scoreMa])
 
   if (sleep && steps && sleep.length === 0 && steps.length === 0)
     return (
-      <EmptyState icon={<IconMoon size={30} />} title="No sleep or steps yet">
-        Both arrive through the Apple Health import: a Shortcut writes them to a file, and the app reads it in two taps.
+      <EmptyState icon={<IconMoon size={30} />} title="Noch kein Schlaf und keine Schritte">
+        Beides kommt über den Apple-Health-Import: Ein Kurzbefehl schreibt die Daten in eine Datei, die App liest sie mit zwei Tippern.
         <div className="mt-5">
-          <Button onClick={() => navigate('/more/health')}>Set up the import</Button>
+          <Button onClick={() => navigate('/more/health')}>Import einrichten</Button>
         </div>
       </EmptyState>
     )
@@ -60,37 +60,37 @@ export default function SleepTab() {
     <>
       <RangePicker value={range} onChange={setRange} />
       {sleep && sleep.length > 0 && (
-        <ChartCard title="Sleep, hours a night, 7-day average">
-          <p className="mt-1 text-[13px] text-ink-2">{lastAvg ? `${fmtSleep(lastAvg.value)} on average in the 7 days to ${formatDate(lastAvg.date)}` : 'The average appears after 4 nights in a week.'}</p>
+        <ChartCard title="Schlaf pro Nacht, 7-Tage-Schnitt">
+          <p className="mt-1 text-[13px] text-ink-2">{lastAvg ? `Im Schnitt ${fmtSleep(lastAvg.value)} in den 7 Tagen bis ${formatDate(lastAvg.date)}` : 'Der Schnitt erscheint nach 4 Nächten in einer Woche.'}</p>
           <div className="mt-2">
             <Legend
               items={[
-                { label: 'Night', colorVar: '--ink-3', kind: 'dot' },
-                { label: '7-day average', colorVar: '--indigo', kind: 'line' },
+                { label: 'Nacht', colorVar: '--ink-3', kind: 'dot' },
+                { label: '7-Tage-Schnitt', colorVar: '--indigo', kind: 'line' },
               ]}
             />
           </div>
           <div className="mt-3">
-            <TimeChart series={sleepSeries} from={from} to={today} format={(n) => fmtSleep(n * 60)} height={200} label="Sleep per night with a 7-day average" />
+            <TimeChart series={sleepSeries} from={from} to={today} format={(n) => fmtSleep(n * 60)} height={200} label="Schlaf pro Nacht mit 7-Tage-Schnitt" />
           </div>
         </ChartCard>
       )}
       {scorePoints.length > 0 && (
-        <ChartCard title={`Sleep score, 7-day average (${scoreSource === 'typed' ? 'typed in from Health' : "the app's own"})`}>
+        <ChartCard title={`Schlafscore, 7-Tage-Schnitt (${scoreSource === 'typed' ? 'aus Health eingetragen' : 'von der App'})`}>
           <p className="mt-1 text-[13px] text-ink-2">
             {scoreSource === 'typed'
-              ? 'Scores you entered from the Health app.'
-              : "Computed from duration (60 points for 7.5 hours), bedtime regularity (20) and interruptions (20). Apple's score has no API."}
+              ? 'Scores, die du aus der Health-App eingetragen hast.'
+              : 'Berechnet aus Dauer (60 Punkte für 7,5 Stunden), Regelmäßigkeit der Schlafenszeit (20) und Unterbrechungen (20). Apples Score hat keine Schnittstelle.'}
           </p>
           <div className="mt-3">
-            <TimeChart series={scoreSeries} from={from} to={today} format={(n) => fmtInt(n)} height={180} label="Sleep score, 7-day average" />
+            <TimeChart series={scoreSeries} from={from} to={today} format={(n) => fmtInt(n)} height={180} label="Schlafscore, 7-Tage-Schnitt" />
           </div>
         </ChartCard>
       )}
       {steps && steps.length > 0 && (
-        <ChartCard title="Steps, daily average per week">
+        <ChartCard title="Schritte, Tagesschnitt pro Woche">
           <div className="mt-3">
-            <WeekBars weeks={stepBars} max={Math.max(0, ...stepBars.map((w) => w.value ?? 0))} format={fmtInt} colorVar="--indigo" unit="steps a day" />
+            <WeekBars weeks={stepBars} max={Math.max(0, ...stepBars.map((w) => w.value ?? 0))} format={fmtInt} colorVar="--indigo" unit="Schritte am Tag" />
           </div>
         </ChartCard>
       )}

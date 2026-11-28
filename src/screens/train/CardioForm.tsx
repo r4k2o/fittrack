@@ -16,7 +16,8 @@ import { Button, Chip, cx, Field, IconButton, NumberInput, Screen, Spinner, Stic
 import { haptic } from '../../ui/motion'
 import { useToast } from '../../ui/toast'
 
-const EFFORT_WORD = ['', 'Very light', 'Very light', 'Light', 'Light', 'Moderate', 'Moderate', 'Hard', 'Hard', 'Very hard', 'Maximal']
+const EFFORT_WORD = ['', 'sehr leicht', 'sehr leicht', 'leicht', 'leicht', 'mittel', 'mittel', 'hart', 'hart', 'sehr hart', 'maximal']
+const INTENSITY_WORD: Record<string, string> = { light: 'leicht', moderate: 'moderat', vigorous: 'intensiv' }
 
 interface Draft {
   type: CardioType
@@ -77,7 +78,7 @@ export default function CardioForm() {
 
   if (!draft)
     return (
-      <Screen back title="Cardio" tone="train">
+      <Screen back title="Cardio">
         <div className="flex justify-center py-16 text-ink-2">
           <Spinner />
         </div>
@@ -108,7 +109,7 @@ export default function CardioForm() {
       id,
     )
     haptic('success')
-    toast({ message: `${CARDIO_TYPES.find((t) => t.value === row.type)?.label} · ${row.durationMin} min saved` })
+    toast({ message: `${CARDIO_TYPES.find((t) => t.value === row.type)?.label} · ${row.durationMin} Min gespeichert` })
     navigate(-1)
   }
 
@@ -116,27 +117,26 @@ export default function CardioForm() {
     if (!id) return
     const row = await deleteCardio(id)
     navigate(-1)
-    if (row) toast({ message: 'Session deleted', action: { label: 'Undo', onClick: () => restoreCardio(row) } })
+    if (row) toast({ message: 'Einheit gelöscht', action: { label: 'Rückgängig', onClick: () => restoreCardio(row) } })
   }
 
   return (
     <Screen
       back
-      title={id ? 'Edit cardio' : 'Log cardio'}
-      tone="train"
+      title={id ? 'Cardio bearbeiten' : 'Cardio eintragen'}
       large={false}
       bottomPad={false}
       className="pb-[calc(env(safe-area-inset-bottom)+7rem)]"
       actions={
         id ? (
-          <IconButton label="Delete session" className="text-danger" onClick={() => void remove()}>
+          <IconButton label="Einheit löschen" className="text-danger" onClick={() => void remove()}>
             <IconTrash size={20} />
           </IconButton>
         ) : undefined
       }
     >
       <div className="space-y-5 pt-2">
-        <Field label="Type" group>
+        <Field label="Art" group>
           <div className="grid grid-cols-3 gap-2">
             {CARDIO_TYPES.map((t) => (
               <button
@@ -152,19 +152,19 @@ export default function CardioForm() {
           </div>
         </Field>
 
-        <Field label="Duration" hint="Minutes">
-          <NumberInput value={draft.durationMin} integer ariaLabel="Duration in minutes" onChange={(n) => set({ durationMin: n })} inputClassName="text-[22px] font-semibold" />
+        <Field label="Dauer" hint="Minuten">
+          <NumberInput value={draft.durationMin} integer ariaLabel="Dauer in Minuten" onChange={(n) => set({ durationMin: n })} inputClassName="text-[22px] font-semibold" />
         </Field>
         <div className="-mt-2 flex flex-wrap gap-2">
           {[20, 30, 45, 60, 90].map((m) => (
             <Chip key={m} active={draft.durationMin === m} onClick={() => set({ durationMin: m })}>
-              {m} min
+              {m} Min
             </Chip>
           ))}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Date">
+          <Field label="Datum">
             <TextInput type="date" value={draft.date} max={localDay()} onChange={(e) => set({ date: e.target.value })} />
           </Field>
           <Field label="Start">
@@ -172,41 +172,41 @@ export default function CardioForm() {
           </Field>
         </div>
 
-        <Field label="Distance" hint={pace ? `Pace ${pace}` : 'Kilometres, optional'}>
-          <NumberInput value={draft.distanceKm} ariaLabel="Distance in kilometres" onChange={(n) => set({ distanceKm: n })} />
+        <Field label="Strecke" hint={pace ? `Tempo ${pace}` : 'Kilometer, optional'}>
+          <NumberInput value={draft.distanceKm} ariaLabel="Strecke in Kilometern" onChange={(n) => set({ distanceKm: n })} />
         </Field>
 
-        <Field label={`Effort: ${draft.rpe} of 10 · ${EFFORT_WORD[draft.rpe]}`} hint={`Counts as ${intensity} for the weekly minutes`}>
+        <Field label={`Anstrengung: ${draft.rpe} von 10 · ${EFFORT_WORD[draft.rpe]}`} hint={`Zählt als ${INTENSITY_WORD[intensity] ?? intensity} für die Wochenminuten`}>
           <input
             type="range"
             min={1}
             max={10}
             step={1}
             value={draft.rpe}
-            aria-label="Effort from 1 to 10"
+            aria-label="Anstrengung von 1 bis 10"
             onChange={(e) => set({ rpe: Number(e.target.value) })}
             className="h-11 w-full accent-[var(--train)]"
           />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Average heart rate" hint="Optional">
-            <NumberInput value={draft.avgHr} integer ariaLabel="Average heart rate" onChange={(n) => set({ avgHr: n })} />
+          <Field label="Puls, Durchschnitt" hint="Optional">
+            <NumberInput value={draft.avgHr} integer ariaLabel="Durchschnittlicher Puls" onChange={(n) => set({ avgHr: n })} />
           </Field>
-          <Field label="Calories" hint={estimate ? `Empty: about ${fmtInt(estimate)}` : 'From your watch'}>
-            <NumberInput value={draft.kcal} integer ariaLabel="Calories burned" placeholder={estimate ? `≈ ${fmtInt(estimate)}` : '–'} onChange={(n) => set({ kcal: n })} />
+          <Field label="Kalorien" hint={estimate ? `Leer: etwa ${fmtInt(estimate)}` : 'Von deiner Uhr'}>
+            <NumberInput value={draft.kcal} integer ariaLabel="Verbrannte Kalorien" placeholder={estimate ? `≈ ${fmtInt(estimate)}` : '–'} onChange={(n) => set({ kcal: n })} />
           </Field>
         </div>
-        {!weight && <p className="-mt-2 px-1 text-[13px] text-ink-2">Log your weight once to get a calorie estimate.</p>}
+        {!weight && <p className="-mt-2 px-1 text-[13px] text-ink-2">Trag einmal dein Gewicht ein, dann schätzt die App die Kalorien.</p>}
 
-        <Field label="Notes">
+        <Field label="Notizen">
           <TextInput value={draft.notes} placeholder="Optional" onChange={(e) => set({ notes: e.target.value })} />
         </Field>
       </div>
 
       <StickyFooter>
         <Button block size="lg" disabled={!valid} onClick={() => void save()}>
-          Save
+          Speichern
         </Button>
       </StickyFooter>
     </Screen>

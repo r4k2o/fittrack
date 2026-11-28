@@ -39,7 +39,7 @@ export default function FoodList() {
       setMap(detectColumns(t.header))
       setName(file.name.replace(/\.(csv|tsv|txt|json)$/i, ''))
     } catch (e) {
-      setError((e as Error).message || 'The file could not be read.')
+      setError((e as Error).message || 'Die Datei ließ sich nicht lesen.')
     }
   }
 
@@ -50,8 +50,8 @@ export default function FoodList() {
     if (!mapped || missing.length) return
     setBusy(true)
     try {
-      const n = await importFoodList(mapped.foods, name.trim() || 'Food list')
-      toast({ message: `${fmtInt(n)} foods imported` })
+      const n = await importFoodList(mapped.foods, name.trim() || 'Lebensmittelliste')
+      toast({ message: `${fmtInt(n)} Lebensmittel importiert` })
       setTable(null)
     } finally {
       setBusy(false)
@@ -59,25 +59,25 @@ export default function FoodList() {
   }
 
   return (
-    <Screen tone="food" back title="Food list and my foods">
+    <Screen back title="Lebensmittel">
       <Card>
         {meta ? (
           <>
             <p className="text-xl font-bold">{meta.name}</p>
             <p className="text-sm text-ink-2">
-              {fmtInt(meta.count)} foods · imported {formatDate(localDay(new Date(meta.importedAt)))}
+              {fmtInt(meta.count)} Lebensmittel · importiert am {formatDate(localDay(new Date(meta.importedAt)))}
             </p>
           </>
         ) : (
           <>
-            <p className="text-xl font-bold">No food list yet</p>
-            <p className="mt-1 text-sm text-ink-2">Search covers what you have scanned or added. Import a food table to search generic foods too.</p>
+            <p className="text-xl font-bold">Noch keine Lebensmittelliste</p>
+            <p className="mt-1 text-sm text-ink-2">Die Suche findet, was du gescannt oder angelegt hast. Mit einer importierten Nährwerttabelle findest du auch allgemeine Lebensmittel.</p>
           </>
         )}
       </Card>
 
       <Button block size="lg" className="mt-3" onClick={() => fileRef.current?.click()}>
-        <IconUpload /> {meta ? 'Import a new version' : 'Import a food list'}
+        <IconUpload /> {meta ? 'Neue Version importieren' : 'Lebensmittelliste importieren'}
       </Button>
       <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.json,text/csv,application/json" className="hidden" onChange={(e) => void pick(e.target.files?.[0])} />
       {error && (
@@ -86,59 +86,59 @@ export default function FoodList() {
         </Notice>
       )}
 
-      <SectionTitle>Where to get one</SectionTitle>
+      <SectionTitle>Woher bekommen</SectionTitle>
       <Card className="space-y-2 text-sm text-ink-2">
         <p>
-          <b className="text-ink">BLS 4.0</b>, Germany's national food table (7,140 foods), is free from{' '}
+          <b className="text-ink">BLS 4.0</b>, der Bundeslebensmittelschlüssel (7.140 Lebensmittel), ist kostenlos auf{' '}
           <a className="text-brand-ink underline" href="https://blsdb.de" target="_blank" rel="noreferrer">
             blsdb.de
           </a>
-          . Open the download in Numbers or Excel, export it as CSV, and import that file here. Read its licence before sharing the file anywhere public.
+          . Den Download in Numbers oder Excel öffnen, als CSV exportieren und hier importieren. Vor dem öffentlichen Teilen die Lizenz lesen.
         </p>
         <p>
-          <b className="text-ink">USDA FoodData Central</b> (English, public domain) works the same way.
+          <b className="text-ink">USDA FoodData Central</b> (Englisch, gemeinfrei) geht genauso.
         </p>
-        <p>The importer needs a name, energy (kcal or kJ), protein, carbohydrate and fat per 100 g; fibre, sugar, saturated fat and salt (or sodium) are used when present. Importing again replaces the list and keeps your history.</p>
+        <p>Gebraucht werden Name, Energie (kcal oder kJ), Eiweiß, Kohlenhydrate und Fett pro 100 g; Ballaststoffe, Zucker, gesättigte Fette und Salz (oder Natrium) werden genutzt, wenn vorhanden. Ein neuer Import ersetzt die Liste, dein Verlauf bleibt.</p>
       </Card>
       {meta && (
         <Button block variant="ghost" className="mt-2 !text-danger" onClick={() => setConfirmRemove(true)}>
-          Remove the food list
+          Lebensmittelliste entfernen
         </Button>
       )}
 
-      <SectionTitle>My foods</SectionTitle>
+      <SectionTitle>Eigene Lebensmittel</SectionTitle>
       {mine && mine.length ? (
         <Group>
           {mine.map((f) => (
             <ListRow
               key={f.id}
               title={f.name}
-              subtitle={[f.brand, f.source === 'off' ? 'scanned' : 'added by you', f.flagged ? 'check values' : null].filter(Boolean).join(' · ')}
+              subtitle={[f.brand, f.source === 'off' ? 'gescannt' : 'selbst angelegt', f.flagged ? 'Werte prüfen' : null].filter(Boolean).join(' · ')}
               detail={`${fmtInt(f.per100.kcal)} kcal`}
               onClick={() => navigate(`/food/edit/${f.id}`)}
             />
           ))}
         </Group>
       ) : (
-        <EmptyState title="Nothing scanned or added yet">Scanned products and foods added from a label appear here and can be corrected.</EmptyState>
+        <EmptyState title="Noch nichts gescannt oder angelegt">Gescannte Produkte und vom Etikett eingetragene Lebensmittel erscheinen hier und lassen sich korrigieren.</EmptyState>
       )}
 
       <Sheet
         open={!!table}
         onClose={() => setTable(null)}
-        title="Check the columns"
+        title="Spalten prüfen"
         footer={
           <Button block size="lg" disabled={busy || !!missing.length || !mapped?.foods.length} onClick={() => void doImport()}>
-            {busy ? <Spinner /> : `Import ${fmtInt(mapped?.foods.length ?? 0)} foods`}
+            {busy ? <Spinner /> : `${fmtInt(mapped?.foods.length ?? 0)} Lebensmittel importieren`}
           </Button>
         }
       >
         {table && mapped && (
           <div className="space-y-4 pb-2">
             <p className="text-sm text-ink-2">
-              {fmtInt(table.rows.length)} rows, {table.header.length} columns. Each value below was matched to a column; change any that are wrong.
+              {fmtInt(table.rows.length)} Zeilen, {table.header.length} Spalten. Jeder Wert unten ist einer Spalte zugeordnet; ändere falsche Zuordnungen.
             </p>
-            <Field label="Name of the list">
+            <Field label="Name der Liste">
               <TextInput value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
             <div className="space-y-2">
@@ -156,27 +156,27 @@ export default function FoodList() {
                       setMap(next)
                     }}
                   >
-                    <option value="">– not in the file –</option>
+                    <option value="">– nicht in der Datei –</option>
                     {table.header.map((h, i) => (
                       <option key={i} value={i}>
-                        {h || `Column ${i + 1}`}
+                        {h || `Spalte ${i + 1}`}
                       </option>
                     ))}
                   </select>
                 </label>
               ))}
             </div>
-            {missing.length > 0 && <Notice tone="danger">Choose a column for: {missing.map((m) => FIELD_LABEL[m]).join(', ')}.</Notice>}
+            {missing.length > 0 && <Notice tone="danger">Spalte wählen für: {missing.map((m) => FIELD_LABEL[m]).join(', ')}.</Notice>}
             {mapped.foods.length > 0 && (
               <div>
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-2">Preview, per 100 g</p>
+                <p className="mb-1 text-xs font-semibold text-ink-2">Vorschau, pro 100 g</p>
                 <table className="w-full text-sm tabular-nums">
                   <tbody className="divide-y divide-line">
                     {mapped.foods.slice(0, 5).map((f) => (
                       <tr key={f.key}>
                         <td className="py-1.5 pr-2">{f.name}</td>
                         <td className="whitespace-nowrap py-1.5 text-right text-ink-2">
-                          {fmtInt(f.per100.kcal)} kcal · P {fmt1(f.per100.protein)} · C {fmt1(f.per100.carbs)} · F {fmt1(f.per100.fat)}
+                          {fmtInt(f.per100.kcal)} kcal · E {fmt1(f.per100.protein)} · K {fmt1(f.per100.carbs)} · F {fmt1(f.per100.fat)}
                         </td>
                       </tr>
                     ))}
@@ -187,8 +187,8 @@ export default function FoodList() {
             {(mapped.skipped.length > 0 || mapped.flagged > 0) && (
               <Notice tone="warn">
                 {mapped.skipped.length > 0 &&
-                  `${fmtInt(mapped.skipped.length)} rows will be skipped (first: line ${mapped.skipped[0].row}, ${mapped.skipped[0].reason}). `}
-                {mapped.flagged > 0 && `${fmtInt(mapped.flagged)} foods have calories that do not match their macros; they are imported and marked.`}
+                  `${fmtInt(mapped.skipped.length)} Zeilen werden übersprungen (erste: Zeile ${mapped.skipped[0].row}, ${mapped.skipped[0].reason}). `}
+                {mapped.flagged > 0 && `Bei ${fmtInt(mapped.flagged)} Lebensmitteln passen Kalorien und Makros nicht zusammen; sie werden importiert und markiert.`}
               </Notice>
             )}
           </div>
@@ -198,7 +198,7 @@ export default function FoodList() {
       <Sheet
         open={confirmRemove}
         onClose={() => setConfirmRemove(false)}
-        title="Remove the food list?"
+        title="Lebensmittelliste entfernen?"
         footer={
           <Button
             block
@@ -206,14 +206,14 @@ export default function FoodList() {
             onClick={async () => {
               await removeFoodList()
               setConfirmRemove(false)
-              toast({ message: 'Food list removed' })
+              toast({ message: 'Lebensmittelliste entfernt' })
             }}
           >
-            Remove {meta ? fmtInt(meta.count) : ''} foods
+            {meta ? fmtInt(meta.count) : ''} Lebensmittel entfernen
           </Button>
         }
       >
-        <p className="pb-2 text-ink-2">Your diary keeps every entry, since each stores its own values. Scanned and saved foods stay. You can import the list again at any time.</p>
+        <p className="pb-2 text-ink-2">Dein Tagebuch behält jeden Eintrag, weil jeder seine Werte selbst speichert. Gescannte und eigene Lebensmittel bleiben. Du kannst die Liste jederzeit wieder importieren.</p>
       </Sheet>
     </Screen>
   )

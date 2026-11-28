@@ -50,29 +50,29 @@ export default function PhotoCompare() {
   }
 
   return (
-    <Screen back="/progress?tab=photos" title="Compare photos">
+    <Screen back="/progress?tab=photos" title="Fotos vergleichen">
       <Segmented value={pose} options={POSES.map((p) => ({ value: p, label: POSE_LABEL[p] }))} onChange={(p) => setParams({ pose: p }, { replace: true })} />
       {list.length < 2 ? (
-        <EmptyState title={`Fewer than two ${POSE_LABEL[pose].toLowerCase()} photos`}>Take one this week and another in a few weeks to compare them.</EmptyState>
+        <EmptyState title={`Weniger als zwei Fotos ${POSE_LABEL[pose]}`}>Mach diese Woche eins und in ein paar Wochen ein weiteres, dann kannst du vergleichen.</EmptyState>
       ) : (
         <>
           <div className="mt-3 flex flex-wrap gap-2">
             <Chip active={a?.id === first?.id && b?.id === latest?.id} onClick={() => first && latest && set({ a: first.id, b: latest.id })}>
-              First against latest
+              Erstes gegen neuestes
             </Chip>
-            <Chip onClick={fourWeeks}>Four weeks apart</Chip>
+            <Chip onClick={fourWeeks}>Vier Wochen Abstand</Chip>
           </div>
           <div className="mt-3 flex gap-2">
-            <PhotoSelect label="Before" list={list} value={a?.id ?? ''} onChange={(id) => set({ a: id })} />
-            <PhotoSelect label="After" list={list} value={b?.id ?? ''} onChange={(id) => set({ b: id })} />
+            <PhotoSelect label="Vorher" list={list} value={a?.id ?? ''} onChange={(id) => set({ a: id })} />
+            <PhotoSelect label="Nachher" list={list} value={b?.id ?? ''} onChange={(id) => set({ b: id })} />
           </div>
           <Segmented
             className="mt-3"
             size="sm"
             value={mode}
             options={[
-              { value: 'side' as const, label: 'Side by side' },
-              { value: 'slider' as const, label: 'Slider' },
+              { value: 'side' as const, label: 'Nebeneinander' },
+              { value: 'slider' as const, label: 'Schieber' },
             ]}
             onChange={setMode}
           />
@@ -97,7 +97,7 @@ export default function PhotoCompare() {
                 <span className="absolute bottom-2 left-2 rounded-full bg-black/50 px-2 py-0.5 text-[12px] font-semibold text-white">{caption(a)}</span>
                 <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[12px] font-semibold text-white">{caption(b)}</span>
               </div>
-              <input type="range" min={0} max={100} value={split} aria-label="Slide between the two photos" onChange={(e) => setSplit(Number(e.target.value))} className="mt-3 h-11 w-full accent-[var(--body)]" />
+              <input type="range" min={0} max={100} value={split} aria-label="Zwischen den beiden Fotos schieben" onChange={(e) => setSplit(Number(e.target.value))} className="mt-3 h-11 w-full accent-[var(--body)]" />
             </div>
           )}
         </>

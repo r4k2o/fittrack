@@ -32,9 +32,9 @@ function Source({ s }: { s: keyof typeof SOURCES }) {
 function SetByYou({ onReset }: { onReset: () => void }) {
   return (
     <span className="inline-flex items-center gap-2">
-      <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[12px] font-bold text-brand-ink">set by you</span>
+      <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[12px] font-bold text-brand-ink">von dir gesetzt</span>
       <button type="button" onClick={onReset} className="text-[12px] font-semibold text-ink-2 underline">
-        reset
+        zurücksetzen
       </button>
     </span>
   )
@@ -58,8 +58,8 @@ function Slider({ value, min, max, step, onChange, label }: { value: number; min
 }
 
 function goalAdjustLabel(goal: GoalType, pct: number): string {
-  if (goal === 'maintain') return 'maintenance'
-  return `${pct > 0 ? '+' : ''}${pct}%`
+  if (goal === 'maintain') return 'Erhalt'
+  return `${pct > 0 ? '+' : ''}${pct} %`
 }
 
 /**
@@ -71,7 +71,7 @@ function SplitBar({ parts }: { parts: { label: string; kcal: number; color: stri
   const total = Math.max(1, parts.reduce((s, p) => s + p.kcal, 0))
   return (
     <div>
-      <div className="flex h-7 gap-[2px]" role="img" aria-label={parts.map((p) => `${p.label} ${Math.round((p.kcal / total) * 100)}%`).join(', ')}>
+      <div className="flex h-7 gap-[2px]" role="img" aria-label={parts.map((p) => `${p.label} ${Math.round((p.kcal / total) * 100)} %`).join(', ')}>
         {parts
           .filter((p) => p.kcal > 0)
           .map((p) => {
@@ -80,7 +80,7 @@ function SplitBar({ parts }: { parts: { label: string; kcal: number; color: stri
               <div key={p.label} className="flex items-center overflow-hidden rounded-[4px] px-2" style={{ width: `${(p.kcal / total) * 100}%`, background: p.color }}>
                 {share >= 12 && (
                   <span className="text-[12px] font-bold" style={{ color: p.ink }}>
-                    {share}%
+                    {share} %
                   </span>
                 )}
               </div>
@@ -94,7 +94,7 @@ function SplitBar({ parts }: { parts: { label: string; kcal: number; color: stri
             {p.label}
           </span>
         ))}
-        <span className="ml-auto">share of calories</span>
+        <span className="ml-auto">Anteil der Kalorien</span>
       </div>
     </div>
   )
@@ -111,13 +111,13 @@ export function TargetsEditor({ inputs, onChange, defaultOpen = false }: { input
 
   return (
     <div className="space-y-3">
-      <div className="card tone-brand tinted p-5 text-center">
-        <p className="text-[13px] font-semibold text-ink-2">Daily target</p>
+      <div className="card p-5 text-center">
+        <p className="text-[13px] font-semibold text-ink-2">Tagesziel</p>
         {editKcal ? (
           <div className="mx-auto mt-2 flex max-w-64 items-center gap-2">
-            <NumberInput value={r.kcal} integer unit="kcal" autoFocus ariaLabel="Calorie target" onChange={(n) => n != null && n >= 800 && n <= 6000 && set({ kcalOverride: n })} />
+            <NumberInput value={r.kcal} integer unit="kcal" autoFocus ariaLabel="Kalorienziel" onChange={(n) => n != null && n >= 800 && n <= 6000 && set({ kcalOverride: n })} />
             <Button size="md" variant="secondary" onClick={() => setEditKcal(false)}>
-              Done
+              Fertig
             </Button>
           </div>
         ) : (
@@ -131,7 +131,7 @@ export function TargetsEditor({ inputs, onChange, defaultOpen = false }: { input
             <SetByYou onReset={() => set({ kcalOverride: undefined })} />
           ) : (
             <button type="button" onClick={() => setEditKcal(true)} className="inline-flex items-center gap-1 text-[12px] font-semibold text-ink-3">
-              <IconEdit size={13} /> Tap the number to set it yourself
+              <IconEdit size={13} /> Zahl antippen, um sie selbst festzulegen
             </button>
           )}
         </div>
@@ -139,25 +139,25 @@ export function TargetsEditor({ inputs, onChange, defaultOpen = false }: { input
         <div className="mt-5 text-left">
           <SplitBar
             parts={[
-              { label: 'Protein', kcal: r.proteinG * 4, color: 'var(--protein)', ink: '#ffffff' },
-              { label: 'Carbs', kcal: r.carbsG * 4, color: 'var(--carbs)', ink: '#0b0b0b' },
-              { label: 'Fat', kcal: r.fatG * 9, color: 'var(--fat)', ink: '#ffffff' },
+              { label: 'Eiweiß', kcal: r.proteinG * 4, color: 'var(--protein)', ink: '#ffffff' },
+              { label: 'Kohlenhydrate', kcal: r.carbsG * 4, color: 'var(--carbs)', ink: '#0b0b0b' },
+              { label: 'Fett', kcal: r.fatG * 9, color: 'var(--fat)', ink: '#ffffff' },
             ]}
           />
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2 text-left">
           {[
-            { label: 'Protein', g: r.proteinG, perKg: r.proteinG / inputs.weightKg },
-            { label: 'Carbs', g: r.carbsG, perKg: r.carbsPerKg },
-            { label: 'Fat', g: r.fatG, perKg: r.fatG / inputs.weightKg },
+            { label: 'Eiweiß', g: r.proteinG, perKg: r.proteinG / inputs.weightKg },
+            { label: 'Kohlenh.', g: r.carbsG, perKg: r.carbsPerKg },
+            { label: 'Fett', g: r.fatG, perKg: r.fatG / inputs.weightKg },
           ].map((m) => (
-            <div key={m.label} className="rounded-[18px] bg-surface/75 px-3 py-2.5">
+            <div key={m.label} className="rounded-[16px] bg-fill px-3 py-2.5">
               <div className="text-[12px] font-semibold text-ink-2">{m.label}</div>
               <div className="text-[22px] font-bold tracking-tight">
                 {fmtInt(m.g)}
                 <span className="text-[14px] font-semibold text-ink-2"> g</span>
               </div>
-              <div className="text-[12px] text-ink-3">{fmt1(m.perKg)} g per kg</div>
+              <div className="text-[12px] text-ink-3">{fmt1(m.perKg)} g pro kg</div>
             </div>
           ))}
         </div>
@@ -171,52 +171,52 @@ export function TargetsEditor({ inputs, onChange, defaultOpen = false }: { input
 
       <div className="card">
         <button type="button" onClick={() => setOpen(!open)} className="flex min-h-14 w-full items-center justify-between px-5 text-[16px] font-semibold" aria-expanded={open}>
-          Why these numbers
+          Wie die Zahlen entstehen
           <IconChevronDown className={cx('text-ink-2 transition-transform duration-300', open && 'rotate-180')} />
         </button>
         {open && (
           <div className="animate-fade px-5 pb-3">
-            <Step n={1} title="Resting energy" value={`${fmtInt(r.restingKcal)} kcal`}>
+            <Step n={1} title="Grundumsatz" value={`${fmtInt(r.restingKcal)} kcal`}>
               {r.method === 'mifflin' ? (
                 <p>
-                  Mifflin-St Jeor: 10 × {fmt2(inputs.weightKg)} kg + 6.25 × {fmt2(inputs.heightCm)} cm − 5 × {inputs.ageYears} years {inputs.sex === 'male' ? '+ 5' : '− 161'}
+                  Mifflin-St Jeor: 10 × {fmt2(inputs.weightKg)} kg + 6,25 × {fmt2(inputs.heightCm)} cm − 5 × {inputs.ageYears} Jahre {inputs.sex === 'male' ? '+ 5' : '− 161'}
                 </p>
               ) : (
-                <p>Katch-McArdle: 370 + 21.6 × {fmt1(inputs.weightKg * (1 - (inputs.bodyFatPct ?? 0) / 100))} kg lean mass</p>
+                <p>Katch-McArdle: 370 + 21,6 × {fmt1(inputs.weightKg * (1 - (inputs.bodyFatPct ?? 0) / 100))} kg fettfreie Masse</p>
               )}
               <p>
-                Most often within 10% of measured values among the equations compared (<Source s="frankenfield" />
+                Unter den verglichenen Formeln am häufigsten innerhalb von 10 % der Messwerte (<Source s="frankenfield" />
                 ).
               </p>
               {inputs.bodyFatPct != null && (
                 <div className="-mx-4 rounded-[20px] bg-fill">
-                  <Toggle label="Use lean mass" hint={`From your body-fat reading of ${fmt1(inputs.bodyFatPct)}%`} checked={inputs.useLeanMass} onChange={(v) => set({ useLeanMass: v })} />
+                  <Toggle label="Fettfreie Masse nutzen" hint={`Aus deinem Körperfettwert von ${fmt1(inputs.bodyFatPct)} %`} checked={inputs.useLeanMass} onChange={(v) => set({ useLeanMass: v })} />
                 </div>
               )}
             </Step>
-            <Step n={2} title="Maintenance" value={`${fmtInt(r.maintenanceKcal)} kcal`}>
+            <Step n={2} title="Erhaltungsbedarf" value={`${fmtInt(r.maintenanceKcal)} kcal`}>
               {inputs.maintenanceOverride ? (
                 <div className="-mx-4 rounded-[20px] bg-fill px-4 py-3">
-                  <p className="font-semibold text-ink">From your own data: {fmtInt(inputs.maintenanceOverride)} kcal</p>
+                  <p className="font-semibold text-ink">Aus deinen Daten: {fmtInt(inputs.maintenanceOverride)} kcal</p>
                   <p className="mt-0.5">
-                    Average intake minus the weight trend's change × 7,700 kcal per kg, over 14 days. The formula gives {fmtInt(r.formulaMaintenanceKcal)} kcal.
+                    Durchschnittliche Zufuhr minus Trendänderung × 7.700 kcal pro kg, über 14 Tage. Die Formel ergibt {fmtInt(r.formulaMaintenanceKcal)} kcal.
                   </p>
                   <button type="button" className="mt-1 text-[14px] font-semibold text-brand-ink" onClick={() => set({ maintenanceOverride: undefined })}>
-                    Use the formula again
+                    Wieder die Formel nutzen
                   </button>
                 </div>
               ) : null}
               <p>
-                × activity factor {fmt2(inputs.activityFactor)} ({level.label.toLowerCase()}: {level.detail.toLowerCase()})
+                × Aktivitätsfaktor {fmt2(inputs.activityFactor)} ({level.label}: {level.detail})
               </p>
-              <Slider label="Activity factor" value={inputs.activityFactor} min={ACTIVITY_RANGE[0]} max={ACTIVITY_RANGE[1]} step={0.025} onChange={(v) => set({ activityFactor: v })} />
-              <p>Standard multipliers, and the weakest link: after 14 logged days the app can correct it from your own intake and weight trend.</p>
+              <Slider label="Aktivitätsfaktor" value={inputs.activityFactor} min={ACTIVITY_RANGE[0]} max={ACTIVITY_RANGE[1]} step={0.025} onChange={(v) => set({ activityFactor: v })} />
+              <p>Standardfaktoren und das schwächste Glied: Nach 14 erfassten Tagen korrigiert die App ihn aus deiner Zufuhr und deinem Gewichtstrend.</p>
             </Step>
-            <Step n={3} title={`Goal: ${goal.label.toLowerCase()}`} value={goalAdjustLabel(inputs.goal, r.goalAdjustPct)}>
+            <Step n={3} title={`Ziel: ${goal.label}`} value={goalAdjustLabel(inputs.goal, r.goalAdjustPct)}>
               {inputs.goal !== 'maintain' && (
                 <>
                   <Slider
-                    label="Calorie adjustment"
+                    label="Kalorienanpassung"
                     value={r.goalAdjustPct}
                     min={goal.adjustRange[0]}
                     max={goal.adjustRange[1]}
@@ -229,25 +229,25 @@ export function TargetsEditor({ inputs, onChange, defaultOpen = false }: { input
               <p>
                 {inputs.goal === 'cut' ? (
                   <>
-                    A loss of 0.5–1% of body weight a week (<Source s="helms" />
+                    0,5–1 % Körpergewicht weniger pro Woche (<Source s="helms" />
                     ).
                   </>
                 ) : inputs.goal === 'bulk' ? (
                   <>
-                    A surplus of about 10–20% for 0.25–0.5% of body weight a week (<Source s="iraki" />
+                    Etwa 10–20 % Überschuss für 0,25–0,5 % Körpergewicht mehr pro Woche (<Source s="iraki" />
                     ).
                   </>
                 ) : (
-                  'Calories match maintenance.'
+                  'Kalorien gleich Erhaltungsbedarf.'
                 )}
               </p>
             </Step>
-            <Step n={4} title="Protein" value={`${fmtInt(r.proteinG)} g`}>
+            <Step n={4} title="Eiweiß" value={`${fmtInt(r.proteinG)} g`}>
               <p>
                 {fmt1(r.proteinPerKg)} g/kg × {fmt2(inputs.weightKg)} kg
               </p>
               <Slider
-                label="Protein per kg"
+                label="Eiweiß pro kg"
                 value={r.proteinPerKg}
                 min={PROTEIN_RANGE[0]}
                 max={PROTEIN_RANGE[1]}
@@ -256,15 +256,15 @@ export function TargetsEditor({ inputs, onChange, defaultOpen = false }: { input
               />
               {r.setByYou.proteinPerKg && <SetByYou onReset={() => set({ proteinPerKg: undefined })} />}
               <p>
-                No further lean-mass gain above about 1.6 g/kg on average (<Source s="morton" />
-                ); more in a deficit (<Source s="helms" />
+                Über etwa 1,6 g/kg im Schnitt kein zusätzlicher Muskelaufbau (<Source s="morton" />
+                ); im Defizit mehr (<Source s="helms" />
                 ).
               </p>
             </Step>
-            <Step n={5} title="Fat" value={`${fmtInt(r.fatG)} g`}>
-              <p>{fmt2(r.fatPerKg)} g/kg × {fmt2(inputs.weightKg)} kg, never below 0.5 g/kg</p>
+            <Step n={5} title="Fett" value={`${fmtInt(r.fatG)} g`}>
+              <p>{fmt2(r.fatPerKg)} g/kg × {fmt2(inputs.weightKg)} kg, nie unter 0,5 g/kg</p>
               <Slider
-                label="Fat per kg"
+                label="Fett pro kg"
                 value={r.fatPerKg}
                 min={FAT_RANGE[0]}
                 max={FAT_RANGE[1]}
@@ -273,18 +273,18 @@ export function TargetsEditor({ inputs, onChange, defaultOpen = false }: { input
               />
               {r.setByYou.fatPerKg && <SetByYou onReset={() => set({ fatPerKg: undefined })} />}
               <p>
-                0.5–1.5 g/kg (<Source s="iraki" />
-                ); 15–30% of calories (<Source s="helms" />
+                0,5–1,5 g/kg (<Source s="iraki" />
+                ); 15–30 % der Kalorien (<Source s="helms" />
                 ).
               </p>
             </Step>
-            <Step n={6} title="Carbohydrate" value={`${fmtInt(r.carbsG)} g`}>
+            <Step n={6} title="Kohlenhydrate" value={`${fmtInt(r.carbsG)} g`}>
               <p>
                 ({fmtInt(r.kcal)} − 4 × {fmtInt(r.proteinG)} − 9 × {fmtInt(r.fatG)}) ÷ 4 = {fmt1(r.carbsPerKg)} g/kg
               </p>
               <p>
-                At least 3–5 g/kg supports training (<Source s="iraki" />
-                ); the app warns below 3.
+                Mindestens 3–5 g/kg unterstützen das Training (<Source s="iraki" />
+                ); die App warnt unter 3.
               </p>
             </Step>
           </div>

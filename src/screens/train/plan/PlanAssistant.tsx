@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { aiConfig, askText } from '../../../adapters/vision'
 import type { Exercise } from '../../../db'
 import { ADAPT_PROMPT, EXPLAIN_PROMPT, parseAdapt } from '../../../lib/ai'
-import { EQUIPMENT_CHOICES, generatePlan, PLAN_GOALS, SPLITS, type GeneratedPlan, type PlanAnswers } from '../../../lib/planner'
+import { EQUIPMENT_CHOICES, generatePlan, JOINT_LABEL, PLAN_GOALS, splitFor, type GeneratedPlan, type PlanAnswers } from '../../../lib/planner'
 import { GROUP_LABEL, GROUPS, volumeOf } from '../../../lib/volume'
 import { adoptPlan, deletePlan, reactivatePlan, type PlanBundle } from '../../../store/plans'
 import { IconSparkle } from '../../../ui/icons'
@@ -32,12 +32,12 @@ function planJson(bundle: PlanBundle, exercises: ReadonlyMap<string, Exercise>):
 
 function describeChange(a: PlanAnswers, b: PlanAnswers): string[] {
   const out: string[] = []
-  if (a.daysPerWeek !== b.daysPerWeek) out.push(`${b.daysPerWeek} days a week (${SPLITS[b.daysPerWeek].label.toLowerCase()})`)
-  if (a.minutes !== b.minutes) out.push(`${b.minutes} minutes a session`)
+  if (a.daysPerWeek !== b.daysPerWeek) out.push(`${b.daysPerWeek} Tage pro Woche (${splitFor(b).label})`)
+  if (a.minutes !== b.minutes) out.push(`${b.minutes} Minuten pro Einheit`)
   if (a.equipment !== b.equipment) out.push(EQUIPMENT_CHOICES[b.equipment].label)
   if (a.goal !== b.goal) out.push(PLAN_GOALS[b.goal].label)
-  if (a.injuries.join() !== b.injuries.join()) out.push(b.injuries.length ? `avoiding ${b.injuries.join(', ')}` : 'no joints flagged')
-  if (a.priority.join() !== b.priority.join()) out.push(b.priority.length ? `priority ${b.priority.map((g) => GROUP_LABEL[g]).join(' and ')}` : 'no priority muscles')
+  if (a.injuries.join() !== b.injuries.join()) out.push(b.injuries.length ? `schont ${b.injuries.map((j) => JOINT_LABEL[j]).join(', ')}` : 'keine Gelenke geschont')
+  if (a.priority.join() !== b.priority.join()) out.push(b.priority.length ? `Schwerpunkt ${b.priority.map((g) => GROUP_LABEL[g]).join(' und ')}` : 'keine Schwerpunkte')
   return out
 }
 
@@ -68,7 +68,7 @@ export function PlanAssistant({
     setBusy('explain')
     try {
       const cfg = await aiConfig()
-      if (!cfg) throw new Error('Add a key under More → Photo logging first.')
+      if (!cfg) throw new Error('Trag zuerst unter Mehr → Foto-Erfassung einen Schlüssel ein.')
       setExplanation((await askText(cfg, EXPLAIN_PROMPT(planJson(bundle, exercises)))).trim())
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -84,16 +84,16 @@ export function PlanAssistant({
     setBusy('adapt')
     try {
       const cfg = await aiConfig()
-      if (!cfg) throw new Error('Add a key under More → Photo logging first.')
+      if (!cfg) throw new Error('Trag zuerst unter Mehr → Foto-Erfassung einen Schlüssel ein.')
       const reply = await askText(cfg, ADAPT_PROMPT(JSON.stringify({ ...answers, weekdays: undefined }), request.trim()), true)
       let parsed: ReturnType<typeof parseAdapt>
       try {
         parsed = parseAdapt(reply, answers)
       } catch {
-        throw new Error('The model suggested answers the questionnaire does not allow, so nothing changed. Try wording the request differently.')
+        throw new Error('Das Modell hat Antworten vorgeschlagen, die der Fragebogen nicht kennt. Nichts geändert; formulier die Bitte anders.')
       }
       const changes = describeChange(answers, parsed.answers)
-      if (!changes.length) throw new Error(parsed.note || 'The model saw nothing to change for that request.')
+      if (!changes.length) throw new Error(parsed.note || 'Das Modell sah für diese Bitte nichts zu ändern.')
       setProposal({ plan: generatePlan(parsed.answers, library), note: parsed.note, changes })
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -111,9 +111,9 @@ export function PlanAssistant({
     setRequest('')
     onClose()
     toast({
-      message: 'New plan in use',
+      message: 'Neuer Plan aktiv',
       action: {
-        label: 'Undo',
+        label: 'Rückgängig',
         onClick: async () => {
           await deletePlan(id)
           await reactivatePlan(previous)
@@ -123,21 +123,21 @@ export function PlanAssistant({
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="Ask the model">
+    <Sheet open={open} onClose={onClose} title="KI fragen">
       <div className="space-y-4 pb-2">
-        <Notice>The plan goes to your model provider as JSON. Changes are built by the app's own rules, so they pass the same volume, spacing, time and equipment checks.</Notice>
+        <Notice>Der Plan geht als JSON an deinen KI-Anbieter. Änderungen baut die App mit ihren eigenen Regeln, also mit denselben Prüfungen für Sätze, Abstände, Zeit und Geräte.</Notice>
         <section>
           <Button block variant="secondary" onClick={() => void explain()} disabled={busy != null}>
-            {busy === 'explain' ? <Spinner /> : <IconSparkle size={18} />} Explain this plan
+            {busy === 'explain' ? <Spinner /> : <IconSparkle size={18} />} Plan erklären
           </Button>
           {explanation && <p className="mt-3 whitespace-pre-wrap rounded-[18px] bg-fill p-3 text-[15px] leading-relaxed">{explanation}</p>}
         </section>
         {answers && (
           <section>
-            <p className="mb-1.5 px-1 text-[13px] font-semibold text-ink-2">Adapt it</p>
-            <TextInput placeholder="e.g. a week of travel with only a hotel gym" value={request} onChange={(e) => setRequest(e.target.value)} />
+            <p className="mb-1.5 px-1 text-[13px] font-semibold text-ink-2">Anpassen</p>
+            <TextInput placeholder="z. B. eine Woche Urlaub, nur Hotel-Gym" value={request} onChange={(e) => setRequest(e.target.value)} />
             <Button block className="mt-2" onClick={() => void adapt()} disabled={busy != null || !request.trim()}>
-              {busy === 'adapt' ? <Spinner /> : 'Propose a change'}
+              {busy === 'adapt' ? <Spinner /> : 'Änderung vorschlagen'}
             </Button>
           </section>
         )}
@@ -145,7 +145,7 @@ export function PlanAssistant({
         {proposal && (
           <section className="rounded-[20px] bg-fill p-3">
             <p className="text-[15px] font-semibold">{proposal.plan.name}</p>
-            <p className="mt-0.5 text-[14px] text-ink-2">Changed: {proposal.changes.join('; ')}.</p>
+            <p className="mt-0.5 text-[14px] text-ink-2">Geändert: {proposal.changes.join('; ')}.</p>
             {proposal.note && <p className="mt-1 text-[14px] text-ink-2">{proposal.note}</p>}
             <div className="mt-3">
               <VolumeBars volume={proposal.plan.volume} targets={proposal.plan.targets} />
@@ -160,10 +160,10 @@ export function PlanAssistant({
               ))}
             <div className="mt-3 flex gap-2">
               <Button variant="secondary" onClick={() => setProposal(null)}>
-                Discard
+                Verwerfen
               </Button>
               <Button className="flex-1" onClick={() => void use()}>
-                Use this plan
+                Plan übernehmen
               </Button>
             </div>
           </section>

@@ -15,8 +15,8 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fmt2, fmtInt, parseDecimal } from '../lib/format'
-import { IconAlert, IconCheckCircle, IconChevronLeft, IconChevronRight, IconInfo, IconX } from './icons'
-import { useAnimatedNumber } from './motion'
+import { IconAlert, IconCheckCircle, IconChevronLeft, IconChevronRight, IconInfo, IconReturn, IconX } from './icons'
+import { haptic, useAnimatedNumber } from './motion'
 
 export const cx = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(' ')
 
@@ -100,7 +100,7 @@ export function Card({
   )
 }
 
-const TONE_VAR: Record<string, string> = {
+const TONE_VAR = {
   brand: 'var(--brand)',
   food: 'var(--food)',
   train: 'var(--train)',
@@ -111,21 +111,25 @@ const TONE_VAR: Record<string, string> = {
   slate: 'var(--slate)',
   protein: 'var(--protein)',
   danger: 'var(--danger)',
-}
+} as const
 
 export type IconTone = keyof typeof TONE_VAR
 
-/** A coloured rounded square holding a white glyph, like iOS Settings. */
+/**
+ * A quiet rounded square behind a glyph. Deliberately neutral: colour in this app
+ * belongs to data (macros, charts) and to the one accent, not to decoration. Only
+ * "danger" keeps its colour, so destructive rows still read as such.
+ */
 export function IconTile({ tone = 'slate', size = 32, children, className }: { tone?: IconTone; size?: number; children: ReactNode; className?: string }) {
-  const bg = TONE_VAR[tone]
   return (
     <span
-      className={cx('inline-flex shrink-0 items-center justify-center text-white', className)}
+      className={cx('inline-flex shrink-0 items-center justify-center', className)}
       style={{
         width: size,
         height: size,
         borderRadius: size * 0.3,
-        background: bg,
+        background: tone === 'danger' ? 'var(--danger-soft)' : 'var(--fill)',
+        color: tone === 'danger' ? 'var(--danger)' : 'var(--ink)',
       }}
     >
       {children}
@@ -220,8 +224,8 @@ export function StickyFooter({ children }: { children: ReactNode }) {
 
 export function SectionTitle({ children, action, className }: { children: ReactNode; action?: ReactNode; className?: string }) {
   return (
-    <div className={cx('mb-2.5 mt-7 flex items-end justify-between gap-2 px-1', className)}>
-      <h2 className="text-[20px] font-bold tracking-tight">{children}</h2>
+    <div className={cx('mb-2 mt-7 flex min-h-9 items-end justify-between gap-2 px-1', className)}>
+      <h2 className="text-[18px] font-semibold tracking-[-0.01em]">{children}</h2>
       {action}
     </div>
   )
@@ -277,6 +281,23 @@ export function ListRow({
 /** An inset group of rows with hairlines between them. */
 export function Group({ children, className }: { children: ReactNode; className?: string }) {
   return <div className={cx('card divide-y divide-line overflow-hidden !p-0', className)}>{children}</div>
+}
+
+/** Shown while a screen is on another day; one tap returns to today. */
+export function TodayButton({ onClick, className }: { onClick: () => void; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        haptic()
+        onClick()
+      }}
+      className={cx('press animate-pop-in inline-flex min-h-9 items-center gap-1.5 rounded-full bg-ink pl-3 pr-3.5 text-[14px] font-semibold text-page shadow-float', className)}
+    >
+      <IconReturn size={16} strokeWidth={2.4} />
+      Heute
+    </button>
+  )
 }
 
 // ---- form controls ------------------------------------------------------------------

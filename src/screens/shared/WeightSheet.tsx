@@ -18,25 +18,25 @@ export function WeightSheet({ open, onClose }: { open: boolean; onClose: () => v
   const save = async () => {
     if (!valid) return
     await upsertMetric('weight', date, kg as number, 'manual')
-    toast({ message: `Weight saved: ${kg} kg` })
+    toast({ message: `Gewicht gespeichert: ${String(kg).replace('.', ',')} kg` })
     onClose()
   }
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title="Log weight"
+      title="Gewicht eintragen"
       footer={
         <Button block size="lg" disabled={!valid} onClick={save}>
-          Save
+          Speichern
         </Button>
       }
     >
       <div className="space-y-4 pt-2">
-        <Field label="Weight" hint="Best taken in the morning, after the bathroom, before eating.">
-          <NumberInput value={kg} unit="kg" autoFocus ariaLabel="Weight" onChange={setKg} onEnter={save} />
+        <Field label="Gewicht" hint="Am besten morgens nach der Toilette und vor dem Frühstück.">
+          <NumberInput value={kg} unit="kg" autoFocus ariaLabel="Gewicht" onChange={setKg} onEnter={save} />
         </Field>
-        <Field label="Date">
+        <Field label="Datum">
           <TextInput type="date" value={date} max={localDay()} onChange={(e) => setDate(e.target.value || localDay())} />
         </Field>
       </div>

@@ -1,6 +1,6 @@
 // Onboarding, seven short screens: install and welcome, about you, goal and activity,
 // targets, training questions (skippable), plan preview and optional extras.
-// One decision per screen, progress dots, Back everywhere, no account, no email,
+// One decision per screen, progress dots, back everywhere, no account, no email,
 // no "calculating" interstitials.
 
 import { useState, type CSSProperties } from 'react'
@@ -29,7 +29,7 @@ function InstallCard() {
       icon: <IconShare size={18} />,
       text: (
         <>
-          Tap <b>Share</b> in Safari's toolbar.
+          In Safari unten auf <b>Teilen</b> tippen.
         </>
       ),
     },
@@ -37,43 +37,40 @@ function InstallCard() {
       icon: <IconPlus size={18} />,
       text: (
         <>
-          Choose <b>Add to Home Screen</b>. On iOS 26 and later, leave "Open as Web App" on.
+          <b>Zum Home-Bildschirm</b> wählen. Ab iOS 26 „Als Web-App öffnen“ eingeschaltet lassen.
         </>
       ),
     },
-    { icon: <IconPhone size={18} />, text: <>Open Fittrack from its new icon and start there.</> },
+    { icon: <IconPhone size={18} />, text: <>Fittrack über das neue Symbol öffnen und dort starten.</> },
   ]
   return (
-    <div className="tone-brand relative flex min-h-dvh flex-col justify-center px-5 pb-10 pt-[env(safe-area-inset-top)]">
-      <div aria-hidden className="ambient pointer-events-none fixed inset-0 -z-10" />
+    <div className="relative flex min-h-dvh flex-col justify-center px-5 pb-10 pt-[env(safe-area-inset-top)]">
       <img src={`${import.meta.env.BASE_URL}pwa-192.png`} alt="" className="mx-auto size-20 rounded-[22px] shadow-float" />
-      <h1 className="mt-6 text-center text-title">Install Fittrack</h1>
-      <p className="mt-2 text-center text-[16px] text-ink-2">It runs from your Home Screen, like any app.</p>
+      <h1 className="mt-6 text-center text-title">Fittrack installieren</h1>
+      <p className="mt-2 text-center text-[16px] text-ink-2">Sie läuft vom Home-Bildschirm wie jede andere App.</p>
       <div className="card mx-auto mt-8 w-full max-w-sm space-y-4 p-5">
         {steps.map((s, i) => (
           <div key={i} className="flex items-start gap-3">
-            <IconTile tone="brand" size={34}>
-              {s.icon}
-            </IconTile>
+            <IconTile size={34}>{s.icon}</IconTile>
             <p className="pt-1.5 text-[15px] leading-snug">{s.text}</p>
           </div>
         ))}
       </div>
-      <p className="mx-auto mt-5 max-w-sm text-center text-[13px] text-ink-2">Your data lives in the installed app, which keeps its own storage, separate from Safari's.</p>
+      <p className="mx-auto mt-5 max-w-sm text-center text-[13px] text-ink-2">Deine Daten liegen in der installierten App, die ihren eigenen Speicher hat, getrennt von Safari.</p>
     </div>
   )
 }
 
 const FEATURES = [
-  { icon: <IconLock size={18} />, tone: 'brand' as const, title: 'Private by design', text: 'No account. Everything stays on this phone.' },
-  { icon: <IconWifiOff size={18} />, tone: 'indigo' as const, title: 'Works offline', text: 'Log at the gym or in the shop without signal.' },
-  { icon: <IconZap size={18} />, tone: 'amber' as const, title: 'Fast logging', text: 'Repeat a meal in one tap; sets start from last time.' },
+  { icon: <IconLock size={18} />, title: 'Privat', text: 'Kein Konto. Alles bleibt auf diesem iPhone.' },
+  { icon: <IconWifiOff size={18} />, title: 'Offline', text: 'Funktioniert im Gym und im Supermarkt ohne Netz.' },
+  { icon: <IconZap size={18} />, title: 'Schnell', text: 'Mahlzeiten mit einem Tipp wiederholen, Sätze starten mit den Werten vom letzten Mal.' },
 ]
 
-const GOAL_ICON: Record<GoalType, { icon: typeof IconTrendUp; tone: 'brand' | 'indigo' | 'food' }> = {
-  bulk: { icon: IconTrendUp, tone: 'brand' },
-  maintain: { icon: IconTrendFlat, tone: 'indigo' },
-  cut: { icon: IconTrendDown, tone: 'food' },
+const GOAL_ICON: Record<GoalType, { icon: typeof IconTrendUp }> = {
+  bulk: { icon: IconTrendUp },
+  maintain: { icon: IconTrendFlat },
+  cut: { icon: IconTrendDown },
 }
 
 function Intensity({ level }: { level: number }) {
@@ -158,23 +155,23 @@ export default function Onboarding() {
       <div className="mx-auto max-w-xl">
         {step === 0 && (
           <Button block size="lg" disabled={!adult} onClick={next}>
-            Get started
+            Los geht's
           </Button>
         )}
         {(step === 1 || step === 2) && (
           <Button block size="lg" onClick={next}>
-            Continue
+            Weiter
           </Button>
         )}
         {step === 3 && (
           <Button block size="lg" disabled={saving} onClick={() => void saveTargets()}>
-            Save targets
+            Ziele speichern
           </Button>
         )}
         {step === 4 && (
           <div className="flex gap-2">
             <Button size="lg" variant="secondary" onClick={() => go(6)}>
-              Skip for now
+              Später
             </Button>
             <Button
               size="lg"
@@ -185,23 +182,23 @@ export default function Onboarding() {
                 go(5)
               }}
             >
-              Build my plan
+              Plan erstellen
             </Button>
           </div>
         )}
         {step === 5 && (
           <div className="flex gap-2">
-            <Button size="lg" variant="secondary" aria-label="Regenerate with other exercises" onClick={() => draft.regenerate()}>
-              <IconRepeat size={19} /> Regenerate
+            <Button size="lg" variant="secondary" aria-label="Mit anderen Übungen neu erstellen" onClick={() => draft.regenerate()}>
+              <IconRepeat size={19} /> Neu mischen
             </Button>
             <Button size="lg" className="flex-1" disabled={saving || !draft.plan} onClick={() => void adoptDraft()}>
-              Use this plan
+              Plan übernehmen
             </Button>
           </div>
         )}
         {step === 6 && (
           <Button block size="lg" disabled={saving} onClick={() => void finish()}>
-            Done
+            Fertig
           </Button>
         )}
       </div>
@@ -209,11 +206,10 @@ export default function Onboarding() {
   )
 
   return (
-    <div className="tone-brand relative mx-auto min-h-dvh max-w-xl px-4 pb-32 pt-[env(safe-area-inset-top)]">
-      <div aria-hidden className="ambient pointer-events-none fixed inset-x-0 top-0 -z-10 mx-auto h-[75vh] max-w-xl" />
+    <div className="relative mx-auto min-h-dvh max-w-xl px-4 pb-32 pt-[env(safe-area-inset-top)]">
       <div className="flex min-h-14 items-center">
         {step > 0 ? (
-          <IconButton label="Back" onClick={() => setStep(step - 1)}>
+          <IconButton label="Zurück" onClick={() => setStep(step - 1)}>
             <IconChevronLeft />
           </IconButton>
         ) : (
@@ -227,16 +223,14 @@ export default function Onboarding() {
 
       {step === 0 && (
         <section className="pt-4">
-          <img src={`${import.meta.env.BASE_URL}pwa-192.png`} alt="" className="animate-pop size-[72px] rounded-[20px] shadow-[0_16px_40px_-12px_color-mix(in_oklab,var(--brand)_70%,transparent)]" />
-          <h1 className="mt-6 text-[40px] font-bold leading-none tracking-[-0.04em]">Fittrack</h1>
-          <p className="mt-3 text-[19px] leading-snug text-ink-2">A private logbook for food, training and body weight.</p>
+          <img src={`${import.meta.env.BASE_URL}pwa-192.png`} alt="" className="animate-pop size-[72px] rounded-[20px] shadow-float" />
+          <h1 className="mt-6 text-[40px] font-bold leading-none tracking-[-0.035em]">Fittrack</h1>
+          <p className="mt-3 text-[19px] leading-snug text-ink-2">Dein privates Logbuch für Essen, Training und Gewicht.</p>
 
           <div className="mt-8 space-y-4">
             {FEATURES.map((f, i) => (
               <div key={f.title} className="animate-rise flex items-start gap-3.5" style={{ '--i': i + 1 } as CSSProperties}>
-                <IconTile tone={f.tone} size={38}>
-                  {f.icon}
-                </IconTile>
+                <IconTile size={38}>{f.icon}</IconTile>
                 <div>
                   <p className="text-[16px] font-semibold">{f.title}</p>
                   <p className="text-[14px] text-ink-2">{f.text}</p>
@@ -246,12 +240,12 @@ export default function Onboarding() {
           </div>
 
           {!isStandalone() && (
-            <Notice className="mt-7">Installing to the Home Screen protects your data from browser clean-up. On an iPhone, open this page in Safari and use Share → Add to Home Screen.</Notice>
+            <Notice className="mt-7">Auf dem Home-Bildschirm installiert sind deine Daten vor dem Aufräumen des Browsers geschützt. Auf dem iPhone: in Safari öffnen, dann Teilen → Zum Home-Bildschirm.</Notice>
           )}
 
           <div className="card mt-4 p-4">
             <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => setNoticeOpen(!noticeOpen)} aria-expanded={noticeOpen}>
-              <span className="text-[15px] font-semibold">Health notice</span>
+              <span className="text-[15px] font-semibold">Gesundheitshinweis</span>
               <IconChevronDown size={18} className={cx('text-ink-2 transition-transform duration-300', noticeOpen && 'rotate-180')} />
             </button>
             <p className={cx('mt-2 text-[14px] leading-relaxed text-ink-2', !noticeOpen && 'line-clamp-3')}>{DISCLAIMER}</p>
@@ -268,7 +262,7 @@ export default function Onboarding() {
             >
               {adult && <IconCheck size={16} strokeWidth={3.2} />}
             </span>
-            <span className="text-[15px] font-medium">I am 18 or older and have read this notice</span>
+            <span className="text-[15px] font-medium">Ich bin mindestens 18 und habe den Hinweis gelesen</span>
           </label>
         </section>
       )}
@@ -276,37 +270,37 @@ export default function Onboarding() {
       {step === 1 && (
         <section className="space-y-5 pt-2">
           <div>
-            <h1 className="text-title">About you</h1>
-            <p className="mt-1.5 text-[16px] text-ink-2">These go into the energy equation. Metric units.</p>
+            <h1 className="text-title">Über dich</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">Daraus berechnet die App deinen Energiebedarf.</p>
           </div>
           <div className="card space-y-5 p-4">
-            <Field group label="Sex" hint="The equation differs for men and women." error={showErrors && check.errors.sex}>
+            <Field group label="Geschlecht" hint="Die Formel unterscheidet sich für Männer und Frauen." error={showErrors && check.errors.sex}>
               <Segmented
                 value={about.sex ?? ('' as Sex)}
                 options={[
-                  { value: 'male' as Sex, label: 'Male' },
-                  { value: 'female' as Sex, label: 'Female' },
+                  { value: 'male' as Sex, label: 'Männlich' },
+                  { value: 'female' as Sex, label: 'Weiblich' },
                 ]}
                 onChange={(sex) => setAbout({ ...about, sex })}
               />
             </Field>
-            <Field label="Birth date" error={showErrors && check.errors.birthDate}>
+            <Field label="Geburtsdatum" error={showErrors && check.errors.birthDate}>
               <TextInput type="date" value={about.birthDate} max={localDay()} onChange={(e) => setAbout({ ...about, birthDate: e.target.value })} />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Height" error={showErrors && check.errors.heightCm}>
-                <NumberInput value={about.heightCm} unit="cm" ariaLabel="Height" onChange={(heightCm) => setAbout({ ...about, heightCm })} />
+              <Field label="Größe" error={showErrors && check.errors.heightCm}>
+                <NumberInput value={about.heightCm} unit="cm" ariaLabel="Größe" onChange={(heightCm) => setAbout({ ...about, heightCm })} />
               </Field>
-              <Field label="Weight" error={showErrors && check.errors.weightKg}>
-                <NumberInput value={about.weightKg} unit="kg" ariaLabel="Weight" onChange={(weightKg) => setAbout({ ...about, weightKg })} />
+              <Field label="Gewicht" error={showErrors && check.errors.weightKg}>
+                <NumberInput value={about.weightKg} unit="kg" ariaLabel="Gewicht" onChange={(weightKg) => setAbout({ ...about, weightKg })} />
               </Field>
             </div>
-            <Field label="Body fat (optional)" hint="Lets you use the lean-mass equation." error={showErrors && check.errors.bodyFatPct}>
-              <NumberInput value={about.bodyFatPct} unit="%" ariaLabel="Body fat" onChange={(bodyFatPct) => setAbout({ ...about, bodyFatPct })} />
+            <Field label="Körperfett (optional)" hint="Ermöglicht die Formel mit fettfreier Masse." error={showErrors && check.errors.bodyFatPct}>
+              <NumberInput value={about.bodyFatPct} unit="%" ariaLabel="Körperfett" onChange={(bodyFatPct) => setAbout({ ...about, bodyFatPct })} />
             </Field>
           </div>
           {about.birthDate && ageOn(about.birthDate, localDay()) < 18 && (
-            <Notice tone="warn">Under 18 the app sets no deficit target. Please talk to a doctor or dietitian before changing how you eat.</Notice>
+            <Notice tone="warn">Unter 18 setzt die App kein Defizit. Bitte sprich mit einer Ärztin, einem Arzt oder einer Ernährungsfachkraft, bevor du deine Ernährung umstellst.</Notice>
           )}
         </section>
       )}
@@ -314,12 +308,12 @@ export default function Onboarding() {
       {step === 2 && (
         <section className="space-y-6 pt-2">
           <div>
-            <h1 className="text-title">Your goal</h1>
-            <p className="mt-1.5 text-[16px] text-ink-2">You can change it any time under More.</p>
+            <h1 className="text-title">Dein Ziel</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">Jederzeit unter Mehr änderbar.</p>
           </div>
-          <div className="space-y-2.5" role="radiogroup" aria-label="Goal">
+          <div className="space-y-2.5" role="radiogroup" aria-label="Ziel">
             {(Object.keys(GOALS) as GoalType[]).map((g) => {
-              const { icon: Icon, tone } = GOAL_ICON[g]
+              const { icon: Icon } = GOAL_ICON[g]
               const sel = goal === g
               return (
                 <button
@@ -334,7 +328,7 @@ export default function Onboarding() {
                   }}
                   className={cx('card press flex w-full items-center gap-4 p-4 text-left transition-shadow', sel && 'ring-2 ring-brand')}
                 >
-                  <IconTile tone={tone} size={44}>
+                  <IconTile size={44}>
                     <Icon size={24} strokeWidth={2.4} />
                   </IconTile>
                   <span className="min-w-0 flex-1">
@@ -349,9 +343,9 @@ export default function Onboarding() {
             })}
           </div>
           <div>
-            <h2 className="mb-2.5 px-1 text-[20px] font-bold tracking-tight">How active are you?</h2>
-            <p className="-mt-1.5 mb-3 px-1 text-[14px] text-ink-2">Training included.</p>
-            <div className="card divide-y divide-line overflow-hidden" role="radiogroup" aria-label="Activity">
+            <h2 className="mb-2.5 px-1 text-[18px] font-semibold tracking-[-0.01em]">Wie aktiv bist du?</h2>
+            <p className="-mt-1.5 mb-3 px-1 text-[14px] text-ink-2">Training eingerechnet.</p>
+            <div className="card divide-y divide-line overflow-hidden" role="radiogroup" aria-label="Aktivität">
               {ACTIVITY_LEVELS.map((l, i) => {
                 const sel = activity === l.factor
                 return (
@@ -383,8 +377,8 @@ export default function Onboarding() {
       {step === 3 && inputs && (
         <section className="space-y-4 pt-2">
           <div>
-            <h1 className="text-title">Your targets</h1>
-            <p className="mt-1.5 text-[16px] text-ink-2">Every number can be changed, now or later.</p>
+            <h1 className="text-title">Deine Ziele</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">Jede Zahl lässt sich ändern, jetzt oder später.</p>
           </div>
           <TargetsEditor
             inputs={inputs}
@@ -399,8 +393,8 @@ export default function Onboarding() {
       {step === 4 && (
         <section className="space-y-4 pt-2">
           <div>
-            <h1 className="text-title">Your training</h1>
-            <p className="mt-1.5 text-[16px] text-ink-2">Seven questions give you a week of training. You can skip this and do it later on Train.</p>
+            <h1 className="text-title">Dein Training</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">Ein paar Fragen, dann steht deine Trainingswoche. Du kannst das auch später unter Training machen.</p>
           </div>
           {draft.answers ? (
             <PlanQuestions value={draft.answers} onChange={draft.setAnswers} />
@@ -415,8 +409,8 @@ export default function Onboarding() {
       {step === 5 && (
         <section className="space-y-4 pt-2">
           <div>
-            <h1 className="text-title">Your first week</h1>
-            <p className="mt-1.5 text-[16px] text-ink-2">Use it as it is, regenerate for other exercises, or edit it later on Train.</p>
+            <h1 className="text-title">Deine erste Woche</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">So übernehmen, neu mischen für andere Übungen oder später unter Training anpassen.</p>
           </div>
           {draft.plan ? <PlanPreview plan={draft.plan} exercises={draft.exercises} /> : <Spinner />}
         </section>
@@ -425,18 +419,17 @@ export default function Onboarding() {
       {step === 6 && (
         <section className="space-y-4 pt-2">
           <div>
-            <h1 className="text-title">Optional extras</h1>
-            <p className="mt-1.5 text-[16px] text-ink-2">Each can wait. Tap one to set it up now, or Done to open Today.</p>
+            <h1 className="text-title">Optionale Extras</h1>
+            <p className="mt-1.5 text-[16px] text-ink-2">Alles kann warten. Tippe auf eins, um es jetzt einzurichten, oder auf Fertig.</p>
           </div>
-          {planSaved && <Notice tone="ok">Your plan is saved. Today shows the next workout.</Notice>}
+          {planSaved && <Notice tone="ok">Dein Plan ist gespeichert. „Heute“ zeigt das nächste Training.</Notice>}
           <Group>
-            <ListRow icon={<IconHeart size={18} />} iconTone="pink" title="Apple Health import" subtitle="Steps, weight, sleep and workouts from a Shortcut" onClick={() => void finish('/more/health')} />
-            <ListRow icon={<IconCamera size={18} />} iconTone="food" title="Photo logging" subtitle="Your own key for a vision model" onClick={() => void finish('/more/ai')} />
+            <ListRow icon={<IconHeart size={18} />} title="Apple-Health-Import" subtitle="Schritte, Gewicht, Schlaf per Kurzbefehl" onClick={() => void finish('/more/health')} />
+            <ListRow icon={<IconCamera size={18} />} title="Foto-Erfassung" subtitle="Mit eigenem Schlüssel für ein Bildmodell" onClick={() => void finish('/more/ai')} />
             <ListRow
               icon={<IconShield size={18} />}
-              iconTone="amber"
               title="Backups"
-              subtitle="Today reminds you after 7 days without one. Save the first now"
+              subtitle="Nach 7 Tagen ohne Backup kommt eine Erinnerung"
               onClick={() => void finish('/more/backup')}
             />
           </Group>

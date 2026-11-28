@@ -66,7 +66,7 @@ export default function PhotoCapture() {
         }
         setLive(true)
       })
-      .catch((e: unknown) => setError(e instanceof Error && e.name === 'NotAllowedError' ? 'Camera access was declined.' : 'The live camera is not available here.'))
+      .catch((e: unknown) => setError(e instanceof Error && e.name === 'NotAllowedError' ? 'Kamerazugriff wurde abgelehnt.' : 'Die Live-Kamera ist hier nicht verfügbar.'))
     return () => {
       cancelled = true
       stopStream(stream.current)
@@ -105,7 +105,7 @@ export default function PhotoCapture() {
     if (!shot) return
     const { replaced } = await savePhoto({ pose, ...shot })
     haptic('success')
-    toast({ message: `${POSE_LABEL[pose]} photo saved${replaced.length ? ', replacing this week’s earlier one' : ''}` })
+    toast({ message: `Foto ${POSE_LABEL[pose]} gespeichert${replaced.length ? ', ersetzt das frühere dieser Woche' : ''}` })
     setShot(null)
     const next = POSES[POSES.indexOf(pose) + 1]
     if (next) setParams({ pose: next }, { replace: true })
@@ -117,7 +117,7 @@ export default function PhotoCapture() {
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <video ref={video} playsInline muted autoPlay className={cx('absolute inset-0 size-full object-cover', facing === 'user' && '-scale-x-100', (!live || shot) && 'invisible')} />
         {live && !shot && ghostOn && ghostUrl && <img src={ghostUrl} alt="" className="pointer-events-none absolute inset-0 size-full object-cover opacity-35" />}
-        {shotUrl && <img src={shotUrl} alt="The photo just taken" className="absolute inset-0 size-full object-contain" />}
+        {shotUrl && <img src={shotUrl} alt="Das gerade aufgenommene Foto" className="absolute inset-0 size-full object-contain" />}
         {count != null && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/25" aria-live="assertive">
             <span className="text-[120px] font-bold tabular-nums">{count}</span>
@@ -126,16 +126,16 @@ export default function PhotoCapture() {
         {!live && !shot && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center">
             <IconCamera size={40} className="opacity-70" />
-            <p className="text-[16px] opacity-80">{error ?? 'Starting the camera…'}</p>
+            <p className="text-[16px] opacity-80">{error ?? 'Kamera startet …'}</p>
             {error && (
               <Button onClick={() => file.current?.click()}>
-                <IconImage size={18} /> Use the system camera
+                <IconImage size={18} /> System-Kamera nutzen
               </Button>
             )}
           </div>
         )}
         <div className="absolute inset-x-0 top-0 flex items-center gap-2 bg-gradient-to-b from-black/60 to-transparent px-3 pb-6 pt-[calc(env(safe-area-inset-top)+0.5rem)]">
-          <IconButton label="Back" className="text-white" onClick={() => navigate('/progress?tab=photos')}>
+          <IconButton label="Zurück" className="text-white" onClick={() => navigate('/progress?tab=photos')}>
             <IconChevronLeft />
           </IconButton>
           <div className="min-w-0 flex-1">
@@ -144,7 +144,7 @@ export default function PhotoCapture() {
         </div>
         {live && !shot && (
           <p className="absolute inset-x-0 bottom-3 px-6 text-center text-[13px] opacity-80">
-            {ghostUrl ? 'Line yourself up with the faint outline of last time. ' : ''}2.5 m away, phone at chest height, same light and clothes.
+            {ghostUrl ? 'Richte dich am blassen Umriss vom letzten Mal aus. ' : ''}2,5 m Abstand, iPhone auf Brusthöhe, gleiches Licht und gleiche Kleidung.
           </p>
         )}
       </div>
@@ -153,29 +153,29 @@ export default function PhotoCapture() {
         {shot ? (
           <>
             <Button variant="glass" size="lg" className="!text-white" onClick={() => setShot(null)}>
-              Retake
+              Neu
             </Button>
             <Button size="lg" className="flex-1" onClick={() => void save()}>
-              Save {POSE_LABEL[pose].toLowerCase()}
+              {POSE_LABEL[pose]} speichern
             </Button>
           </>
         ) : (
           <>
-            <IconButton label={ghostOn ? 'Hide last photo' : 'Show last photo'} className={cx('size-12 text-white', !ghostUrl && 'invisible', ghostOn ? 'bg-white/25' : 'bg-white/10')} onClick={() => setGhostOn(!ghostOn)}>
+            <IconButton label={ghostOn ? 'Letztes Foto ausblenden' : 'Letztes Foto einblenden'} className={cx('size-12 text-white', !ghostUrl && 'invisible', ghostOn ? 'bg-white/25' : 'bg-white/10')} onClick={() => setGhostOn(!ghostOn)}>
               <IconImage size={22} />
             </IconButton>
             <button
               type="button"
-              aria-label="Take the photo now"
+              aria-label="Jetzt aufnehmen"
               disabled={!live || count != null}
               onClick={() => void capture()}
               className="press size-[76px] rounded-full border-4 border-white bg-white/30 disabled:opacity-40"
             />
             <div className="flex flex-col gap-2">
-              <IconButton label="Take it in 10 seconds" className="size-12 bg-white/15 text-white" disabled={!live || count != null} onClick={() => setCount(10)}>
+              <IconButton label="In 10 Sekunden aufnehmen" className="size-12 bg-white/15 text-white" disabled={!live || count != null} onClick={() => setCount(10)}>
                 <IconTimer size={22} />
               </IconButton>
-              <IconButton label="Switch camera" className="size-12 bg-white/15 text-white" onClick={() => setFacing(facing === 'user' ? 'environment' : 'user')}>
+              <IconButton label="Kamera wechseln" className="size-12 bg-white/15 text-white" onClick={() => setFacing(facing === 'user' ? 'environment' : 'user')}>
                 <IconRepeat size={20} />
               </IconButton>
             </div>
